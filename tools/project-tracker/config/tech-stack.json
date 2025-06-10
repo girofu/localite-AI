@@ -1,0 +1,76 @@
+{
+  "frontend": {
+    "mobile": {
+      "framework": "React Native",
+      "stateManagement": "Redux Toolkit",
+      "testing": "Jest + React Testing Library",
+      "status": "planned"
+    },
+    "web": {
+      "framework": "React.js",
+      "uiFramework": "Material-UI / Ant Design",
+      "stateManagement": "Redux Toolkit",
+      "testing": "Jest + React Testing Library",
+      "status": "planned"
+    }
+  },
+  "backend": {
+    "framework": "Node.js + Express",
+    "apiDesign": "RESTful API + OpenAPI",
+    "documentation": "Swagger",
+    "messageQueue": "RabbitMQ",
+    "cache": "Redis",
+    "featureFlags": "LaunchDarkly/PostHog",
+    "status": "planned"
+  },
+  "database": {
+    "primary": {
+      "type": "MongoDB",
+      "purpose": "導覽內容、用戶資料",
+      "status": "planned"
+    },
+    "transaction": {
+      "type": "MySQL",
+      "purpose": "訂單、付款紀錄",
+      "status": "planned"
+    },
+    "storage": {
+      "type": "AWS S3 / GCP Storage",
+      "purpose": "照片、影片",
+      "status": "planned"
+    }
+  },
+  "ai": {
+    "llm": {
+      "service": "GPT API",
+      "purpose": "導覽內容生成",
+      "status": "planned"
+    },
+    "tts": {
+      "service": "Azure Speech Service / Google Cloud TTS",
+      "purpose": "語音合成",
+      "status": "planned"
+    }
+  },
+  "payment": {
+    "gateway": "綠界金流",
+    "methods": [
+      "信用卡",
+      "Apple Pay",
+      "Line Pay"
+    ],
+    "status": "planned"
+  },
+  "cloud": {
+    "authentication": "Firebase Authentication",
+    "messaging": "Firebase Cloud Messaging",
+    "storage": "Firebase Storage",
+    "status": "planned"
+  },
+  "monitoring": {
+    "metrics": "Prometheus",
+    "alerting": "Grafana Alert",
+    "logging": "ELK Stack",
+    "status": "planned"
+  }
+}

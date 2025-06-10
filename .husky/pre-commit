@@ -1,0 +1,29 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "🔍 執行 pre-commit 檢查..."
+
+# 執行 lint-staged
+npx lint-staged
+
+# 檢查是否有未追蹤的大型檔案
+echo "📁 檢查檔案大小..."
+if [ -n "$(find . -name '*.json' -size +1M -not -path './node_modules/*' -not -path './.git/*')" ]; then
+  echo "❌ 發現大型 JSON 檔案，請確認是否需要提交："
+  find . -name '*.json' -size +1M -not -path './node_modules/*' -not -path './.git/*'
+  exit 1
+fi
+
+# 檢查環境變數檔案
+echo "🔐 檢查環境變數檔案..."
+if git diff --cached --name-only | grep -E '\.(env|key|pem)$' | grep -v '\.example'; then
+  echo "❌ 嘗試提交敏感檔案！請檢查以下檔案："
+  git diff --cached --name-only | grep -E '\.(env|key|pem)$' | grep -v '\.example'
+  echo "建議："
+  echo "  1. 將敏感檔案加入 .gitignore"
+  echo "  2. 使用 git rm --cached <file> 移除追蹤"
+  echo "  3. 只提交 .example 範本檔案"
+  exit 1
+fi
+
+echo "✅ Pre-commit 檢查通過！" 

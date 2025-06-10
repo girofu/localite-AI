@@ -1,0 +1,208 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+env:
+  NODE_VERSION: '18.x'
+
+jobs:
+  # 程式碼品質檢查
+  lint:
+    name: 程式碼品質檢查
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout 程式碼
+        uses: actions/checkout@v4
+        
+      - name: 設定 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          
+      - name: 安裝依賴
+        run: npm ci
+        
+      - name: 程式碼格式檢查
+        run: npm run format:check
+        
+      - name: ESLint 檢查
+        run: npm run lint
+
+  # 單元測試
+  test:
+    name: 單元測試
+    runs-on: ubuntu-latest
+    needs: lint
+    
+    services:
+      mongodb:
+        image: mongo:7
+        env:
+          MONGO_INITDB_ROOT_USERNAME: test
+          MONGO_INITDB_ROOT_PASSWORD: test123
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.runCommand({ping: 1})'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 3
+          
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 3
+    
+    steps:
+      - name: Checkout 程式碼
+        uses: actions/checkout@v4
+        
+      - name: 設定 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          
+      - name: 安裝依賴
+        run: npm ci
+        
+      - name: 建立測試環境變數
+        run: |
+          echo "NODE_ENV=test" >> $GITHUB_ENV
+          echo "MONGODB_URI=mongodb://test:test123@localhost:27017/localite-test?authSource=admin" >> $GITHUB_ENV
+          echo "REDIS_URL=redis://localhost:6379" >> $GITHUB_ENV
+          echo "JWT_SECRET=test-secret-key" >> $GITHUB_ENV
+          
+      - name: 執行測試
+        run: npm run test:coverage
+        
+      - name: 上傳覆蓋率報告
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: ./coverage/lcov.info
+
+  # 建置檢查
+  build:
+    name: 建置檢查
+    runs-on: ubuntu-latest
+    needs: [lint, test]
+    
+    strategy:
+      matrix:
+        app: [backend, web]
+    
+    steps:
+      - name: Checkout 程式碼
+        uses: actions/checkout@v4
+        
+      - name: 設定 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          
+      - name: 安裝依賴
+        run: npm ci
+        
+      - name: 建置 ${{ matrix.app }}
+        run: npm run build:${{ matrix.app }}
+
+  # Docker 建置 (僅在 main 分支)
+  docker:
+    name: Docker 建置
+    runs-on: ubuntu-latest
+    needs: [lint, test, build]
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Checkout 程式碼
+        uses: actions/checkout@v4
+        
+      - name: 設定 Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        
+      - name: 登入 Google Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: gcr.io
+          username: _json_key
+          password: ${{ secrets.GCP_SA_KEY }}
+          
+      - name: 建置並推送 Backend Docker 映像
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./apps/backend/Dockerfile
+          push: true
+          tags: |
+            gcr.io/${{ secrets.GCP_PROJECT_ID }}/localite-backend:latest
+            gcr.io/${{ secrets.GCP_PROJECT_ID }}/localite-backend:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          
+      - name: 建置並推送 Web Docker 映像
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./apps/web/Dockerfile
+          push: true
+          tags: |
+            gcr.io/${{ secrets.GCP_PROJECT_ID }}/localite-web:latest
+            gcr.io/${{ secrets.GCP_PROJECT_ID }}/localite-web:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # 部署到 Google Cloud Run (僅在 main 分支)
+  deploy:
+    name: 部署到 Google Cloud Run
+    runs-on: ubuntu-latest
+    needs: docker
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Checkout 程式碼
+        uses: actions/checkout@v4
+        
+      - name: 設定 Google Cloud CLI
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          
+      - name: 部署 Backend 到 Cloud Run
+        run: |
+          gcloud run deploy localite-backend \
+            --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/localite-backend:${{ github.sha }} \
+            --platform managed \
+            --region asia-southeast1 \
+            --allow-unauthenticated \
+            --memory 512Mi \
+            --cpu 1 \
+            --min-instances 0 \
+            --max-instances 10 \
+            --port 8000
+            
+      - name: 部署 Web 到 Cloud Run
+        run: |
+          gcloud run deploy localite-web \
+            --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/localite-web:${{ github.sha }} \
+            --platform managed \
+            --region asia-southeast1 \
+            --allow-unauthenticated \
+            --memory 256Mi \
+            --cpu 1 \
+            --min-instances 0 \
+            --max-instances 5 \
+            --port 3000 

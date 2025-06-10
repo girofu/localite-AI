@@ -1,0 +1,43 @@
+{
+  "milestones": [
+    {
+      "id": 1,
+      "name": "基礎架構完成",
+      "week": 4,
+      "description": "可以進行 API 測試",
+      "status": "pending",
+      "criteria": [
+        "Node.js + Express 框架運行",
+        "MongoDB 資料庫連接",
+        "Firebase 認證設置",
+        "基礎 API 端點測試通過"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "核心功能完成",
+      "week": 8,
+      "description": "可以進行端到端測試",
+      "status": "pending",
+      "criteria": [
+        "AI 導覽服務運行",
+        "商戶管理系統運行",
+        "Web 應用基本功能",
+        "端到端測試通過"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "完整系統上線準備",
+      "week": 12,
+      "description": "準備生產環境部署",
+      "status": "pending",
+      "criteria": [
+        "移動應用完成",
+        "支付系統整合",
+        "監控系統設置",
+        "部署文檔完成"
+      ]
+    }
+  ]
+}

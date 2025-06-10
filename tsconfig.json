@@ -1,0 +1,50 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "noFallthroughCasesInSwitch": true,
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "incremental": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "composite": true,
+    "baseUrl": ".",
+    "paths": {
+      "@localite/shared/*": ["packages/shared/src/*"],
+      "@localite/ui-components/*": ["packages/ui-components/src/*"],
+      "@localite/api-client/*": ["packages/api-client/src/*"]
+    }
+  },
+  "include": [
+    "packages/*/src/**/*",
+    "apps/*/src/**/*",
+    "global.d.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "build",
+    "coverage",
+    "**/*.test.*",
+    "**/*.spec.*"
+  ],
+  "references": [
+    { "path": "./packages/shared" },
+    { "path": "./packages/ui-components" },
+    { "path": "./packages/api-client" },
+    { "path": "./apps/backend" },
+    { "path": "./apps/web" },
+    { "path": "./apps/mobile" }
+  ]
+} 

@@ -1,0 +1,270 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+
+
+# 在地人 AI 導覽系統 - 單工程師工程工作細項規劃
+
+## 第一階段：基礎架構與核心功能（第1個月）
+
+### 1.1 專案初始化與基礎架構 [週1-2]
+**目標**：快速建立可運行的基礎架構
+
+**預計產出**：
+- Google Cloud Project 建置
+- Node.js + Express 基礎專案結構
+- MongoDB Atlas 資料庫設定
+- Firebase Authentication 配置
+- 基礎 CI/CD 管道（GitHub Actions）
+
+**需要考量的地方**：
+- 遵循 Google 開發者風格指南設定 ESLint 配置
+- 建立清晰的專案目錄結構
+- 設定環境變數管理
+- 確保本地開發環境一致性
+
+**銜接工作**：
+- 為所有後續開發提供基礎平台
+- 與設計師的 UI 設計同步進行
+
+**具體實作步驟**：
+```bash
+# 專案結構建議
+localite-v3/
+├── backend/
+│   ├── src/
+│   │   ├── controllers/
+│   │   ├── services/
+│   │   ├── models/
+│   │   ├── middleware/
+│   │   └── utils/
+│   ├── test/
+│   └── package.json
+├── frontend/
+│   ├── web/          # React web app
+│   └── mobile/       # React Native app
+└── docs/
+```
+
+### 1.2 API 基礎框架與認證系統 [週2-3]
+**目標**：建立安全的 API 基礎架構
+
+**預計產出**：
+- RESTful API 路由結構
+- Firebase Auth 中間件
+- 錯誤處理機制
+- API 文檔（Swagger）
+- 基礎單元測試框架
+
+**需要考量的地方**：
+- API 版本控制策略（/api/v1/）
+- 統一錯誤回應格式
+- 請求參數驗證
+- Rate limiting 實作
+
+**銜接工作**：
+- 為 AI 導覽服務提供 API 端點
+- 與前端認證流程整合
+
+### 1.3 MongoDB 資料模型設計 [週3-4]
+**目標**：建立高效的資料存儲結構
+
+**預計產出**：
+- 核心資料模型（User, Tour, Content, Merchant）
+- Mongoose Schema 定義
+- 資料庫索引策略
+- 資料遷移腳本
+- 基礎 CRUD 操作
+
+**需要考量的地方**：
+- 多語言內容存儲結構
+- 嵌套文檔 vs 引用設計
+- 查詢效能優化
+- 資料一致性保證
+
+**銜接工作**：
+- 為 AI 服務提供內容資料
+- 支援前端資料展示需求
+
+## 第二階段：核心功能開發（第2個月）
+
+### 2.1 AI 導覽服務整合 [週5-6]
+**目標**：實作 AI 導覽內容生成核心功能
+
+**預計產出**：
+- Google Vertex AI Gemini 整合
+- 導覽內容生成邏輯
+- 多語言翻譯服務
+- Google Cloud Text-to-Speech 整合
+- 內容快取機制（Redis）
+
+**需要考量的地方**：
+- API 調用成本控制
+- 回應時間優化
+- 錯誤重試機制
+- 內容品質監控
+
+**銜接工作**：
+- 與商戶內容管理整合
+- 與前端播放介面對接
+
+**參考架構（基於 Google 範例）**：
+```javascript
+// services/ai-service.js
+const { VertexAI } = require('@google-cloud/vertexai');
+
+class AIService {
+  async generateTourContent(location, preferences) {
+    // 使用 Vertex AI 生成導覽內容
+  }
+  
+  async translateContent(content, targetLanguage) {
+    // 多語言翻譯
+  }
+}
+```
+
+### 2.2 商戶管理系統 [週6-7]
+**目標**：建立商戶內容管理功能
+
+**預計產出**：
+- 商戶註冊/登入 API
+- 內容上傳管理
+- Google Cloud Storage 檔案管理
+- 商戶權限控制
+- 基礎商戶後台 API
+
+**需要考量的地方**：
+- 檔案上傳安全性
+- 商戶資料隔離
+- 內容審核流程
+- 上傳進度追蹤
+
+**銜接工作**：
+- 與 AI 服務的內容整合
+- 為前端管理介面提供 API
+
+### 2.3 前端 Web 應用開發 [週7-8]
+**目標**：實作用戶端網頁應用
+
+**預計產出**：
+- React.js 基礎應用
+- 用戶認證介面
+- 導覽播放介面
+- 響應式設計實作
+- 基礎路由系統
+
+**需要考量的地方**：
+- PWA 功能支援
+- 離線內容快取
+- 音訊播放優化
+- 跨瀏覽器相容性
+
+**銜接工作**：
+- 與所有後端 API 整合
+- 與設計師的 UI 設計整合
+
+## 第三階段：系統完善與部署（第3個月）
+
+### 3.1 React Native 移動應用 [週9-10]
+**目標**：實作移動端應用
+
+**預計產出**：
+- React Native 基礎應用
+- 原生功能整合（GPS、相機）
+- 推播通知（Firebase FCM）
+- 離線功能支援
+- 應用商店準備
+
+**需要考量的地方**：
+- iOS/Android 平台差異
+- 效能優化
+- 電池使用優化
+- 網路斷線處理
+
+**銜接工作**：
+- 共用 Web 應用的 API
+- 與 Web 版本保持功能一致
+
+### 3.2 監控與日誌系統 [週10-11]
+**目標**：建立系統監控能力
+
+**預計產出**：
+- Google Cloud Monitoring 設定
+- Cloud Logging 配置
+- 錯誤追蹤（Google Cloud Error Reporting）
+- 效能監控指標
+- 告警通知設定
+
+**需要考量的地方**：
+- 關鍵指標定義
+- 成本控制
+- 隱私資料保護
+- 告警疲勞避免
+
+**銜接工作**：
+- 整合所有服務的監控
+- 為維運提供支援
+
+### 3.3 支付系統與最終整合 [週11-12]
+**目標**：完成支付功能與系統最終整合
+
+**預計產出**：
+- 綠界金流 API 整合
+- 訂單管理系統
+- 交易記錄管理
+- 全系統整合測試
+- 部署腳本與文檔
+
+**需要考量的地方**：
+- 支付安全性
+- 交易冪等性
+- 退款處理
+- 對帳機制
+
+**銜接工作**：
+- 整合所有系統功能
+- 準備生產環境部署
+
+## 技術架構簡化版
+
+```mermaid
+graph TD
+    A[React Web App] --> B[API Gateway]
+    C[React Native App] --> B
+    B --> D[Express.js Server]
+    D --> E[Firebase Auth]
+    D --> F[MongoDB Atlas]
+    D --> G[Google Vertex AI]
+    D --> H[Google Cloud Storage]
+    D --> I[綠界金流]
+    J[Google Cloud Monitoring] --> D
+```
+
+## 風險控制與應對策略
+
+### 時間風險應對：
+1. **功能優先級調整**：如時間緊迫，優先完成 MVP 核心功能
+2. **第三方服務優先**：使用 Google Cloud 托管服務減少開發時間
+3. **前端並行開發**：Web 和 Mobile 版本可以並行開發
+
+### 技術風險應對：
+1. **AI 服務備案**：準備 OpenAI API 作為 Vertex AI 的備選方案
+2. **簡化架構**：初期使用 Firebase 生態系統簡化開發
+3. **漸進式開發**：使用功能旗標控制功能發布
+
+## 每週檢查點
+
+**週度目標檢核**：
+- 每週五進行進度檢討
+- 每週一確認本週重點任務
+- 遇到阻礙立即向專案經理回報
+
+**關鍵里程碑**：
+- 週4：基礎架構完成，可以進行 API 測試
+- 週8：核心功能完成，可以進行端到端測試
+- 週12：完整系統上線準備完成
+
+這個規劃考慮了單人開發的現實限制，重點使用 Google Cloud 生態系統來減少開發複雜度，同時確保在3個月內完成 MVP。需要我針對任何特定階段提供更詳細的技術實作指引嗎？

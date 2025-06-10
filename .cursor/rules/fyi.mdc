@@ -1,0 +1,162 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Localite V3 開發經驗與提示
+
+## TypeScript & Node.js 後端開發
+
+### 專案結構最佳實踐
+- 使用 `apps/backend/src/` 結構組織程式碼
+- 分離 controllers、middleware、models、routes 目錄
+- 使用 TypeScript 嚴格模式進行開發
+
+### Firebase 整合要點
+1. **環境變數配置**
+   - 確保 `FIREBASE_ADMIN_SDK_KEY` 環境變數正確設定
+   - 使用 `firebase-admin` SDK 進行伺服器端認證
+   - Firebase 配置應在 `src/config/firebase.ts` 中集中管理
+
+2. **認證中間件實作**
+   - 創建 `authMiddleware.ts` 處理 JWT token 驗證
+   - 使用 `admin.auth().verifyIdToken()` 驗證 Firebase token
+   - 將解碼的用戶資訊附加到 request 物件上
+
+### 資料庫設計原則
+
+#### MongoDB 與 Mongoose
+- 使用 Mongoose schemas 定義資料模型
+- 實作適當的索引以提升查詢效能
+- 分離 User、Tour、Content、Merchant 等核心模型
+
+#### 資料模型設計
+```typescript
+// User 模型必須包含
+interface User {
+  firebaseId: string; // Firebase UID
+  email: string;
+  role: 'admin' | 'merchant' | 'user';
+  profile: UserProfile;
+  preferences: UserPreferences;
+}
+```
+
+### API 設計規範
+
+#### 路由結構
+- 使用 `/api/v1/` 版本前綴
+- RESTful 設計原則
+- 統一錯誤處理格式
+
+#### 中間件順序
+1. 日誌記錄 (requestLogger)
+2. 身份驗證 (authMiddleware)
+3. 請求驗證 (validationMiddleware)
+4. 業務邏輯處理
+
+### 錯誤處理最佳實踐
+
+#### 常見問題與解決方案
+1. **Redis 配置問題**
+   - 確保 Redis 連線字串正確
+   - 處理連線失敗的 fallback 機制
+   - 避免在沒有 Redis 時直接拋出錯誤
+
+2. **TypeScript 編譯錯誤**
+   - 確保所有類型定義正確
+   - 使用 `npm run build` 檢查編譯錯誤
+   - 注意 async/await 的返回類型
+
+3. **Firebase 認證問題**
+   - 檢查服務帳戶金鑰是否正確
+   - 確保 Firebase 專案設定正確
+   - 處理 token 過期和無效的情況
+
+### 開發流程建議
+
+#### 步驟順序
+1. 先完成基礎架構設定
+2. 實作認證系統
+3. 建立資料模型
+4. 開發 API 端點
+5. 整合第三方服務（AI、支付等）
+
+#### 測試策略
+- 每完成一個模組就進行 TypeScript 編譯檢查
+- 使用 Postman 或類似工具測試 API 端點
+- 建立基礎的單元測試框架
+
+### 效能優化要點
+
+#### 快取策略
+- 使用 Redis 快取常用查詢結果
+- 實作適當的快取失效機制
+- 避免不必要的資料庫查詢
+
+#### 安全考量
+- 實作適當的 rate limiting
+- 驗證所有輸入參數
+- 使用 CORS 設定限制來源
+- 敏感資料加密存儲
+
+### 部署準備
+
+#### 環境變數清單
+```bash
+MONGODB_URI=
+FIREBASE_ADMIN_SDK_KEY=
+REDIS_URL=
+JWT_SECRET=
+GOOGLE_CLOUD_PROJECT_ID=
+PORT=
+NODE_ENV=
+```
+
+#### 容器化注意事項
+- 確保 Dockerfile 包含所有必要依賴
+- 設定適當的健康檢查
+- 處理 graceful shutdown
+
+## 前端開發提示
+
+### React + TypeScript 最佳實踐
+- 使用功能元件和 hooks
+- 實作適當的錯誤邊界
+- 使用 Context API 管理全域狀態
+
+### 移動端考量
+- 響應式設計原則
+- PWA 功能實作
+- 離線功能支援
+
+## 專案管理建議
+
+### 開發檢查點
+- 每週進行程式碼審查
+- 定期更新依賴套件
+- 監控應用程式效能指標
+
+### 文件維護
+- 更新 API 文件（Swagger）
+- 維護 README 和 SETUP 指南
+- 記錄重要的架構決策
+
+## 常見錯誤避免
+
+1. **不要在初期過度設計**
+   - 先實作 MVP 功能
+   - 後續再進行優化
+
+2. **確保型別安全**
+   - 使用 TypeScript strict mode
+   - 避免使用 `any` 類型
+
+3. **環境設定一致性**
+   - 使用 Docker 確保開發環境一致
+   - 建立詳細的設定文件
+
+4. **第三方服務整合**
+   - 實作適當的錯誤處理
+   - 準備備案方案
+   - 監控 API 使用量和成本

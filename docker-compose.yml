@@ -1,0 +1,130 @@
+version: '3.8'
+
+services:
+  # MongoDB - 主要資料庫
+  mongodb:
+    image: mongo:7.0
+    container_name: localite-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: localite
+      MONGO_INITDB_ROOT_PASSWORD: localite123
+      MONGO_INITDB_DATABASE: localite
+    volumes:
+      - mongodb_data:/data/db
+      - ./tools/docker/mongodb/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+    networks:
+      - localite-network
+
+  # Redis - 快取服務
+  redis:
+    image: redis:7-alpine
+    container_name: localite-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --requirepass localite123
+    volumes:
+      - redis_data:/data
+    networks:
+      - localite-network
+
+  # MySQL - 交易資料庫
+  mysql:
+    image: mysql:8.0
+    container_name: localite-mysql
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: localite123
+      MYSQL_DATABASE: localite_transactions
+      MYSQL_USER: localite
+      MYSQL_PASSWORD: localite123
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./tools/docker/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - localite-network
+
+  # RabbitMQ - 消息隊列 (選用)
+  rabbitmq:
+    image: rabbitmq:3.12-management-alpine
+    container_name: localite-rabbitmq
+    restart: unless-stopped
+    ports:
+      - "5672:5672"
+      - "15672:15672"  # 管理界面
+    environment:
+      RABBITMQ_DEFAULT_USER: localite
+      RABBITMQ_DEFAULT_PASS: localite123
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - localite-network
+
+  # MinIO - 本地對象存儲 (替代 Google Cloud Storage 用於開發)
+  minio:
+    image: minio/minio:latest
+    container_name: localite-minio
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+      - "9001:9001"  # 管理界面
+    environment:
+      MINIO_ROOT_USER: localite
+      MINIO_ROOT_PASSWORD: localite123
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+    networks:
+      - localite-network
+
+  # 後端 API (開發時)
+  backend:
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile
+    container_name: localite-backend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      MONGODB_URI: mongodb://localite:localite123@mongodb:27017/localite?authSource=admin
+      REDIS_URL: redis://:localite123@redis:6379
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_DATABASE: localite_transactions
+      MYSQL_USERNAME: localite
+      MYSQL_PASSWORD: localite123
+      RABBITMQ_URL: amqp://localite:localite123@rabbitmq:5672
+      MINIO_ENDPOINT: minio
+      MINIO_PORT: 9000
+      MINIO_ACCESS_KEY: localite
+      MINIO_SECRET_KEY: localite123
+    depends_on:
+      - mongodb
+      - redis
+      - mysql
+    volumes:
+      - ./apps/backend:/app
+      - /app/node_modules
+    networks:
+      - localite-network
+    profiles:
+      - backend
+
+volumes:
+  mongodb_data:
+  redis_data:
+  mysql_data:
+  rabbitmq_data:
+  minio_data:
+
+networks:
+  localite-network:
+    driver: bridge 
