@@ -14,6 +14,7 @@ import { initializeFirebase } from './config/firebase';
 
 // 路由導入
 import authRoutes from './routes/auth';
+import tourRoutes from './routes/tour-routes';
 
 // 載入環境變數
 dotenv.config();
@@ -110,6 +111,7 @@ app.get('/api', (req, res) => {
 
 // API v1 路由
 app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/tours', tourRoutes);
 
 // 404 處理
 app.use('*', (req, res) => {

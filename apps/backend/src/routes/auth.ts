@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { authenticateFirebaseUser } from '../middleware/auth';
+import { authenticateToken } from '../middleware/auth-middleware';
 import { validateRequest, schemas } from '../middleware/validation';
 import { authController } from '../controllers/authController';
 
@@ -12,45 +12,63 @@ const router = Router();
  *     User:
  *       type: object
  *       properties:
- *         _id:
+ *         id:
+ *           type: string
+ *         firebaseUid:
  *           type: string
  *         email:
  *           type: string
- *         displayName:
+ *         name:
  *           type: string
  *         role:
  *           type: string
  *           enum: [user, merchant, admin]
+ *         emailVerified:
+ *           type: boolean
+ *         avatar:
+ *           type: string
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
  */
 
 /**
  * @swagger
  * /api/v1/auth/register:
  *   post:
- *     tags: [Auth]
- *     summary: 用戶註冊
+ *     summary: 註冊新用戶
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *               - name
  *             properties:
  *               email:
  *                 type: string
- *               displayName:
+ *                 format: email
+ *               password:
+ *                 type: string
+ *                 minLength: 6
+ *               name:
  *                 type: string
  *               role:
  *                 type: string
  *                 enum: [user, merchant]
- *     responses:
- *       201:
- *         description: 註冊成功
- *       400:
- *         description: 請求參數錯誤
+ *                 default: user
  */
-router.post('/register', 
-  authenticateFirebaseUser,
+router.post('/register',
+  authenticateToken,
   validateRequest({ body: schemas.user.register }),
   authController.register
 );
@@ -59,16 +77,13 @@ router.post('/register',
  * @swagger
  * /api/v1/auth/profile:
  *   get:
- *     tags: [Auth]
  *     summary: 獲取用戶資料
+ *     tags: [Authentication]
  *     security:
  *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: 成功獲取用戶資料
  */
-router.get('/profile', 
-  authenticateFirebaseUser,
+router.get('/profile',
+  authenticateToken,
   authController.getProfile
 );
 
@@ -76,8 +91,8 @@ router.get('/profile',
  * @swagger
  * /api/v1/auth/profile:
  *   put:
- *     tags: [Auth]
  *     summary: 更新用戶資料
+ *     tags: [Authentication]
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -87,34 +102,32 @@ router.get('/profile',
  *           schema:
  *             type: object
  *             properties:
- *               displayName:
+ *               name:
  *                 type: string
+ *               email:
+ *                 type: string
+ *                 format: email
  *               avatar:
  *                 type: string
  */
 router.put('/profile',
-  authenticateFirebaseUser,
+  authenticateToken,
   validateRequest({ body: schemas.user.update }),
   authController.updateProfile
 );
 
 /**
  * @swagger
- * /api/v1/auth/verify-token:
- *   post:
- *     tags: [Auth]
- *     summary: 驗證 Token
+ * /api/v1/auth/delete:
+ *   delete:
+ *     summary: 刪除用戶帳戶
+ *     tags: [Authentication]
  *     security:
  *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Token 有效
- *       401:
- *         description: Token 無效
  */
-router.post('/verify-token',
-  authenticateFirebaseUser,
-  authController.verifyToken
+router.delete('/delete',
+  authenticateToken,
+  authController.deleteAccount
 );
 
 export default router; 

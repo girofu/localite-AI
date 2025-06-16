@@ -1,0 +1,511 @@
+{
+  "timestamp": "2025-06-15T06:19:25.765Z",
+  "architecture": {
+    "architecture": {
+      "version": "1.0.0",
+      "lastUpdated": "2025-06-10T11:14:40.305Z",
+      "phases": {
+        "phase1": {
+          "name": "基礎架構與核心功能",
+          "duration": "第1個月",
+          "status": "pending",
+          "completion": 0,
+          "components": {
+            "projectInit": {
+              "name": "專案初始化與基礎架構",
+              "status": "pending",
+              "tasks": [
+                "Google Cloud Project 建置",
+                "Node.js + Express 基礎專案結構",
+                "MongoDB Atlas 資料庫設定",
+                "Firebase Authentication 配置",
+                "基礎 CI/CD 管道（GitHub Actions）"
+              ]
+            },
+            "apiFramework": {
+              "name": "API 基礎框架與認證系統",
+              "status": "pending",
+              "tasks": [
+                "RESTful API 路由結構",
+                "Firebase Auth 中間件",
+                "錯誤處理機制",
+                "API 文檔（Swagger）",
+                "基礎單元測試框架"
+              ]
+            },
+            "dataModel": {
+              "name": "MongoDB 資料模型設計",
+              "status": "pending",
+              "tasks": [
+                "核心資料模型（User, Tour, Content, Merchant）",
+                "Mongoose Schema 定義",
+                "資料庫索引策略",
+                "資料遷移腳本",
+                "基礎 CRUD 操作"
+              ]
+            }
+          }
+        },
+        "phase2": {
+          "name": "核心功能開發",
+          "duration": "第2個月",
+          "status": "pending",
+          "completion": 0,
+          "components": {
+            "aiService": {
+              "name": "AI 導覽服務整合",
+              "status": "pending",
+              "tasks": [
+                "Google Vertex AI Gemini 整合",
+                "導覽內容生成邏輯",
+                "多語言翻譯服務",
+                "Google Cloud Text-to-Speech 整合",
+                "內容快取機制（Redis）"
+              ]
+            },
+            "merchantSystem": {
+              "name": "商戶管理系統",
+              "status": "pending",
+              "tasks": [
+                "商戶註冊/登入 API",
+                "內容上傳管理",
+                "Google Cloud Storage 檔案管理",
+                "商戶權限控制",
+                "基礎商戶後台 API"
+              ]
+            },
+            "webApp": {
+              "name": "前端 Web 應用開發",
+              "status": "pending",
+              "tasks": [
+                "React.js 基礎應用",
+                "用戶認證介面",
+                "導覽播放介面",
+                "響應式設計實作",
+                "基礎路由系統"
+              ]
+            }
+          }
+        },
+        "phase3": {
+          "name": "系統完善與部署",
+          "duration": "第3個月",
+          "status": "pending",
+          "completion": 0,
+          "components": {
+            "mobileApp": {
+              "name": "React Native 移動應用",
+              "status": "pending",
+              "tasks": [
+                "React Native 基礎應用",
+                "原生功能整合（GPS、相機）",
+                "推播通知（Firebase FCM）",
+                "離線功能支援",
+                "應用商店準備"
+              ]
+            },
+            "monitoring": {
+              "name": "監控與日誌系統",
+              "status": "pending",
+              "tasks": [
+                "Google Cloud Monitoring 設定",
+                "Cloud Logging 配置",
+                "錯誤追蹤（Google Cloud Error Reporting）",
+                "效能監控指標",
+                "告警通知設定"
+              ]
+            },
+            "payment": {
+              "name": "支付系統與最終整合",
+              "status": "pending",
+              "tasks": [
+                "綠界金流 API 整合",
+                "訂單管理系統",
+                "交易記錄管理",
+                "全系統整合測試",
+                "部署腳本與文檔"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "techStack": {
+      "frontend": {
+        "mobile": {
+          "framework": "React Native",
+          "stateManagement": "Redux Toolkit",
+          "testing": "Jest + React Testing Library",
+          "status": "planned"
+        },
+        "web": {
+          "framework": "React.js",
+          "uiFramework": "Material-UI / Ant Design",
+          "stateManagement": "Redux Toolkit",
+          "testing": "Jest + React Testing Library",
+          "status": "planned"
+        }
+      },
+      "backend": {
+        "framework": "Node.js + Express",
+        "apiDesign": "RESTful API + OpenAPI",
+        "documentation": "Swagger",
+        "messageQueue": "RabbitMQ",
+        "cache": "Redis",
+        "featureFlags": "LaunchDarkly/PostHog",
+        "status": "planned"
+      },
+      "database": {
+        "primary": {
+          "type": "MongoDB",
+          "purpose": "導覽內容、用戶資料",
+          "status": "planned"
+        },
+        "transaction": {
+          "type": "MySQL",
+          "purpose": "訂單、付款紀錄",
+          "status": "planned"
+        },
+        "storage": {
+          "type": "AWS S3 / GCP Storage",
+          "purpose": "照片、影片",
+          "status": "planned"
+        }
+      },
+      "ai": {
+        "llm": {
+          "service": "GPT API",
+          "purpose": "導覽內容生成",
+          "status": "planned"
+        },
+        "tts": {
+          "service": "Azure Speech Service / Google Cloud TTS",
+          "purpose": "語音合成",
+          "status": "planned"
+        }
+      },
+      "payment": {
+        "gateway": "綠界金流",
+        "methods": [
+          "信用卡",
+          "Apple Pay",
+          "Line Pay"
+        ],
+        "status": "planned"
+      },
+      "cloud": {
+        "authentication": "Firebase Authentication",
+        "messaging": "Firebase Cloud Messaging",
+        "storage": "Firebase Storage",
+        "status": "planned"
+      },
+      "monitoring": {
+        "metrics": "Prometheus",
+        "alerting": "Grafana Alert",
+        "logging": "ELK Stack",
+        "status": "planned"
+      }
+    },
+    "summary": {
+      "completion": 0,
+      "totalComponents": 9,
+      "completedComponents": 0,
+      "currentPhase": "基礎架構與核心功能"
+    }
+  },
+  "progress": {
+    "progress": {
+      "version": "1.0.0",
+      "startDate": "2025-06-10T11:14:40.305Z",
+      "lastUpdated": "2025-06-10T11:14:40.305Z",
+      "currentWeek": 1,
+      "totalWeeks": 12,
+      "weeks": {
+        "1": {
+          "phase": "基礎架構與核心功能",
+          "focus": "系統設計與架構確認",
+          "goals": [
+            "確認需求規格書",
+            "建立專案管理流程",
+            "系統架構設計確認",
+            "開發環境建置"
+          ],
+          "deliverables": [
+            "架構設計文檔",
+            "API 規範文檔",
+            "開發環境"
+          ],
+          "status": "pending",
+          "completion": 0,
+          "notes": ""
+        },
+        "2": {
+          "phase": "基礎架構與核心功能",
+          "focus": "UI/UX設計",
+          "goals": [
+            "用戶流程圖設計",
+            "線框圖製作",
+            "資料庫結構設計",
+            "後端基礎建置"
+          ],
+          "deliverables": [
+            "UI 設計稿",
+            "資料庫 Schema",
+            "後端框架"
+          ],
+          "status": "pending",
+          "completion": 0,
+          "notes": ""
+        },
+        "3": {
+          "phase": "基礎架構與核心功能",
+          "focus": "核心架構開發",
+          "goals": [
+            "Node.js 後端框架搭建",
+            "MongoDB 資料模型建立",
+            "Firebase 認證整合",
+            "Redis 快取環境設置"
+          ],
+          "deliverables": [
+            "後端 API 框架",
+            "資料模型",
+            "認證系統"
+          ],
+          "status": "pending",
+          "completion": 0,
+          "notes": ""
+        },
+        "4": {
+          "phase": "基礎架構與核心功能",
+          "focus": "前端初始化與API整合",
+          "goals": [
+            "React Native 專案建置",
+            "React Web 專案建置",
+            "基礎路由系統",
+            "CI/CD 管道設置"
+          ],
+          "deliverables": [
+            "前端應用",
+            "API 客戶端",
+            "CI/CD 管道"
+          ],
+          "status": "pending",
+          "completion": 0,
+          "notes": ""
+        },
+        "5": {
+          "phase": "核心功能開發",
+          "focus": "用戶系統與認證",
+          "goals": [
+            "用戶註冊/登入功能",
+            "角色權限系統",
+            "Session 管理",
+            "單元測試實現"
+          ],
+          "deliverables": [
+            "用戶認證系統",
+            "權限管理",
+            "測試框架"
+          ],
+          "status": "pending",
+          "completion": 0,
+          "notes": ""
+        },
+        "6": {
+          "phase": "核心功能開發",
+          "focus": "廠商系統基礎",
+          "goals": [
+            "廠商註冊/認證",
+            "內容上傳介面",
+            "文件存儲系統",
+            "內容管理 API"
+          ],
+          "deliverables": [
+            "廠商管理系統",
+            "文件上傳功能",
+            "內容管理"
+          ],
+          "status": "pending",
+          "completion": 0,
+          "notes": ""
+        },
+        "7": {
+          "phase": "核心功能開發",
+          "focus": "AI 導覽核心功能",
+          "goals": [
+            "GPT API 整合",
+            "導覽內容生成邏輯",
+            "語音合成整合",
+            "多語言切換功能"
+          ],
+          "deliverables": [
+            "AI 導覽服務",
+            "語音合成",
+            "多語言支援"
+          ],
+          "status": "pending",
+          "completion": 0,
+          "notes": ""
+        },
+        "8": {
+          "phase": "核心功能開發",
+          "focus": "導覽功能完善",
+          "goals": [
+            "導覽流程實現",
+            "內容快取機制",
+            "離線功能",
+            "效能優化"
+          ],
+          "deliverables": [
+            "完整導覽功能",
+            "快取系統",
+            "效能報告"
+          ],
+          "status": "pending",
+          "completion": 0,
+          "notes": ""
+        },
+        "9": {
+          "phase": "系統完善與部署",
+          "focus": "系統整合",
+          "goals": [
+            "前後端功能整合",
+            "API 測試與調優",
+            "錯誤處理機制",
+            "監控告警系統"
+          ],
+          "deliverables": [
+            "整合系統",
+            "監控系統",
+            "API 文檔"
+          ],
+          "status": "pending",
+          "completion": 0,
+          "notes": ""
+        },
+        "10": {
+          "phase": "系統完善與部署",
+          "focus": "內部測試",
+          "goals": [
+            "功能測試",
+            "壓力測試",
+            "安全性檢查",
+            "UI/UX 體驗測試"
+          ],
+          "deliverables": [
+            "測試報告",
+            "性能報告",
+            "安全報告"
+          ],
+          "status": "pending",
+          "completion": 0,
+          "notes": ""
+        },
+        "11": {
+          "phase": "系統完善與部署",
+          "focus": "修復與優化",
+          "goals": [
+            "修復測試問題",
+            "性能優化",
+            "程式碼重構",
+            "文檔完善"
+          ],
+          "deliverables": [
+            "修復報告",
+            "優化報告",
+            "完整文檔"
+          ],
+          "status": "pending",
+          "completion": 0,
+          "notes": ""
+        },
+        "12": {
+          "phase": "系統完善與部署",
+          "focus": "上線準備",
+          "goals": [
+            "生產環境準備",
+            "CI/CD 流程建立",
+            "監控系統設置",
+            "上線計劃制定"
+          ],
+          "deliverables": [
+            "生產環境",
+            "部署文檔",
+            "上線計劃"
+          ],
+          "status": "pending",
+          "completion": 0,
+          "notes": ""
+        }
+      }
+    },
+    "tasks": {
+      "tasks": [],
+      "nextId": 1
+    },
+    "milestones": {
+      "milestones": [
+        {
+          "id": 1,
+          "name": "基礎架構完成",
+          "week": 4,
+          "description": "可以進行 API 測試",
+          "status": "pending",
+          "criteria": [
+            "Node.js + Express 框架運行",
+            "MongoDB 資料庫連接",
+            "Firebase 認證設置",
+            "基礎 API 端點測試通過"
+          ]
+        },
+        {
+          "id": 2,
+          "name": "核心功能完成",
+          "week": 8,
+          "description": "可以進行端到端測試",
+          "status": "pending",
+          "criteria": [
+            "AI 導覽服務運行",
+            "商戶管理系統運行",
+            "Web 應用基本功能",
+            "端到端測試通過"
+          ]
+        },
+        {
+          "id": 3,
+          "name": "完整系統上線準備",
+          "week": 12,
+          "description": "準備生產環境部署",
+          "status": "pending",
+          "criteria": [
+            "移動應用完成",
+            "支付系統整合",
+            "監控系統設置",
+            "部署文檔完成"
+          ]
+        }
+      ]
+    },
+    "summary": {
+      "completion": 0,
+      "currentWeek": 1,
+      "currentPhase": "基礎架構與核心功能",
+      "pendingTasks": 0,
+      "risks": 1,
+      "totalWeeks": 12,
+      "completedWeeks": 0
+    }
+  },
+  "risks": [
+    {
+      "type": "schedule",
+      "severity": "medium",
+      "message": "當前週（第1週）進度落後",
+      "week": 1,
+      "phase": "基礎架構與核心功能"
+    }
+  ],
+  "recommendations": [
+    "建議加強基礎架構建置，確保後續開發順利"
+  ]
+}

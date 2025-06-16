@@ -9,7 +9,7 @@ export const authController = {
   async register(req: Request, res: Response) {
     try {
       const { email, displayName, role = 'user' } = req.body;
-      const firebaseUid = req.userId!;
+      const firebaseUid = req.user!.uid;
 
       // 檢查用戶是否已存在
       const existingUser = await User.findOne({
@@ -58,7 +58,7 @@ export const authController = {
    */
   async getProfile(req: Request, res: Response) {
     try {
-      const firebaseUid = req.userId!;
+      const firebaseUid = req.user!.uid;
 
       // 先從快取獲取
       const cachedUser = await cache.get(`user:${firebaseUid}`);
@@ -102,7 +102,7 @@ export const authController = {
    */
   async updateProfile(req: Request, res: Response) {
     try {
-      const firebaseUid = req.userId!;
+      const firebaseUid = req.user!.uid;
       const updateData = req.body;
 
       const user = await User.findByFirebaseUid(firebaseUid);
@@ -151,7 +151,7 @@ export const authController = {
    */
   async verifyToken(req: Request, res: Response) {
     try {
-      const firebaseUid = req.userId!;
+      const firebaseUid = req.user!.uid;
       const user = req.user!;
 
       res.json({
@@ -168,6 +168,41 @@ export const authController = {
       res.status(500).json({
         error: 'TOKEN_VERIFICATION_FAILED',
         message: 'Token 驗證失敗'
+      });
+    }
+  },
+
+  /**
+   * 刪除用戶帳戶
+   */
+  async deleteAccount(req: Request, res: Response) {
+    try {
+      const firebaseUid = req.user!.uid;
+
+      const user = await User.findByFirebaseUid(firebaseUid);
+      
+      if (!user) {
+        return res.status(404).json({
+          error: 'USER_NOT_FOUND',
+          message: '用戶不存在'
+        });
+      }
+
+      // 刪除用戶
+      await User.deleteOne({ firebaseUid });
+
+      // 清除快取
+      await cache.del(`user:${firebaseUid}`);
+
+      res.json({
+        message: '帳戶刪除成功'
+      });
+
+    } catch (error) {
+      console.error('刪除帳戶錯誤:', error);
+      res.status(500).json({
+        error: 'DELETE_ACCOUNT_FAILED',
+        message: '刪除帳戶失敗'
       });
     }
   }

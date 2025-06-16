@@ -1,0 +1,187 @@
+# AI 導覽服務 API 測試請求
+# 使用方法：在 VS Code 中安裝 REST Client 擴展，然後點擊 "Send Request"
+
+### 變數定義
+@baseUrl = http://localhost:8000/api/v1
+@authToken = your_firebase_auth_token_here
+
+### 1. 生成導覽內容 - 台北101
+POST {{baseUrl}}/tours/generate
+Content-Type: application/json
+X-Test-User: test-user
+
+{
+  "location": {
+    "name": "台北101",
+    "description": "台北最著名的地標性摩天大樓，曾為世界最高建築",
+    "coordinates": {
+      "lat": 25.0340,
+      "lng": 121.5645
+    },
+    "category": "landmark",
+    "merchantInfo": {
+      "id": "taipei101",
+      "name": "台北101觀景台",
+      "highlights": ["360度全景視野", "高速電梯體驗", "世界級建築工藝"]
+    }
+  },
+  "preferences": {
+    "language": "zh-TW",
+    "duration": 15,
+    "interests": ["architecture", "history"],
+    "audienceType": "adult",
+    "difficulty": "moderate"
+  }
+}
+
+### 2. 生成導覽內容 - 故宮博物院 (英文)
+POST {{baseUrl}}/tours/generate
+Content-Type: application/json
+X-Test-User: test-user
+
+{
+  "location": {
+    "name": "國立故宮博物院",
+    "description": "收藏大量中華文物和藝術品的博物館",
+    "coordinates": {
+      "lat": 25.1013,
+      "lng": 121.5492
+    },
+    "category": "museum",
+    "merchantInfo": {
+      "id": "npm",
+      "name": "故宮博物院",
+      "highlights": ["翠玉白菜", "肉形石", "清明上河圖"]
+    }
+  },
+  "preferences": {
+    "language": "en-US",
+    "duration": 20,
+    "interests": ["culture", "art", "history"],
+    "audienceType": "family",
+    "difficulty": "easy"
+  }
+}
+
+### 3. 生成語音檔案 - 中文
+POST {{baseUrl}}/tours/speech
+Content-Type: application/json
+X-Test-User: test-user
+
+{
+  "text": "歡迎來到台北101觀景台，讓我為您介紹這座令人驚嘆的建築。台北101曾是世界最高的摩天大樓，高度達到508公尺，共有101層樓。",
+  "language": "zh-TW"
+}
+
+### 4. 生成語音檔案 - 英文
+POST {{baseUrl}}/tours/speech
+Content-Type: application/json
+X-Test-User: test-user
+
+{
+  "text": "Welcome to Taipei 101 Observatory. Let me introduce this amazing building. Taipei 101 was once the world's tallest skyscraper, reaching a height of 508 meters with 101 floors.",
+  "language": "en-US"
+}
+
+### 5. 翻譯內容 - 中文到英文
+POST {{baseUrl}}/tours/translate
+Content-Type: application/json
+X-Test-User: test-user
+
+{
+  "content": "歡迎來到故宮博物院，這裡收藏了世界上最精美的中華文物和藝術珍品。您將看到翠玉白菜、肉形石等國寶級文物。",
+  "targetLanguage": "en-US"
+}
+
+### 6. 翻譯內容 - 中文到日文
+POST {{baseUrl}}/tours/translate
+Content-Type: application/json
+X-Test-User: test-user
+
+{
+  "content": "西門町是台北年輕人最愛的聚集地，這裡有豐富的街頭文化、時尚購物和美食體驗。",
+  "targetLanguage": "ja-JP"
+}
+
+### 7. 獲取可用語言列表
+GET {{baseUrl}}/tours/languages
+X-Test-User: test-user
+
+### 8. 測試錯誤處理 - 缺少必要參數
+POST {{baseUrl}}/tours/generate
+Content-Type: application/json
+X-Test-User: test-user
+
+{
+  "location": {
+    "name": "測試地點"
+  },
+  "preferences": {
+    "language": "zh-TW"
+  }
+}
+
+### 9. 測試語音合成 - 文字過長
+POST {{baseUrl}}/tours/speech
+Content-Type: application/json
+X-Test-User: test-user
+
+{
+  "text": "這是一段非常長的文字，用來測試系統對於超長文字的處理能力。重複內容重複內容重複內容重複內容重複內容重複內容重複內容重複內容重複內容重複內容重複內容重複內容重複內容重複內容重複內容",
+  "language": "zh-TW"
+}
+
+### 10. 測試無效的語言代碼
+POST {{baseUrl}}/tours/translate
+Content-Type: application/json
+X-Test-User: test-user
+
+{
+  "content": "測試內容",
+  "targetLanguage": "invalid-language-code"
+}
+
+#####################
+# 快速測試用的簡單請求
+#####################
+
+### 快速測試 - 簡單導覽生成
+POST {{baseUrl}}/tours/generate
+Content-Type: application/json
+X-Test-User: test-user
+
+{
+  "location": {
+    "name": "測試地點",
+    "description": "簡單的測試描述",
+    "coordinates": {"lat": 25.0340, "lng": 121.5645},
+    "category": "test"
+  },
+  "preferences": {
+    "language": "zh-TW",
+    "duration": 10,
+    "interests": ["test"],
+    "audienceType": "adult",
+    "difficulty": "easy"
+  }
+}
+
+### 快速測試 - 簡單語音生成
+POST {{baseUrl}}/tours/speech
+Content-Type: application/json
+X-Test-User: test-user
+
+{
+  "text": "這是一個簡單的語音測試。",
+  "language": "zh-TW"
+}
+
+### 快速測試 - 簡單翻譯
+POST {{baseUrl}}/tours/translate
+Content-Type: application/json
+X-Test-User: test-user
+
+{
+  "content": "你好世界",
+  "targetLanguage": "en-US"
+} 

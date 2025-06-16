@@ -1,7 +1,7 @@
 ---
 description: 
 globs: 
-alwaysApply: false
+alwaysApply: true
 ---
 # 在地人 AI 導覽系統 - 改進版開發架構與時程規劃-v2
 

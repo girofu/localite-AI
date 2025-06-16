@@ -1,16 +1,39 @@
 {
-  "timestamp": "2025-06-10T11:38:05.230Z",
+  "timestamp": "2025-06-10T11:40:10.902Z",
   "git": {
-    "totalCommits": 0,
-    "recentCommits": [],
-    "branches": [],
-    "contributors": [],
+    "totalCommits": 1,
+    "recentCommits": [
+      "e3ea12a 初始專案架構與開發進度追蹤器"
+    ],
+    "branches": [
+      "* main"
+    ],
+    "contributors": [
+      "CWF"
+    ],
     "codeChurn": {
-      "insertions": 0,
+      "insertions": 50670,
       "deletions": 0
     },
-    "weeklyActivity": [],
-    "progress": 0
+    "weeklyActivity": [
+      {
+        "week": 4,
+        "commits": 0
+      },
+      {
+        "week": 3,
+        "commits": 0
+      },
+      {
+        "week": 2,
+        "commits": 0
+      },
+      {
+        "week": 1,
+        "commits": 1
+      }
+    ],
+    "progress": 25
   },
   "architecture": {
     "checks": {
@@ -53,7 +76,7 @@
   "codebase": {
     "files": 103580,
     "lines": 1516110,
-    "jstsFiles": 25098361,
+    "jstsFiles": 3.605873711288886e+39,
     "components": 1355,
     "apiEndpoints": 790,
     "testFiles": 133,
@@ -3469,7 +3492,7 @@
     "progress": 80
   },
   "overall": {
-    "score": 71,
+    "score": 75,
     "phase": "系統完善與部署 (第3個月)",
     "recommendations": [
       "建議增加Git提交頻率，建立良好的版本控制習慣"
