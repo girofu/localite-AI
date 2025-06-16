@@ -1,5 +1,5 @@
 const { spawn } = require('child_process');
-const path = require('path');
+// const path = require('path'); // 暫時註解掉未使用的 import
 
 // 設定環境變數
 process.env.NODE_ENV = 'development';

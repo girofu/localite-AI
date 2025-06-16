@@ -6,18 +6,18 @@ import {
   StyleSheet,
   Text,
   useColorScheme,
-  View,
+  View
 } from 'react-native';
 
-function App(): JSX.Element {
+function App(): React.JSX.Element {
   const isDarkMode = useColorScheme() === 'dark';
 
   const backgroundStyle = {
-    backgroundColor: isDarkMode ? '#242424' : '#f0f0f0',
+    backgroundColor: isDarkMode ? '#242424' : '#f0f0f0'
   };
 
   const textStyle = {
-    color: isDarkMode ? '#ffffff' : '#000000',
+    color: isDarkMode ? '#ffffff' : '#000000'
   };
 
   return (
@@ -62,27 +62,27 @@ function App(): JSX.Element {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flex: 1
   },
   header: {
     alignItems: 'center',
     paddingVertical: 40,
-    paddingHorizontal: 20,
+    paddingHorizontal: 20
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: 8
   },
   subtitle: {
     fontSize: 16,
     opacity: 0.7,
-    textAlign: 'center',
+    textAlign: 'center'
   },
   content: {
     paddingHorizontal: 20,
-    paddingBottom: 40,
+    paddingBottom: 40
   },
   card: {
     backgroundColor: '#ffffff',
@@ -92,23 +92,23 @@ const styles = StyleSheet.create({
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 2
     },
     shadowOpacity: 0.1,
     shadowRadius: 3.84,
-    elevation: 5,
+    elevation: 5
   },
   cardTitle: {
     fontSize: 20,
     fontWeight: '600',
     color: '#333333',
-    marginBottom: 12,
+    marginBottom: 12
   },
   cardText: {
     fontSize: 16,
     lineHeight: 24,
-    color: '#666666',
-  },
+    color: '#666666'
+  }
 });
 
 export default App; 
