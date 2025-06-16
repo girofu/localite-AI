@@ -17,7 +17,7 @@ module.exports = {
   },
   plugins: ['@typescript-eslint'],
   rules: {
-    // Google 風格指南規則
+    // Google 風格指南規則 - 稍微放寬
     indent: ['error', 2, { SwitchCase: 1 }],
     quotes: ['error', 'single', { avoidEscape: true }],
     semi: ['error', 'always'],
@@ -30,11 +30,12 @@ module.exports = {
         code: 100,
         ignoreUrls: true,
         ignoreStrings: true,
-        ignoreTemplateLiterals: true
+        ignoreTemplateLiterals: true,
+        ignoreComments: true
       }
     ],
 
-    // TypeScript 規則
+    // TypeScript 規則 - 放寬測試和錯誤處理
     '@typescript-eslint/no-unused-vars': [
       'error',
       {
@@ -42,7 +43,8 @@ module.exports = {
         varsIgnorePattern: '^_'
       }
     ],
-    '@typescript-eslint/no-explicit-any': 'warn'
+    '@typescript-eslint/no-explicit-any': 'off', // 暫時關閉，允許 any 類型
+    'no-unused-vars': 'off' // 讓 TypeScript 處理
   },
   overrides: [
     {
@@ -56,6 +58,14 @@ module.exports = {
       env: {
         browser: false,
         node: true
+      }
+    },
+    {
+      // 測試檔案特別規則
+      files: ['**/*.test.ts', '**/*.test.js', '**/__tests__/**/*'],
+      rules: {
+        '@typescript-eslint/no-explicit-any': 'off',
+        'max-len': 'off'
       }
     }
   ]

@@ -76,13 +76,8 @@ export class AIService {
     this.cache = new CacheService();
     this.logger = winston.createLogger({
       level: 'info',
-      format: winston.format.combine(
-        winston.format.timestamp(),
-        winston.format.json()
-      ),
-      transports: [
-        new winston.transports.File({ filename: 'logs/ai-service.log' })
-      ]
+      format: winston.format.combine(winston.format.timestamp(), winston.format.json()),
+      transports: [new winston.transports.File({ filename: 'logs/ai-service.log' })]
     });
   }
 
@@ -90,11 +85,11 @@ export class AIService {
    * 生成導覽內容
    */
   async generateTourContent(
-    location: LocationData, 
+    location: LocationData,
     preferences: TourPreferences
   ): Promise<GeneratedTourContent> {
     const cacheKey = this.generateCacheKey(location, preferences);
-    
+
     try {
       // 檢查快取
       const cachedContent = await this.cache.get(cacheKey);
@@ -105,13 +100,13 @@ export class AIService {
 
       // 構建 AI 提示詞
       const prompt = this.buildTourPrompt(location, preferences);
-      
+
       // 調用 Vertex AI Gemini
       const generatedText = await this.callVertexAI(prompt);
-      
+
       // 解析生成的內容
       const tourContent = await this.parseTourContent(generatedText, preferences);
-      
+
       // 如果需要，生成語音
       if (preferences.language !== 'zh-TW') {
         await this.generateAudioForSections(tourContent);
@@ -119,15 +114,14 @@ export class AIService {
 
       // 存入快取（24小時）
       await this.cache.set(cacheKey, JSON.stringify(tourContent), 86400);
-      
-      this.logger.info('成功生成導覽內容', { 
+
+      this.logger.info('成功生成導覽內容', {
         locationName: location.name,
         language: preferences.language,
         sectionsCount: tourContent.content.sections.length
       });
 
       return tourContent;
-
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '未知錯誤';
       this.logger.error('生成導覽內容失敗', {
@@ -180,16 +174,16 @@ export class AIService {
       };
 
       const [response] = await this.ttsClient.synthesizeSpeech(request);
-      
+
       // 保存音頻文件到本地暫存
       const fileName = `tts_${Date.now()}_${Math.random().toString(36).substr(2, 9)}.mp3`;
       const filePath = join(process.cwd(), 'temp', fileName);
-      
+
       await fs.writeFile(filePath, response.audioContent as Buffer);
-      
+
       // 實際部署時應該上傳到 Cloud Storage
       // const audioUrl = await this.uploadToCloudStorage(filePath, fileName);
-      
+
       return `/api/v1/audio/${fileName}`; // 暫時返回本地路徑
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '未知錯誤';
@@ -204,9 +198,9 @@ export class AIService {
   private buildTourPrompt(location: LocationData, preferences: TourPreferences): string {
     const interestsText = preferences.interests.join('、');
     const audienceText = {
-      'family': '家庭親子',
-      'adult': '成人',
-      'solo': '個人旅行者'
+      family: '家庭親子',
+      adult: '成人',
+      solo: '個人旅行者'
     }[preferences.audienceType];
 
     return `
@@ -257,37 +251,32 @@ ${location.merchantInfo ? `- 商戶亮點：${location.merchantInfo.highlights.j
   private async callVertexAI(prompt: string): Promise<string> {
     try {
       // 嘗試使用不同的模型版本
-      const modelNames = [
-        'gemini-1.0-pro',
-        'gemini-pro',
-        'text-bison@001'
-      ];
+      const modelNames = ['gemini-1.0-pro', 'gemini-pro', 'text-bison@001'];
 
       let lastError: Error | null = null;
 
       for (const modelName of modelNames) {
         try {
           this.logger.info(`嘗試使用模型: ${modelName}`);
-          
+
           const model = this.vertexAI.getGenerativeModel({
             model: modelName,
             generationConfig: {
               maxOutputTokens: 8192,
               temperature: 0.7,
-              topP: 0.8,
+              topP: 0.8
             }
           });
 
           const result = await model.generateContent(prompt);
           const response = result.response;
-          
+
           if (!response || !response.candidates || response.candidates.length === 0) {
             throw new Error(`模型 ${modelName} 沒有返回有效回應`);
           }
 
           this.logger.info(`模型 ${modelName} 調用成功`);
           return response.candidates[0].content.parts[0].text || '';
-          
         } catch (error) {
           lastError = error instanceof Error ? error : new Error(String(error));
           this.logger.warn(`模型 ${modelName} 調用失敗，嘗試下一個`, { error: lastError.message });
@@ -298,7 +287,6 @@ ${location.merchantInfo ? `- 商戶亮點：${location.merchantInfo.highlights.j
       // 如果所有模型都失敗，返回模擬回應用於測試
       this.logger.warn('所有 Vertex AI 模型都無法使用，返回模擬內容進行測試');
       return this.generateMockTourContent(prompt);
-      
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '未知錯誤';
       this.logger.error('Vertex AI 調用完全失敗', { error: errorMessage });
@@ -313,40 +301,44 @@ ${location.merchantInfo ? `- 商戶亮點：${location.merchantInfo.highlights.j
     // 從提示詞中提取地點名稱
     const locationMatch = prompt.match(/名稱：([^\n]+)/);
     const locationName = locationMatch ? locationMatch[1] : '測試地點';
-    
-    return JSON.stringify({
-      title: `探索${locationName}`,
-      description: `深度導覽${locationName}的歷史文化與特色亮點`,
-      estimatedDuration: 15,
-      content: {
-        introduction: `歡迎來到${locationName}！我是您今天的導覽員，很高興為您介紹這個充滿故事的地方。`,
-        sections: [
-          {
-            title: "歷史背景",
-            content: `${locationName}有著豐富的歷史背景。這裡見證了時代的變遷，承載著無數珍貴的記憶與故事。`,
-            timestamp: 0
-          },
-          {
-            title: "建築特色", 
-            content: `讓我們來欣賞${locationName}獨特的建築風格。每一個細節都展現了當時的工藝技術與美學理念。`,
-            timestamp: 180
-          },
-          {
-            title: "文化意義",
-            content: `${locationName}不僅僅是一個地標，更是文化的象徵。它代表著這個城市的精神與價值。`,
-            timestamp: 360
-          }
-        ],
-        conclusion: `感謝您的聆聽！希望今天的導覽讓您對${locationName}有了更深的認識。歡迎您再次造訪！`
-      }
-    }, null, 2);
+
+    return JSON.stringify(
+      {
+        title: `探索${locationName}`,
+        description: `深度導覽${locationName}的歷史文化與特色亮點`,
+        estimatedDuration: 15,
+        content: {
+          introduction: `歡迎來到${locationName}！我是您今天的導覽員，很高興為您介紹這個充滿故事的地方。`,
+          sections: [
+            {
+              title: '歷史背景',
+              content: `${locationName}有著豐富的歷史背景。這裡見證了時代的變遷，承載著無數珍貴的記憶與故事。`,
+              timestamp: 0
+            },
+            {
+              title: '建築特色',
+              content: `讓我們來欣賞${locationName}獨特的建築風格。每一個細節都展現了當時的工藝技術與美學理念。`,
+              timestamp: 180
+            },
+            {
+              title: '文化意義',
+              content: `${locationName}不僅僅是一個地標，更是文化的象徵。它代表著這個城市的精神與價值。`,
+              timestamp: 360
+            }
+          ],
+          conclusion: `感謝您的聆聽！希望今天的導覽讓您對${locationName}有了更深的認識。歡迎您再次造訪！`
+        }
+      },
+      null,
+      2
+    );
   }
 
   /**
    * 解析 AI 生成的內容
    */
   private async parseTourContent(
-    generatedText: string, 
+    generatedText: string,
     preferences: TourPreferences
   ): Promise<GeneratedTourContent> {
     try {
@@ -355,9 +347,9 @@ ${location.merchantInfo ? `- 商戶亮點：${location.merchantInfo.highlights.j
         .replace(/```json\n?/g, '')
         .replace(/```\n?/g, '')
         .trim();
-      
+
       const parsed = JSON.parse(cleanedText);
-      
+
       // 添加時間戳記和元數據
       let currentTimestamp = 0;
       parsed.content.sections = parsed.content.sections.map((section: any) => {
@@ -378,7 +370,7 @@ ${location.merchantInfo ? `- 商戶亮點：${location.merchantInfo.highlights.j
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '未知錯誤';
       this.logger.error('解析 AI 內容失敗', { error: errorMessage });
-      
+
       // 後備方案：返回基本結構
       return {
         title: '導覽解說',
@@ -386,11 +378,13 @@ ${location.merchantInfo ? `- 商戶亮點：${location.merchantInfo.highlights.j
         estimatedDuration: preferences.duration,
         content: {
           introduction: generatedText.substring(0, 500),
-          sections: [{
-            title: '詳細介紹',
-            content: generatedText,
-            timestamp: 0
-          }],
+          sections: [
+            {
+              title: '詳細介紹',
+              content: generatedText,
+              timestamp: 0
+            }
+          ],
           conclusion: '感謝您的聆聽，希望您享受這次的導覽體驗。'
         },
         language: preferences.language,
@@ -413,9 +407,9 @@ ${location.merchantInfo ? `- 商戶亮點：${location.merchantInfo.highlights.j
         section.audioUrl = audioUrl;
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : '未知錯誤';
-        this.logger.warn('段落語音生成失敗', { 
-          error: errorMessage, 
-          sectionTitle: section.title 
+        this.logger.warn('段落語音生成失敗', {
+          error: errorMessage,
+          sectionTitle: section.title
         });
       }
     }
@@ -433,7 +427,7 @@ ${location.merchantInfo ? `- 商戶亮點：${location.merchantInfo.highlights.j
       interests: preferences.interests.sort(),
       audienceType: preferences.audienceType
     };
-    
+
     return `tour_content:${Buffer.from(JSON.stringify(keyData)).toString('base64')}`;
   }
 
@@ -447,9 +441,9 @@ ${location.merchantInfo ? `- 商戶亮點：${location.merchantInfo.highlights.j
       'ja-JP': 'ja-JP-Wavenet-A',
       'ko-KR': 'ko-KR-Wavenet-A'
     };
-    
+
     return voiceMap[language] || voiceMap['zh-TW'];
   }
 }
 
-export default AIService; 
+export default AIService;

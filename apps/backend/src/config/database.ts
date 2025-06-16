@@ -5,17 +5,17 @@ import { createClient } from 'redis';
 export const connectMongoDB = async (): Promise<void> => {
   try {
     const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/localite';
-    
+
     await mongoose.connect(mongoUri, {
       maxPoolSize: 10,
       serverSelectionTimeoutMS: 5000,
-      socketTimeoutMS: 45000,
+      socketTimeoutMS: 45000
     });
 
     console.log('✅ MongoDB 連線成功');
-    
+
     // 監聽連線事件
-    mongoose.connection.on('error', (error) => {
+    mongoose.connection.on('error', error => {
       console.error('❌ MongoDB 連線錯誤:', error);
     });
 
@@ -29,7 +29,6 @@ export const connectMongoDB = async (): Promise<void> => {
       console.log('📴 MongoDB 連線已關閉');
       process.exit(0);
     });
-
   } catch (error) {
     console.error('❌ MongoDB 連線失敗:', error);
     process.exit(1);
@@ -42,15 +41,15 @@ export let redisClient: ReturnType<typeof createClient>;
 export const connectRedis = async (): Promise<void> => {
   try {
     const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
-    
+
     redisClient = createClient({
       url: redisUrl,
       socket: {
-        connectTimeout: 50000,
+        connectTimeout: 50000
       }
     });
 
-    redisClient.on('error', (error) => {
+    redisClient.on('error', error => {
       console.error('❌ Redis 連線錯誤:', error);
     });
 
@@ -69,7 +68,6 @@ export const connectRedis = async (): Promise<void> => {
       await redisClient.quit();
       console.log('📴 Redis 連線已關閉');
     });
-
   } catch (error) {
     console.error('❌ Redis 連線失敗:', error);
     // Redis 失敗不影響主服務啟動
@@ -78,10 +76,7 @@ export const connectRedis = async (): Promise<void> => {
 
 // 資料庫初始化
 export const initializeDatabase = async (): Promise<void> => {
-  await Promise.all([
-    connectMongoDB(),
-    connectRedis()
-  ]);
+  await Promise.all([connectMongoDB(), connectRedis()]);
 };
 
 // 快取工具函數
@@ -99,7 +94,7 @@ export const cache = {
   async set(key: string, value: string, ttl?: number): Promise<boolean> {
     try {
       if (!redisClient?.isOpen) return false;
-      
+
       if (ttl) {
         await redisClient.setEx(key, ttl, value);
       } else {
@@ -133,4 +128,4 @@ export const cache = {
       return false;
     }
   }
-}; 
+};

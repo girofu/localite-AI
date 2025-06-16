@@ -19,40 +19,40 @@ jest.mock('../middleware/rate-limit-middleware', () => ({
 
 describe('Tour API Integration Tests', () => {
   let app: express.Application;
-  let mockAIService: jest.Mocked<AIService>;
+  let _mockAIService: jest.Mocked<AIService>;
 
   beforeEach(() => {
     // Setup Express app for testing
     app = express();
     app.use(express.json());
-    
+
     // Mock AIService
-    mockAIService = new AIService() as jest.Mocked<AIService>;
-    
+    _mockAIService = new AIService() as jest.Mocked<AIService>;
+
     // Setup routes (simplified for testing)
     const tourController = new TourController();
-    
-    app.post('/api/v1/tours/generate', async (req, res, next) => {
+
+    app.post('/api/v1/tours/generate', async (req, res, _next) => {
       req.user = { uid: 'test-user-123', email: 'test@example.com' };
-      await tourController.generateTour(req, res, next);
+      await tourController.generateTour(req, res, _next);
     });
-    
+
     app.post('/api/v1/tours/speech', async (req, res, next) => {
       req.user = { uid: 'test-user-123', email: 'test@example.com' };
       await tourController.generateSpeech(req, res, next);
     });
-    
+
     app.post('/api/v1/tours/translate', async (req, res, next) => {
       req.user = { uid: 'test-user-123', email: 'test@example.com' };
       await tourController.translateTour(req, res, next);
     });
-    
+
     app.get('/api/v1/tours/languages', async (req, res, next) => {
       await tourController.getAvailableLanguages(req, res, next);
     });
 
     // Error handling middleware
-    app.use((error: any, req: any, res: any, next: any) => {
+    app.use((error: any, req: any, res: any, _next: any) => {
       res.status(500).json({
         success: false,
         message: error.message || '伺服器錯誤',
@@ -93,7 +93,7 @@ describe('Tour API Integration Tests', () => {
         location: {
           name: '台北101',
           description: '台北最著名的地標性摩天大樓',
-          coordinates: { lat: 25.0340, lng: 121.5645 },
+          coordinates: { lat: 25.034, lng: 121.5645 },
           category: 'landmark'
         },
         preferences: {
@@ -145,7 +145,7 @@ describe('Tour API Integration Tests', () => {
         location: {
           name: '台北101',
           description: '台北最著名的地標性摩天大樓',
-          coordinates: { lat: 25.0340, lng: 121.5645 },
+          coordinates: { lat: 25.034, lng: 121.5645 },
           category: 'landmark'
         },
         preferences: {
@@ -251,19 +251,17 @@ describe('Tour API Integration Tests', () => {
   describe('GET /api/v1/tours/languages', () => {
     it('應該返回可用語言列表', async () => {
       // Act
-      const response = await request(app)
-        .get('/api/v1/tours/languages')
-        .expect(200);
+      const response = await request(app).get('/api/v1/tours/languages').expect(200);
 
       // Assert
       expect(response.body.success).toBe(true);
       expect(response.body.data).toBeInstanceOf(Array);
       expect(response.body.data.length).toBeGreaterThan(0);
-      
+
       const zhTW = response.body.data.find((lang: any) => lang.code === 'zh-TW');
       expect(zhTW).toBeDefined();
       expect(zhTW.name).toBe('繁體中文');
-      
+
       const enUS = response.body.data.find((lang: any) => lang.code === 'en-US');
       expect(enUS).toBeDefined();
       expect(enUS.name).toBe('English');
@@ -284,7 +282,7 @@ describe('Tour API Integration Tests', () => {
           location: {
             name: '測試地點',
             description: '測試描述',
-            coordinates: { lat: 25.0340, lng: 121.5645 },
+            coordinates: { lat: 25.034, lng: 121.5645 },
             category: 'test'
           },
           preferences: {
@@ -302,4 +300,4 @@ describe('Tour API Integration Tests', () => {
       expect(response.body.message).toContain('意外的錯誤');
     });
   });
-}); 
+});

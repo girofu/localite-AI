@@ -11,8 +11,9 @@ export const initializeFirebase = (): void => {
     }
 
     const projectId = process.env.FIREBASE_PROJECT_ID;
-    const privateKeyPath = process.env.FIREBASE_PRIVATE_KEY_PATH || 
-                           join(process.cwd(), 'config', 'service-account.json');
+    const privateKeyPath =
+      process.env.FIREBASE_PRIVATE_KEY_PATH ||
+      join(process.cwd(), 'config', 'service-account.json');
 
     if (!projectId) {
       console.warn('⚠️ 缺少 FIREBASE_PROJECT_ID 環境變數，使用開發模式');
@@ -43,7 +44,7 @@ export const initializeFirebase = (): void => {
         type: 'service_account',
         project_id: projectId,
         private_key: privateKey.replace(/\\n/g, '\n'),
-        client_email: clientEmail,
+        client_email: clientEmail
       };
     }
 
@@ -55,7 +56,6 @@ export const initializeFirebase = (): void => {
     });
 
     console.log('✅ Firebase Admin 初始化成功');
-
   } catch (error) {
     console.error('❌ Firebase Admin 初始化失敗:', error);
     process.exit(1);
@@ -102,4 +102,4 @@ export const setCustomUserClaims = async (uid: string, customClaims: object) => 
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
   }
-}; 
+};

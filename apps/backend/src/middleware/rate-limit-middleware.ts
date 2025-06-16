@@ -3,13 +3,8 @@ import { Request, Response } from 'express';
 import winston from 'winston';
 const logger = winston.createLogger({
   level: 'info',
-  format: winston.format.combine(
-    winston.format.timestamp(),
-    winston.format.json()
-  ),
-  transports: [
-    new winston.transports.File({ filename: 'logs/rate-limit.log' })
-  ]
+  format: winston.format.combine(winston.format.timestamp(), winston.format.json()),
+  transports: [new winston.transports.File({ filename: 'logs/rate-limit.log' })]
 });
 
 /**
@@ -25,7 +20,7 @@ const generateKey = (req: Request): string => {
   if (req.user?.uid) {
     return `user:${req.user.uid}`;
   }
-  
+
   // 後備使用 IP 地址
   return `ip:${req.ip}`;
 };
@@ -45,7 +40,7 @@ const rateLimitHandler = (req: Request, res: Response) => {
     success: false,
     message: '請求過於頻繁，請稍後再試',
     code: 'RATE_LIMIT_EXCEEDED',
-    retryAfter: Math.ceil(60), // 建議1分鐘後重試
+    retryAfter: Math.ceil(60) // 建議1分鐘後重試
   });
 };
 
@@ -135,7 +130,7 @@ export const authRateLimit = rateLimit({
       success: false,
       message: '認證請求過於頻繁，請稍後再試',
       code: 'AUTH_RATE_LIMIT_EXCEEDED',
-      retryAfter: Math.ceil(15 * 60), // 建議15分鐘後重試
+      retryAfter: Math.ceil(15 * 60) // 建議15分鐘後重試
     });
   },
   standardHeaders: true,
@@ -187,4 +182,4 @@ export const rateLimiter = {
   merchant: merchantRateLimit
 };
 
-export default rateLimiter; 
+export default rateLimiter;

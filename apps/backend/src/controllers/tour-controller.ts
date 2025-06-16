@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { AIService, TourPreferences, LocationData } from '../services/ai-service';
+import { AIService } from '../services/ai-service';
 import { body, validationResult } from 'express-validator';
 import winston from 'winston';
 
@@ -10,13 +10,8 @@ export class TourController {
   constructor() {
     this.logger = winston.createLogger({
       level: 'info',
-      format: winston.format.combine(
-        winston.format.timestamp(),
-        winston.format.json()
-      ),
-      transports: [
-        new winston.transports.File({ filename: 'logs/tour-controller.log' })
-      ]
+      format: winston.format.combine(winston.format.timestamp(), winston.format.json()),
+      transports: [new winston.transports.File({ filename: 'logs/tour-controller.log' })]
     });
   }
 
@@ -64,7 +59,6 @@ export class TourController {
         message: '導覽內容生成成功',
         data: tourContent
       });
-
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '未知錯誤';
       const errorStack = error instanceof Error ? error.stack : undefined;
@@ -112,7 +106,6 @@ export class TourController {
           textLength: text.length
         }
       });
-
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '未知錯誤';
       this.logger.error('語音生成失敗', {
@@ -158,7 +151,6 @@ export class TourController {
           targetLanguage
         }
       });
-
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '未知錯誤';
       this.logger.error('翻譯失敗', {
@@ -190,7 +182,6 @@ export class TourController {
         message: '可用語言列表',
         data: languages
       });
-
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '未知錯誤';
       this.logger.error('獲取語言列表失敗', {
@@ -247,7 +238,6 @@ export class TourController {
         message: '導覽模板列表',
         data: templates
       });
-
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '未知錯誤';
       this.logger.error('獲取導覽模板失敗', {
@@ -281,9 +271,7 @@ export const tourValidation = {
     body('preferences.interests')
       .isArray({ min: 1, max: 5 })
       .withMessage('興趣必須至少選擇1項，最多5項'),
-    body('preferences.audienceType')
-      .isIn(['family', 'adult', 'solo'])
-      .withMessage('受眾類型無效'),
+    body('preferences.audienceType').isIn(['family', 'adult', 'solo']).withMessage('受眾類型無效'),
     body('preferences.difficulty')
       .isIn(['easy', 'moderate', 'challenging'])
       .withMessage('難度等級無效')
@@ -311,4 +299,4 @@ export const tourValidation = {
   ]
 };
 
-export default TourController; 
+export default TourController;

@@ -3,7 +3,7 @@ import { CacheService } from '../services/cache-service';
 
 // Mock Google Cloud services
 jest.mock('@google-cloud/vertexai');
-jest.mock('@google-cloud/text-to-speech');  
+jest.mock('@google-cloud/text-to-speech');
 jest.mock('@google-cloud/translate/build/src/v3');
 jest.mock('../services/cache-service');
 
@@ -14,7 +14,7 @@ describe('AIService', () => {
   const mockLocation: LocationData = {
     name: '台北101',
     description: '台北最著名的地標性摩天大樓',
-    coordinates: { lat: 25.0340, lng: 121.5645 },
+    coordinates: { lat: 25.034, lng: 121.5645 },
     category: 'landmark',
     merchantInfo: {
       id: 'merchant001',
@@ -35,7 +35,7 @@ describe('AIService', () => {
     // 設置環境變數
     process.env.GOOGLE_CLOUD_PROJECT_ID = 'test-project';
     process.env.GOOGLE_CLOUD_LOCATION = 'us-central1';
-    
+
     // Mock cache service
     mockCacheService = {
       get: jest.fn(),
@@ -45,8 +45,10 @@ describe('AIService', () => {
       expire: jest.fn()
     } as jest.Mocked<CacheService>;
 
-    (CacheService as jest.MockedClass<typeof CacheService>).mockImplementation(() => mockCacheService);
-    
+    (CacheService as jest.MockedClass<typeof CacheService>).mockImplementation(
+      () => mockCacheService
+    );
+
     aiService = new AIService();
   });
 
@@ -64,27 +66,31 @@ describe('AIService', () => {
       const mockVertexAI = require('@google-cloud/vertexai').VertexAI;
       const mockGenerateContentResult = {
         response: {
-          candidates: [{
-            content: {
-              parts: [{
-                text: JSON.stringify({
-                  title: '探索台北101',
-                  description: '深度導覽台北地標',
-                  content: {
-                    introduction: '歡迎來到台北101',
-                    sections: [
-                      {
-                        title: '建築特色',
-                        content: '台北101是台灣最高的摩天大樓...',
-                        timestamp: 0
+          candidates: [
+            {
+              content: {
+                parts: [
+                  {
+                    text: JSON.stringify({
+                      title: '探索台北101',
+                      description: '深度導覽台北地標',
+                      content: {
+                        introduction: '歡迎來到台北101',
+                        sections: [
+                          {
+                            title: '建築特色',
+                            content: '台北101是台灣最高的摩天大樓...',
+                            timestamp: 0
+                          }
+                        ],
+                        conclusion: '感謝您的參觀'
                       }
-                    ],
-                    conclusion: '感謝您的參觀'
+                    })
                   }
-                })
-              }]
+                ]
+              }
             }
-          }]
+          ]
         }
       };
 
@@ -135,28 +141,33 @@ describe('AIService', () => {
     it('應該處理AI服務錯誤', async () => {
       // Arrange
       mockCacheService.get.mockResolvedValue(null);
-      
+
       const mockVertexAI = require('@google-cloud/vertexai').VertexAI;
       mockVertexAI.prototype.getGenerativeModel = jest.fn().mockReturnValue({
         generateContent: jest.fn().mockRejectedValue(new Error('AI服務暫時不可用'))
       });
 
       // Act & Assert
-      await expect(
-        aiService.generateTourContent(mockLocation, mockPreferences)
-      ).rejects.toThrow('AI 導覽服務錯誤');
+      await expect(aiService.generateTourContent(mockLocation, mockPreferences)).rejects.toThrow(
+        'AI 導覽服務錯誤'
+      );
     });
   });
 
   describe('translateContent', () => {
     it('應該成功翻譯內容', async () => {
       // Arrange
-      const mockTranslateClient = require('@google-cloud/translate/build/src/v3').TranslationServiceClient;
-      mockTranslateClient.prototype.translateText = jest.fn().mockResolvedValue([{
-        translations: [{
-          translatedText: 'Welcome to Taipei 101'
-        }]
-      }]);
+      const mockTranslateClient =
+        require('@google-cloud/translate/build/src/v3').TranslationServiceClient;
+      mockTranslateClient.prototype.translateText = jest.fn().mockResolvedValue([
+        {
+          translations: [
+            {
+              translatedText: 'Welcome to Taipei 101'
+            }
+          ]
+        }
+      ]);
 
       // Act
       const result = await aiService.translateContent('歡迎來到台北101', 'en-US');
@@ -167,8 +178,11 @@ describe('AIService', () => {
 
     it('翻譯失敗時應該返回原始內容', async () => {
       // Arrange
-      const mockTranslateClient = require('@google-cloud/translate/build/src/v3').TranslationServiceClient;
-      mockTranslateClient.prototype.translateText = jest.fn().mockRejectedValue(new Error('翻譯服務錯誤'));
+      const mockTranslateClient =
+        require('@google-cloud/translate/build/src/v3').TranslationServiceClient;
+      mockTranslateClient.prototype.translateText = jest
+        .fn()
+        .mockRejectedValue(new Error('翻譯服務錯誤'));
 
       const originalText = '歡迎來到台北101';
 
@@ -184,9 +198,11 @@ describe('AIService', () => {
     it('應該成功生成語音檔案', async () => {
       // Arrange
       const mockTTSClient = require('@google-cloud/text-to-speech').TextToSpeechClient;
-      mockTTSClient.prototype.synthesizeSpeech = jest.fn().mockResolvedValue([{
-        audioContent: Buffer.from('mock audio data')
-      }]);
+      mockTTSClient.prototype.synthesizeSpeech = jest.fn().mockResolvedValue([
+        {
+          audioContent: Buffer.from('mock audio data')
+        }
+      ]);
 
       // Mock fs.writeFile
       jest.doMock('fs', () => ({
@@ -213,12 +229,12 @@ describe('AIService', () => {
     it('語音合成失敗時應該拋出錯誤', async () => {
       // Arrange
       const mockTTSClient = require('@google-cloud/text-to-speech').TextToSpeechClient;
-      mockTTSClient.prototype.synthesizeSpeech = jest.fn().mockRejectedValue(new Error('TTS服務錯誤'));
+      mockTTSClient.prototype.synthesizeSpeech = jest
+        .fn()
+        .mockRejectedValue(new Error('TTS服務錯誤'));
 
       // Act & Assert
-      await expect(
-        aiService.generateSpeech('測試文字', 'zh-TW')
-      ).rejects.toThrow('TTS服務錯誤');
+      await expect(aiService.generateSpeech('測試文字', 'zh-TW')).rejects.toThrow('TTS服務錯誤');
     });
   });
 
@@ -232,16 +248,20 @@ describe('AIService', () => {
       mockVertexAI.prototype.getGenerativeModel = jest.fn().mockReturnValue({
         generateContent: jest.fn().mockResolvedValue({
           response: {
-            candidates: [{
-              content: {
-                parts: [{
-                  text: JSON.stringify({
-                    title: '測試',
-                    content: { sections: [] }
-                  })
-                }]
+            candidates: [
+              {
+                content: {
+                  parts: [
+                    {
+                      text: JSON.stringify({
+                        title: '測試',
+                        content: { sections: [] }
+                      })
+                    }
+                  ]
+                }
               }
-            }]
+            ]
           }
         })
       });
@@ -250,9 +270,7 @@ describe('AIService', () => {
       await aiService.generateTourContent(mockLocation, mockPreferences);
 
       // Assert
-      expect(mockCacheService.get).toHaveBeenCalledWith(
-        expect.stringContaining('tour_content_')
-      );
+      expect(mockCacheService.get).toHaveBeenCalledWith(expect.stringContaining('tour_content_'));
       expect(mockCacheService.set).toHaveBeenCalledWith(
         expect.stringContaining('tour_content_'),
         expect.any(String),
@@ -260,4 +278,4 @@ describe('AIService', () => {
       );
     });
   });
-}); 
+});

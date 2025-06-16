@@ -29,35 +29,37 @@ const swaggerOptions = {
     info: {
       title: '在地人 AI 導覽系統 API',
       version: '1.0.0',
-      description: '在地人 AI 導覽系統的後端 API 文檔',
+      description: '在地人 AI 導覽系統的後端 API 文檔'
     },
     servers: [
       {
         url: process.env.API_BASE_URL || `http://localhost:${PORT}`,
-        description: '開發環境',
-      },
+        description: '開發環境'
+      }
     ],
     components: {
       securitySchemes: {
         bearerAuth: {
           type: 'http',
           scheme: 'bearer',
-          bearerFormat: 'JWT',
-        },
-      },
-    },
+          bearerFormat: 'JWT'
+        }
+      }
+    }
   },
-  apis: ['./src/routes/*.ts'],
+  apis: ['./src/routes/*.ts']
 };
 
 const specs = swaggerJsdoc(swaggerOptions);
 
 // 安全性中間件
 app.use(helmet());
-app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
-  credentials: true
-}));
+app.use(
+  cors({
+    origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+    credentials: true
+  })
+);
 
 // 速率限制
 const limiter = rateLimit({
@@ -77,11 +79,15 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
 // API 文檔
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs, {
-  explorer: true,
-  customCss: '.swagger-ui .topbar { display: none }',
-  customSiteTitle: '在地人 AI 導覽系統 API 文檔'
-}));
+app.use(
+  '/api-docs',
+  swaggerUi.serve,
+  swaggerUi.setup(specs, {
+    explorer: true,
+    customCss: '.swagger-ui .topbar { display: none }',
+    customSiteTitle: '在地人 AI 導覽系統 API 文檔'
+  })
+);
 
 // 健康檢查端點
 app.get('/health', (req, res) => {
@@ -124,7 +130,7 @@ app.use('*', (req, res) => {
 });
 
 // 全域錯誤處理
-app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+app.use((err: Error, req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error('全域錯誤:', {
     error: err.message,
     stack: err.stack,
@@ -145,10 +151,10 @@ async function startServer() {
   try {
     // 初始化 Firebase
     initializeFirebase();
-    
+
     // 初始化資料庫
     await initializeDatabase();
-    
+
     // 啟動伺服器
     app.listen(PORT, () => {
       console.log('\n🚀 === 在地人 AI 導覽系統 後端服務啟動 ===');
@@ -160,7 +166,6 @@ async function startServer() {
       console.log(`🕐 啟動時間: ${new Date().toLocaleString('zh-TW')}`);
       console.log('================================================\n');
     });
-
   } catch (error) {
     console.error('❌ 伺服器啟動失敗:', error);
     process.exit(1);
@@ -181,4 +186,4 @@ process.on('SIGINT', () => {
 // 啟動伺服器
 startServer();
 
-export default app; 
+export default app;

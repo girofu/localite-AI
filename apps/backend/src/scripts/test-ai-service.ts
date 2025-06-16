@@ -1,7 +1,7 @@
 #!/usr/bin/env tsx
 /**
  * AI服務手動測試工具
- * 
+ *
  * 使用方法：
  * npm run test:ai
  * 或
@@ -26,9 +26,7 @@ const logger = winston.createLogger({
       return `${timestamp} [${level}]: ${message} ${Object.keys(rest).length ? JSON.stringify(rest, null, 2) : ''}`;
     })
   ),
-  transports: [
-    new winston.transports.Console()
-  ]
+  transports: [new winston.transports.Console()]
 });
 
 class AIServiceTester {
@@ -48,7 +46,7 @@ class AIServiceTester {
       {
         name: '台北101',
         description: '台北最著名的地標性摩天大樓，曾為世界最高建築',
-        coordinates: { lat: 25.0340, lng: 121.5645 },
+        coordinates: { lat: 25.034, lng: 121.5645 },
         category: 'landmark',
         merchantInfo: {
           id: 'taipei101',
@@ -70,7 +68,7 @@ class AIServiceTester {
       {
         name: '西門町',
         description: '台北著名的年輕人聚集地和購物區',
-        coordinates: { lat: 25.0420, lng: 121.5081 },
+        coordinates: { lat: 25.042, lng: 121.5081 },
         category: 'shopping'
       }
     ];
@@ -110,7 +108,7 @@ class AIServiceTester {
    */
   async testTourContentGeneration(): Promise<void> {
     logger.info('🎯 開始測試導覽內容生成...');
-    
+
     try {
       const locations = this.getTestLocations();
       const preferences = this.getTestPreferences();
@@ -129,7 +127,7 @@ class AIServiceTester {
         const result = await this.aiService.generateTourContent(location, preference);
         const endTime = Date.now();
 
-        logger.info(`✅ 導覽內容生成成功`, {
+        logger.info('✅ 導覽內容生成成功', {
           title: result.title,
           language: result.language,
           sectionsCount: result.content.sections.length,
@@ -141,7 +139,6 @@ class AIServiceTester {
         // 簡單驗證內容品質
         this.validateTourContent(result);
       }
-
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '未知錯誤';
       logger.error('❌ 導覽內容生成測試失敗', { error: errorMessage });
@@ -171,7 +168,7 @@ class AIServiceTester {
           const translated = await this.aiService.translateContent(text, targetLang);
           const endTime = Date.now();
 
-          logger.info(`✅ 翻譯完成`, {
+          logger.info('✅ 翻譯完成', {
             originalLength: text.length,
             translatedLength: translated.length,
             targetLanguage: targetLang,
@@ -214,7 +211,7 @@ class AIServiceTester {
         const audioUrl = await this.aiService.generateSpeech(text, language);
         const endTime = Date.now();
 
-        logger.info(`✅ 語音合成完成`, {
+        logger.info('✅ 語音合成完成', {
           audioUrl,
           language,
           processingTime: `${endTime - startTime}ms`
@@ -255,7 +252,6 @@ class AIServiceTester {
       // 清理測試快取
       await this.cacheService.del(testKey);
       logger.info('✅ 測試快取清理完成');
-
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '未知錯誤';
       logger.warn('⚠️ 快取系統測試遇到問題 (可能Redis未配置)', { error: errorMessage });
@@ -292,7 +288,7 @@ class AIServiceTester {
    */
   async runCompleteTest(): Promise<void> {
     logger.info('🚀 開始 AI 服務完整測試套件...');
-    
+
     // 檢查環境變數
     this.checkEnvironmentVariables();
 
@@ -322,7 +318,7 @@ class AIServiceTester {
 
     logger.info('='.repeat(50));
     logger.info(`🎉 測試完成! 通過: ${passedTests}/${totalTests}`);
-    
+
     if (passedTests === totalTests) {
       logger.info('🎊 所有測試都通過了！AI 服務運作正常。');
     } else {
@@ -334,10 +330,7 @@ class AIServiceTester {
    * 檢查必要的環境變數
    */
   private checkEnvironmentVariables(): void {
-    const requiredEnvVars = [
-      'GOOGLE_CLOUD_PROJECT_ID',
-      'GOOGLE_CLOUD_LOCATION'
-    ];
+    const requiredEnvVars = ['GOOGLE_CLOUD_PROJECT_ID', 'GOOGLE_CLOUD_LOCATION'];
 
     const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
 
@@ -356,7 +349,7 @@ class AIServiceTester {
 // 主執行函數
 async function main() {
   const tester = new AIServiceTester();
-  
+
   // 解析命令行參數
   const args = process.argv.slice(2);
   const testType = args[0] || 'all';
@@ -389,15 +382,15 @@ process.on('unhandledRejection', (reason, promise) => {
   process.exit(1);
 });
 
-process.on('uncaughtException', (error) => {
+process.on('uncaughtException', error => {
   logger.error('未捕獲的異常', { error: error.message, stack: error.stack });
   process.exit(1);
 });
 
 // 執行測試
 if (require.main === module) {
-  main().catch((error) => {
+  main().catch(error => {
     logger.error('測試執行失敗', { error: error.message });
     process.exit(1);
   });
-} 
+}
