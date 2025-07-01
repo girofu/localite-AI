@@ -95,13 +95,13 @@ class FeatureFlagService {
       },
     };
 
-    for (const [key, flag] of Object.entries(defaultFlags)) {
+    Object.entries(defaultFlags).forEach(([key, flag]) => {
       this.flags.set(key, {
         ...flag,
         createdAt: new Date(),
         updatedAt: new Date(),
       });
-    }
+    });
   }
 
   /**
@@ -170,7 +170,7 @@ class FeatureFlagService {
 
     // 用戶群體檢查
     if (flag.userGroups && context.userGroups) {
-      const hasGroup = flag.userGroups.some(group => context.userGroups.includes(group));
+      const hasGroup = flag.userGroups.some((group) => context.userGroups.includes(group));
       if (!hasGroup) {
         return false;
       }
@@ -276,9 +276,9 @@ class FeatureFlagService {
    */
   getAllFlags() {
     const flags = {};
-    for (const [name, flag] of this.flags) {
+    Array.from(this.flags.entries()).forEach(([name, flag]) => {
       flags[name] = flag;
-    }
+    });
     return flags;
   }
 
@@ -290,9 +290,9 @@ class FeatureFlagService {
     const flags = Array.from(this.flags.values());
     return {
       total: flags.length,
-      enabled: flags.filter(f => f.enabled).length,
-      disabled: flags.filter(f => !f.enabled).length,
-      canaryDeployment: flags.filter(f => f.rolloutPercentage < 100 && f.rolloutPercentage > 0)
+      enabled: flags.filter((f) => f.enabled).length,
+      disabled: flags.filter((f) => !f.enabled).length,
+      canaryDeployment: flags.filter((f) => f.rolloutPercentage < 100 && f.rolloutPercentage > 0)
         .length,
     };
   }

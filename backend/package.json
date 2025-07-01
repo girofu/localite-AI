@@ -12,40 +12,48 @@
     "lint": "eslint src/ --ext .js",
     "lint:fix": "eslint src/ --ext .js --fix"
   },
-  "keywords": ["ai", "tour", "guide", "backend", "api"],
+  "keywords": [
+    "ai",
+    "tour",
+    "guide",
+    "backend",
+    "api"
+  ],
   "author": "Localite Team",
   "license": "MIT",
   "dependencies": {
-    "express": "^4.18.2",
-    "mongoose": "^8.0.3",
-    "mysql2": "^3.6.5",
-    "redis": "^4.6.10",
-    "firebase-admin": "^12.0.0",
-    "jsonwebtoken": "^9.0.2",
+    "@google-cloud/storage": "^7.7.0",
+    "@google-cloud/text-to-speech": "^5.3.0",
+    "@google-cloud/vertexai": "^1.6.0",
+    "axios": "^1.6.2",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
-    "helmet": "^7.1.0",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
     "express-rate-limit": "^7.1.5",
     "express-validator": "^7.0.1",
+    "firebase-admin": "^12.0.0",
+    "helmet": "^7.1.0",
+    "joi": "^17.11.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.0.3",
     "multer": "^1.4.5-lts.1",
-    "dotenv": "^16.3.1",
-    "winston": "^3.11.0",
-    "swagger-ui-express": "^5.0.0",
+    "mysql2": "^3.6.5",
+    "redis": "^4.6.10",
     "swagger-jsdoc": "^6.2.8",
-    "@google-cloud/vertexai": "^1.6.0",
-    "@google-cloud/text-to-speech": "^5.3.0",
-    "@google-cloud/storage": "^7.7.0",
-    "axios": "^1.6.2",
-    "joi": "^17.11.0"
+    "swagger-ui-express": "^5.0.0",
+    "uuid": "^11.1.0",
+    "winston": "^3.11.0",
+    "winston-daily-rotate-file": "^5.0.0"
   },
   "devDependencies": {
-    "nodemon": "^3.0.2",
-    "jest": "^29.7.0",
-    "supertest": "^6.3.3",
+    "@types/jest": "^29.5.8",
     "eslint": "^8.55.0",
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-plugin-import": "^2.29.0",
-    "@types/jest": "^29.5.8"
+    "jest": "^29.7.0",
+    "nodemon": "^3.0.2",
+    "supertest": "^6.3.3"
   },
   "engines": {
     "node": ">=18.0.0",
@@ -53,7 +61,9 @@
   },
   "jest": {
     "testEnvironment": "node",
-    "setupFilesAfterEnv": ["<rootDir>/src/test/setup.js"],
+    "setupFilesAfterEnv": [
+      "<rootDir>/src/test/setup.js"
+    ],
     "collectCoverageFrom": [
       "src/**/*.js",
       "!src/server.js"
@@ -63,4 +73,4 @@
       "**/?(*.)+(spec|test).js"
     ]
   }
-} 
+}

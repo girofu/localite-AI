@@ -51,6 +51,14 @@ alwaysApply: true
 - `backend/src/services/aiService.test.js` - AI 服務單元測試 (待建立)
 - `backend/src/services/ttsService.js` - 語音合成服務 (待建立)
 - `backend/src/services/ttsService.test.js` - TTS 服務測試 (待建立)
+- `backend/src/config/logger.js` - 增強版日誌系統（Winston + 日誌輪轉 + 結構化格式）
+- `backend/src/config/logger.test.js` - 日誌系統單元測試
+- `backend/src/middleware/performanceMonitor.js` - 效能監控中間件（CPU、記憶體、響應時間監控）
+- `backend/src/middleware/performanceMonitor.test.js` - 效能監控中間件單元測試
+- `backend/src/routes/monitoring.js` - 監控 API 路由（效能指標、健康檢查、日誌管理、錯誤追蹤）
+- `backend/src/routes/monitoring.test.js` - 監控路由單元測試
+- `backend/src/services/errorTrackingService.js` - 錯誤追蹤和通知服務（錯誤分類、通知門檻、統計分析）
+- `backend/src/services/errorTrackingService.test.js` - 錯誤追蹤服務單元測試
 - `backend/src/services/cacheService.js` - Redis 快取服務 (待建立)
 - `backend/src/services/cacheService.test.js` - 快取服務測試 (待建立)
 - `backend/src/models/User.js` - 用戶資料模型 (待建立)
@@ -90,7 +98,12 @@ alwaysApply: true
     - [x] 1.5.4 完善測試腳本配置
     - [x] 1.5.5 驗證 CI/CD pipeline 運作
   - [x] 1.6 實作功能旗標服務基礎架構
-  - [ ] 1.7 設置監控系統（日誌收集、效能監控、錯誤追蹤）
+  - [x] 1.7 設置監控系統（日誌收集、效能監控、錯誤追蹤）
+    - [x] 1.7.1 增強日誌系統（結構化日誌、日誌分級、日誌輪轉）
+    - [x] 1.7.2 建立效能監控中間件（CPU、記憶體、響應時間監控）
+    - [x] 1.7.3 實作系統健康檢查端點
+    - [x] 1.7.4 建立錯誤追蹤和通知系統
+    - [x] 1.7.5 設置監控指標收集API
   - [ ] 1.8 建立 API 文檔框架（OpenAPI/Swagger 配置）
 
 - [ ] 2.0 用戶管理與認證系統

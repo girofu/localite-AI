@@ -1,0 +1,15 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 30
+    },
+    "auditLog": "/Users/fuchangwei/Projects/localite-v4/backend/logs/app-audit.json",
+    "files": [
+        {
+            "date": 1751389567762,
+            "name": "/Users/fuchangwei/Projects/localite-v4/backend/logs/app-2025-07-02.log",
+            "hash": "259794c542834a6148616a27fb2ecdf0de8e3d9e8e2e338964981014a1964c0d"
+        }
+    ],
+    "hashType": "sha256"
+}

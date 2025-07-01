@@ -69,7 +69,7 @@ router.get('/check', initializeMiddleware, authMiddleware, async (req, res) => {
       });
     }
 
-    const flagNames = flags.split(',').map(f => f.trim());
+    const flagNames = flags.split(',').map((f) => f.trim());
     const context = featureFlagMiddleware.extractUserContext(req);
     const results = {};
 
@@ -241,7 +241,7 @@ router.delete(
         message: error.message,
       });
     }
-  }
+  },
 );
 
 /**
@@ -281,7 +281,7 @@ router.post(
         message: error.message,
       });
     }
-  }
+  },
 );
 
 /**
@@ -324,7 +324,7 @@ router.post(
         message: error.message,
       });
     }
-  }
+  },
 );
 
 module.exports = router;

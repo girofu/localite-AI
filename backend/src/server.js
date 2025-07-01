@@ -12,6 +12,7 @@ const {
   apiLimiter,
   sanitizeInput,
 } = require('./middleware/security');
+const { performanceMonitorMiddleware } = require('./middleware/performanceMonitor');
 const swaggerSetup = require('./config/swagger');
 
 const app = express();
@@ -34,6 +35,9 @@ async function initializeApp() {
 
     // 請求記錄
     app.use(requestLogger);
+
+    // 效能監控
+    app.use(performanceMonitorMiddleware);
 
     // 速率限制
     app.use('/api/', apiLimiter);
@@ -96,7 +100,10 @@ async function initializeApp() {
 
     // API 路由
     const featureFlagRoutes = require('./routes/featureFlags');
+    const { router: monitoringRoutes } = require('./routes/monitoring');
+
     app.use('/api/v1/feature-flags', featureFlagRoutes);
+    app.use('/api/v1/monitoring', monitoringRoutes);
 
     // API 基本資訊端點
     app.get('/api/v1', (req, res) => {
@@ -105,6 +112,7 @@ async function initializeApp() {
         version: '1.0.0',
         availableEndpoints: {
           'feature-flags': '/api/v1/feature-flags',
+          monitoring: '/api/v1/monitoring',
           health: '/health',
           docs: '/api-docs',
         },

@@ -3,7 +3,7 @@
 <html lang="en">
 
 <head>
-    <title>Code coverage report for config/firebase.js</title>
+    <title>Code coverage report for middleware/performanceMonitor.js</title>
     <meta charset="utf-8" />
     <link rel="stylesheet" href="../prettify.css" />
     <link rel="stylesheet" href="../base.css" />
@@ -19,34 +19,34 @@
 <body>
 <div class='wrapper'>
     <div class='pad1'>
-        <h1><a href="../index.html">All files</a> / <a href="index.html">config</a> firebase.js</h1>
+        <h1><a href="../index.html">All files</a> / <a href="index.html">middleware</a> performanceMonitor.js</h1>
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">54.79% </span>
+                <span class="strong">87.77% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>40/73</span>
+                <span class='fraction'>79/90</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">59.37% </span>
+                <span class="strong">75% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>19/32</span>
+                <span class='fraction'>18/24</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">47.05% </span>
+                <span class="strong">77.77% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>8/17</span>
+                <span class='fraction'>14/18</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">55.55% </span>
+                <span class="strong">87.77% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>40/72</span>
+                <span class='fraction'>79/90</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line medium'></div>
+    <div class='status-line high'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -286,7 +286,87 @@
 <a name='L221'></a><a href='#L221'>221</a>
 <a name='L222'></a><a href='#L222'>222</a>
 <a name='L223'></a><a href='#L223'>223</a>
-<a name='L224'></a><a href='#L224'>224</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
+<a name='L224'></a><a href='#L224'>224</a>
+<a name='L225'></a><a href='#L225'>225</a>
+<a name='L226'></a><a href='#L226'>226</a>
+<a name='L227'></a><a href='#L227'>227</a>
+<a name='L228'></a><a href='#L228'>228</a>
+<a name='L229'></a><a href='#L229'>229</a>
+<a name='L230'></a><a href='#L230'>230</a>
+<a name='L231'></a><a href='#L231'>231</a>
+<a name='L232'></a><a href='#L232'>232</a>
+<a name='L233'></a><a href='#L233'>233</a>
+<a name='L234'></a><a href='#L234'>234</a>
+<a name='L235'></a><a href='#L235'>235</a>
+<a name='L236'></a><a href='#L236'>236</a>
+<a name='L237'></a><a href='#L237'>237</a>
+<a name='L238'></a><a href='#L238'>238</a>
+<a name='L239'></a><a href='#L239'>239</a>
+<a name='L240'></a><a href='#L240'>240</a>
+<a name='L241'></a><a href='#L241'>241</a>
+<a name='L242'></a><a href='#L242'>242</a>
+<a name='L243'></a><a href='#L243'>243</a>
+<a name='L244'></a><a href='#L244'>244</a>
+<a name='L245'></a><a href='#L245'>245</a>
+<a name='L246'></a><a href='#L246'>246</a>
+<a name='L247'></a><a href='#L247'>247</a>
+<a name='L248'></a><a href='#L248'>248</a>
+<a name='L249'></a><a href='#L249'>249</a>
+<a name='L250'></a><a href='#L250'>250</a>
+<a name='L251'></a><a href='#L251'>251</a>
+<a name='L252'></a><a href='#L252'>252</a>
+<a name='L253'></a><a href='#L253'>253</a>
+<a name='L254'></a><a href='#L254'>254</a>
+<a name='L255'></a><a href='#L255'>255</a>
+<a name='L256'></a><a href='#L256'>256</a>
+<a name='L257'></a><a href='#L257'>257</a>
+<a name='L258'></a><a href='#L258'>258</a>
+<a name='L259'></a><a href='#L259'>259</a>
+<a name='L260'></a><a href='#L260'>260</a>
+<a name='L261'></a><a href='#L261'>261</a>
+<a name='L262'></a><a href='#L262'>262</a>
+<a name='L263'></a><a href='#L263'>263</a>
+<a name='L264'></a><a href='#L264'>264</a>
+<a name='L265'></a><a href='#L265'>265</a>
+<a name='L266'></a><a href='#L266'>266</a>
+<a name='L267'></a><a href='#L267'>267</a>
+<a name='L268'></a><a href='#L268'>268</a>
+<a name='L269'></a><a href='#L269'>269</a>
+<a name='L270'></a><a href='#L270'>270</a>
+<a name='L271'></a><a href='#L271'>271</a>
+<a name='L272'></a><a href='#L272'>272</a>
+<a name='L273'></a><a href='#L273'>273</a>
+<a name='L274'></a><a href='#L274'>274</a>
+<a name='L275'></a><a href='#L275'>275</a>
+<a name='L276'></a><a href='#L276'>276</a>
+<a name='L277'></a><a href='#L277'>277</a>
+<a name='L278'></a><a href='#L278'>278</a>
+<a name='L279'></a><a href='#L279'>279</a>
+<a name='L280'></a><a href='#L280'>280</a>
+<a name='L281'></a><a href='#L281'>281</a>
+<a name='L282'></a><a href='#L282'>282</a>
+<a name='L283'></a><a href='#L283'>283</a>
+<a name='L284'></a><a href='#L284'>284</a>
+<a name='L285'></a><a href='#L285'>285</a>
+<a name='L286'></a><a href='#L286'>286</a>
+<a name='L287'></a><a href='#L287'>287</a>
+<a name='L288'></a><a href='#L288'>288</a>
+<a name='L289'></a><a href='#L289'>289</a>
+<a name='L290'></a><a href='#L290'>290</a>
+<a name='L291'></a><a href='#L291'>291</a>
+<a name='L292'></a><a href='#L292'>292</a>
+<a name='L293'></a><a href='#L293'>293</a>
+<a name='L294'></a><a href='#L294'>294</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -297,8 +377,216 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">16x</span>
+<span class="cline-any cline-yes">80x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">16x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-yes">12x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-yes">12x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">11x</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">11x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">16x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">16x</span>
+<span class="cline-any cline-yes">16x</span>
+<span class="cline-any cline-yes">16x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">16x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -306,101 +594,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">7x</span>
-<span class="cline-any cline-yes">5x</span>
-<span class="cline-any cline-yes">5x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -408,24 +602,7 @@
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -438,24 +615,20 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -463,274 +636,311 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">const admin = require('firebase-admin');
-const { logger } = require('../middleware/requestLogger');
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">const os = require('os');
+const process = require('process');
+const { createComponentLogger } = require('../config/logger');
+&nbsp;
+const logger = createComponentLogger('performance-monitor');
 &nbsp;
 /**
- * Firebase Admin 配置初始化
- * 支援多種環境配置方式：
- * 1. 生產環境：從環境變數讀取 JSON 字串
- * 2. 開發環境：從 JSON 檔案讀取或環境變數
+ * 系統效能監控器
  */
-class FirebaseConfig {
+class PerformanceMonitor {
   constructor() {
-    this.admin = null;
-    this.initialized = false;
+    this.metrics = {
+      requests: {
+        total: 0,
+        success: 0,
+        error: 0,
+        averageResponseTime: 0,
+      },
+      system: {
+        cpuUsage: 0,
+        memoryUsage: {
+          used: 0,
+          free: 0,
+          percentage: 0,
+        },
+        uptime: 0,
+      },
+      endpoints: new Map(),
+    };
+&nbsp;
+    this.startTime = Date.now();
+    this.responseTimeWindow = [];
+    this.windowSize = 100; // 保留最近 100 個請求的響應時間
+&nbsp;
+    // 每 30 秒更新系統指標
+    this.systemMetricsInterval = setInterval(<span class="fstat-no" title="function not covered" >()</span> =&gt; {
+<span class="cstat-no" title="statement not covered" >      this.updateSystemMetrics();</span>
+    }, 30000);
+&nbsp;
+    // 初始化時更新一次系統指標
+    this.updateSystemMetrics();
   }
 &nbsp;
   /**
-   * 初始化 Firebase Admin SDK
+   * 更新系統指標
    */
-  initialize() {
-    if (this.initialized) {
-      return this.admin;
-    }
-&nbsp;
+  updateSystemMetrics() {
     try {
-      // 檢查是否已經有 Firebase 應用實例
-      <span class="missing-if-branch" title="if path not taken" >I</span>if (admin.apps.length &gt; 0) {
-<span class="cstat-no" title="statement not covered" >        this.admin = admin;</span>
-<span class="cstat-no" title="statement not covered" >        this.initialized = true;</span>
-<span class="cstat-no" title="statement not covered" >        logger.info('Firebase Admin SDK 已經初始化，使用現有實例');</span>
-<span class="cstat-no" title="statement not covered" >        return this.admin;</span>
-      }
+      // CPU 使用率計算
+      const cpus = os.cpus();
+      let totalIdle = 0;
+      let totalTick = 0;
 &nbsp;
-      const serviceAccount = this.getServiceAccountConfig();
-&nbsp;
-      // 初始化 Firebase Admin
-      admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount),
-        projectId:
-          process.env.FIREBASE_PROJECT_ID
-          || process.env.GOOGLE_CLOUD_PROJECT_ID,
-        storageBucket: process.env.GOOGLE_CLOUD_STORAGE_BUCKET,
+      cpus.forEach((cpu) =&gt; {
+        Object.keys(cpu.times).forEach((type) =&gt; {
+          totalTick += cpu.times[type];
+        });
+        totalIdle += cpu.times.idle;
       });
 &nbsp;
-      this.admin = admin;
-      this.initialized = true;
+      const idle = totalIdle / cpus.length;
+      const total = totalTick / cpus.length;
+      this.metrics.system.cpuUsage = Math.round((1 - idle / total) * 100);
 &nbsp;
-      logger.info('Firebase Admin SDK 初始化成功', {
-        projectId:
-          process.env.FIREBASE_PROJECT_ID
-          || process.env.GOOGLE_CLOUD_PROJECT_ID,
-        hasStorageBucket: !!process.env.GOOGLE_CLOUD_STORAGE_BUCKET,
-      });
+      // 記憶體使用率
+      const totalMemory = os.totalmem();
+      const freeMemory = os.freemem();
+      const usedMemory = totalMemory - freeMemory;
 &nbsp;
-      return this.admin;
-    } catch (error) {
-      const errorMessage = <span class="cstat-no" title="statement not covered" >error instanceof Error ? error.message : '未知錯誤';</span>
-<span class="cstat-no" title="statement not covered" >      logger.error('Firebase Admin SDK 初始化失敗', {</span>
-        error: errorMessage,
-        projectId: process.env.FIREBASE_PROJECT_ID,
-        hasPrivateKey: !!process.env.FIREBASE_PRIVATE_KEY,
-      });
-<span class="cstat-no" title="statement not covered" >      throw new Error(`Firebase 初始化失敗: ${errorMessage}`);</span>
-    }
-  }
-&nbsp;
-  /**
-   * 獲取服務帳戶配置
-   * 優先級：環境變數 &gt; JSON 檔案
-   */
-  getServiceAccountConfig() {
-    // 方法 1: 從環境變數讀取完整的 JSON 字串（生產環境推薦）
-    if (process.env.FIREBASE_ADMIN_SDK_KEY) {
-      try {
-        return JSON.parse(process.env.FIREBASE_ADMIN_SDK_KEY);
-      } catch (error) {
-        logger.warn('FIREBASE_ADMIN_SDK_KEY 格式錯誤，嘗試其他配置方式');
-      }
-    }
-&nbsp;
-    // 方法 2: 從分散的環境變數構建配置物件
-    if (process.env.FIREBASE_PRIVATE_KEY &amp;&amp; process.env.FIREBASE_CLIENT_EMAIL) {
-      return {
-        type: 'service_account',
-        project_id: process.env.FIREBASE_PROJECT_ID,
-        private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
-        private_key: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
-        client_email: process.env.FIREBASE_CLIENT_EMAIL,
-        client_id: process.env.FIREBASE_CLIENT_ID,
-        auth_uri:
-          process.env.FIREBASE_AUTH_URI
-          || 'https://accounts.google.com/oauth2/auth',
-        token_uri:
-          process.env.FIREBASE_TOKEN_URI
-          || 'https://oauth2.googleapis.com/token',
-        auth_provider_x509_cert_url:
-          'https://www.googleapis.com/oauth2/v1/certs',
-        client_x509_cert_url: `https://www.googleapis.com/robot/v1/metadata/x509/${encodeURIComponent(
-          process.env.FIREBASE_CLIENT_EMAIL,
-        )}`,
+      this.metrics.system.memoryUsage = {
+        used: Math.round(usedMemory / 1024 / 1024), // MB
+        free: Math.round(freeMemory / 1024 / 1024), // MB
+        total: Math.round(totalMemory / 1024 / 1024), // MB
+        percentage: Math.round((usedMemory / totalMemory) * 100),
       };
-    }
 &nbsp;
-    // 方法 3: 從 JSON 檔案讀取（開發環境）
-    <span class="missing-if-branch" title="if path not taken" >I</span>if (process.env.GOOGLE_CLOUD_KEY_FILE) {
-<span class="cstat-no" title="statement not covered" >      try {</span>
-<span class="cstat-no" title="statement not covered" >        return require(process.env.GOOGLE_CLOUD_KEY_FILE);</span>
-      } catch (error) {
-<span class="cstat-no" title="statement not covered" >        logger.warn('無法從檔案載入 Firebase 配置', {</span>
-          file: process.env.GOOGLE_CLOUD_KEY_FILE,
+      // 系統運行時間
+      this.metrics.system.uptime = Math.round(os.uptime());
+&nbsp;
+      // 記錄高使用率警告
+      <span class="missing-if-branch" title="if path not taken" >I</span>if (this.metrics.system.cpuUsage &gt; 80) {
+<span class="cstat-no" title="statement not covered" >        logger.warn('高 CPU 使用率檢測', {</span>
+          cpuUsage: this.metrics.system.cpuUsage,
+          threshold: 80,
         });
       }
-    }
 &nbsp;
-    // 開發環境預設路徑
-    const defaultPaths = [
-      '../../config/firebase-service-account.json',
-      '../../../config/firebase-service-account.json',
-    ];
-&nbsp;
-    for (const path of defaultPaths) {
-      try {
-        return require(path);
-      } catch (error) {
-        // 繼續嘗試下一個路徑
+      <span class="missing-if-branch" title="else path not taken" >E</span>if (this.metrics.system.memoryUsage.percentage &gt; 85) {
+        logger.warn('高記憶體使用率檢測', {
+          memoryUsage: this.metrics.system.memoryUsage,
+          threshold: 85,
+        });
       }
-    }
-&nbsp;
-    throw new Error('無法載入 Firebase 服務帳戶配置，請檢查環境變數或配置檔案');
-  }
-&nbsp;
-  /**
-   * 獲取 Firebase Admin 實例
-   */
-  getAdmin() {
-    <span class="missing-if-branch" title="else path not taken" >E</span>if (!this.initialized) {
-      return this.initialize();
-    }
-<span class="cstat-no" title="statement not covered" >    return this.admin;</span>
-  }
-&nbsp;
-  /**
-   * 獲取 Authentication 服務
-   */
-  getAuth() {
-    const admin = this.getAdmin();
-    return admin.auth();
-  }
-&nbsp;
-  /**
-   * 獲取 Firestore 服務
-   */
-<span class="fstat-no" title="function not covered" >  ge</span>tFirestore() {
-    const admin = <span class="cstat-no" title="statement not covered" >this.getAdmin();</span>
-<span class="cstat-no" title="statement not covered" >    return admin.firestore();</span>
-  }
-&nbsp;
-  /**
-   * 獲取 Storage 服務
-   */
-<span class="fstat-no" title="function not covered" >  ge</span>tStorage() {
-    const admin = <span class="cstat-no" title="statement not covered" >this.getAdmin();</span>
-<span class="cstat-no" title="statement not covered" >    return admin.storage();</span>
-  }
-&nbsp;
-  /**
-   * 獲取 Cloud Messaging 服務
-   */
-<span class="fstat-no" title="function not covered" >  ge</span>tMessaging() {
-    const admin = <span class="cstat-no" title="statement not covered" >this.getAdmin();</span>
-<span class="cstat-no" title="statement not covered" >    return admin.messaging();</span>
-  }
-&nbsp;
-  /**
-   * 驗證 Firebase 配置是否正確
-   */
-  async validateConfig() {
-    try {
-      const admin = this.getAdmin();
-      const auth = admin.auth();
-&nbsp;
-      // 嘗試獲取用戶列表來驗證配置
-      await auth.listUsers(1);
-&nbsp;
-      logger.info('Firebase 配置驗證成功');
-      return true;
     } catch (error) {
-      const errorMessage = <span class="cstat-no" title="statement not covered" >error instanceof Error ? error.message : '未知錯誤';</span>
-<span class="cstat-no" title="statement not covered" >      logger.error('Firebase 配置驗證失敗', { error: errorMessage });</span>
-<span class="cstat-no" title="statement not covered" >      return false;</span>
+<span class="cstat-no" title="statement not covered" >      logger.error('更新系統指標失敗', { error: error.message });</span>
     }
+  }
+&nbsp;
+  /**
+   * 記錄請求指標
+   */
+  recordRequest(req, res, responseTime) {
+    this.metrics.requests.total += 1;
+&nbsp;
+    if (res.statusCode &gt;= 200 &amp;&amp; res.statusCode &lt; 400) {
+      this.metrics.requests.success += 1;
+    } else {
+      this.metrics.requests.error += 1;
+    }
+&nbsp;
+    // 更新響應時間
+    this.responseTimeWindow.push(responseTime);
+    <span class="missing-if-branch" title="if path not taken" >I</span>if (this.responseTimeWindow.length &gt; this.windowSize) {
+<span class="cstat-no" title="statement not covered" >      this.responseTimeWindow.shift();</span>
+    }
+&nbsp;
+    // 計算平均響應時間
+    this.metrics.requests.averageResponseTime = Math.round(
+      this.responseTimeWindow.reduce((a, b) =&gt; a + b, 0) / this.responseTimeWindow.length,
+    );
+&nbsp;
+    // 記錄端點指標
+    const endpoint = `${req.method} ${req.route?.path || req.path}`;
+    if (!this.metrics.endpoints.has(endpoint)) {
+      this.metrics.endpoints.set(endpoint, {
+        count: 0,
+        averageResponseTime: 0,
+        responseTimes: [],
+        errors: 0,
+      });
+    }
+&nbsp;
+    const endpointMetrics = this.metrics.endpoints.get(endpoint);
+    endpointMetrics.count += 1;
+    endpointMetrics.responseTimes.push(responseTime);
+&nbsp;
+    // 保留最近 50 個請求的響應時間
+    <span class="missing-if-branch" title="if path not taken" >I</span>if (endpointMetrics.responseTimes.length &gt; 50) {
+<span class="cstat-no" title="statement not covered" >      endpointMetrics.responseTimes.shift();</span>
+    }
+&nbsp;
+    endpointMetrics.averageResponseTime = Math.round(
+      endpointMetrics.responseTimes.reduce((a, b) =&gt; a + b, 0)
+        / endpointMetrics.responseTimes.length,
+    );
+&nbsp;
+    if (res.statusCode &gt;= 400) {
+      endpointMetrics.errors += 1;
+    }
+&nbsp;
+    // 記錄慢請求警告
+    if (responseTime &gt; 3000) {
+      logger.warn('慢請求檢測', {
+        method: req.method,
+        url: req.originalUrl,
+        responseTime: `${responseTime}ms`,
+        statusCode: res.statusCode,
+        userAgent: req.get('User-Agent'),
+      });
+    }
+  }
+&nbsp;
+  /**
+   * 獲取當前指標
+   */
+  getMetrics() {
+    const endpointsArray = Array.from(this.metrics.endpoints.entries()).map(
+      ([endpoint, metrics]) =&gt; ({
+        endpoint,
+        ...metrics,
+        responseTimes: undefined, // 不返回詳細的響應時間陣列
+      }),
+    );
+&nbsp;
+    return {
+      ...this.metrics,
+      endpoints: endpointsArray,
+      timestamp: new Date().toISOString(),
+      applicationUptime: Math.round((Date.now() - this.startTime) / 1000),
+    };
+  }
+&nbsp;
+  /**
+   * 重置指標
+   */
+  resetMetrics() {
+    this.metrics.requests = {
+      total: 0,
+      success: 0,
+      error: 0,
+      averageResponseTime: 0,
+    };
+    this.metrics.endpoints.clear();
+    this.responseTimeWindow = [];
+    this.startTime = Date.now();
+&nbsp;
+    logger.info('效能指標已重置');
   }
 &nbsp;
   /**
    * 清理資源
    */
-<span class="fstat-no" title="function not covered" >  as</span>ync cleanup() {
-<span class="cstat-no" title="statement not covered" >    try {</span>
-<span class="cstat-no" title="statement not covered" >      if (this.initialized &amp;&amp; this.admin) {</span>
-<span class="cstat-no" title="statement not covered" >        await Promise.all(this.admin.apps.map(<span class="fstat-no" title="function not covered" >(a</span>pp) =&gt; <span class="cstat-no" title="statement not covered" >app.delete())</span>);</span>
-<span class="cstat-no" title="statement not covered" >        this.initialized = false;</span>
-<span class="cstat-no" title="statement not covered" >        this.admin = null;</span>
-<span class="cstat-no" title="statement not covered" >        logger.info('Firebase Admin SDK 資源清理完成');</span>
-      }
-    } catch (error) {
-      const errorMessage = <span class="cstat-no" title="statement not covered" >error instanceof Error ? error.message : '未知錯誤';</span>
-<span class="cstat-no" title="statement not covered" >      logger.error('Firebase 資源清理失敗', { error: errorMessage });</span>
+<span class="fstat-no" title="function not covered" >  cl</span>eanup() {
+<span class="cstat-no" title="statement not covered" >    if (this.systemMetricsInterval) {</span>
+<span class="cstat-no" title="statement not covered" >      clearInterval(this.systemMetricsInterval);</span>
     }
   }
 }
 &nbsp;
-// 建立單例實例
-const firebaseConfig = new FirebaseConfig();
+// 全域 monitor 實例
+const monitor = new PerformanceMonitor();
 &nbsp;
-// 導出常用的服務實例
+/**
+ * 效能監控中間件
+ */
+const performanceMonitorMiddleware = (req, res, next) =&gt; {
+  const startTime = Date.now();
+&nbsp;
+  // 監聽響應結束
+  res.on('finish', () =&gt; {
+    const responseTime = Date.now() - startTime;
+&nbsp;
+    // 記錄請求指標
+    monitor.recordRequest(req, res, responseTime);
+&nbsp;
+    // 記錄詳細的效能日誌
+    logger.http('請求效能記錄', {
+      method: req.method,
+      url: req.originalUrl,
+      statusCode: res.statusCode,
+      responseTime: `${responseTime}ms`,
+      contentLength: res.get('Content-Length') || 0,
+      userAgent: req.get('User-Agent'),
+      ip: req.ip,
+    });
+  });
+&nbsp;
+  next();
+};
+&nbsp;
+/**
+ * 獲取效能指標的 API 端點處理器
+ */
+const getPerformanceMetrics = (req, res) =&gt; {
+  try {
+    const metrics = monitor.getMetrics();
+    res.json({
+      success: true,
+      data: metrics,
+    });
+  } catch (error) {
+    logger.error('獲取效能指標失敗', { error: error.message });
+    res.status(500).json({
+      success: false,
+      error: '獲取效能指標失敗',
+    });
+  }
+};
+&nbsp;
+/**
+ * 重置效能指標的 API 端點處理器
+ */
+const resetPerformanceMetrics = (req, res) =&gt; {
+  try {
+    monitor.resetMetrics();
+    res.json({
+      success: true,
+      message: '效能指標已重置',
+    });
+  } catch (error) {
+<span class="cstat-no" title="statement not covered" >    logger.error('重置效能指標失敗', { error: error.message });</span>
+<span class="cstat-no" title="statement not covered" >    res.status(500).json({</span>
+      success: false,
+      error: '重置效能指標失敗',
+    });
+  }
+};
+&nbsp;
+// 優雅關閉時清理資源
+process.on('SIGTERM', <span class="fstat-no" title="function not covered" >()</span> =&gt; {
+<span class="cstat-no" title="statement not covered" >  monitor.cleanup();</span>
+});
+&nbsp;
+process.on('SIGINT', <span class="fstat-no" title="function not covered" >()</span> =&gt; {
+<span class="cstat-no" title="statement not covered" >  monitor.cleanup();</span>
+});
+&nbsp;
 module.exports = {
-  firebaseConfig,
-  getAuth: () =&gt; firebaseConfig.getAuth(),
-  getFirestore: <span class="fstat-no" title="function not covered" >()</span> =&gt; <span class="cstat-no" title="statement not covered" >firebaseConfig.getFirestore(),</span>
-  getStorage: <span class="fstat-no" title="function not covered" >()</span> =&gt; <span class="cstat-no" title="statement not covered" >firebaseConfig.getStorage(),</span>
-  getMessaging: <span class="fstat-no" title="function not covered" >()</span> =&gt; <span class="cstat-no" title="statement not covered" >firebaseConfig.getMessaging(),</span>
-  validateConfig: () =&gt; firebaseConfig.validateConfig(),
-  cleanup: <span class="fstat-no" title="function not covered" >()</span> =&gt; <span class="cstat-no" title="statement not covered" >firebaseConfig.cleanup(),</span>
+  performanceMonitorMiddleware,
+  getPerformanceMetrics,
+  resetPerformanceMetrics,
+  monitor,
 };
 &nbsp;</pre></td></tr></table></pre>
 
@@ -739,7 +949,7 @@ module.exports = {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-07-01T17:28:24.840Z
+                at 2025-07-01T17:28:24.867Z
             </div>
         <script src="../prettify.js"></script>
         <script>

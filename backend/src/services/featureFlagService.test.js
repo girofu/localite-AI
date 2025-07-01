@@ -203,7 +203,7 @@ describe('FeatureFlagService', () => {
 
     test('更新不存在的旗標應該拋出錯誤', async () => {
       await expect(
-        featureFlagService.updateFlag('non_existent', { enabled: true })
+        featureFlagService.updateFlag('non_existent', { enabled: true }),
       ).rejects.toThrow('功能旗標不存在: non_existent');
     });
 
@@ -217,7 +217,7 @@ describe('FeatureFlagService', () => {
 
     test('刪除不存在的旗標應該拋出錯誤', async () => {
       await expect(featureFlagService.deleteFlag('non_existent')).rejects.toThrow(
-        '功能旗標不存在: non_existent'
+        '功能旗標不存在: non_existent',
       );
     });
   });
@@ -265,7 +265,7 @@ describe('FeatureFlagService', () => {
       expect(isEnabled).toBe(false);
       expect(mockLogger.error).toHaveBeenCalledWith(
         '評估功能旗標失敗 ai_tour_generation:',
-        'Evaluation error'
+        'Evaluation error',
       );
 
       // 恢復原始方法

@@ -30,7 +30,7 @@ const createMockRequest = (overrides = {}) => ({
   headers: {},
   ip: '127.0.0.1',
   connection: { remoteAddress: '127.0.0.1' },
-  get: jest.fn(header => {
+  get: jest.fn((header) => {
     if (header === 'User-Agent') return 'test-agent';
     return null;
   }),
