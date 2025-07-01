@@ -1,104 +1,66 @@
 {
-  "name": "localite-v3",
+  "name": "localite-v4",
   "version": "1.0.0",
-  "description": "在地人 AI 導覽系統 - 智能旅遊導覽平台",
+  "description": "Localite AI Tour Guide System - V4",
   "private": true,
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
-  "engines": {
-    "node": ">=18.0.0",
-    "npm": ">=8.0.0"
-  },
   "scripts": {
-    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:web\" \"npm run dev:mobile\"",
-    "dev:backend": "npm run dev --workspace=@localite/backend",
-    "dev:web": "npm run dev --workspace=@localite/web",
-    "dev:mobile": "npm run dev --workspace=@localite/mobile",
-    "build": "npm run build --workspaces",
-    "build:backend": "npm run build --workspace=@localite/backend",
-    "build:web": "npm run build --workspace=@localite/web",
-    "build:mobile": "npm run build --workspace=@localite/mobile",
-    "test": "npm run test --workspaces",
-    "test:watch": "npm run test:watch --workspaces",
-    "test:coverage": "npm run test:coverage --workspaces",
-    "lint": "eslint . --ext .ts,.tsx,.js,.jsx",
-    "lint:fix": "eslint . --ext .ts,.tsx,.js,.jsx --fix",
-    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
-    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
-    "clean": "rimraf node_modules && npm run clean --workspaces",
-    "prepare": "husky install",
-    "bootstrap": "npm install --workspaces",
-    "docker:build": "docker-compose build",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:web\"",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:web": "cd frontend/web && npm start",
+    "dev:mobile": "cd frontend/mobile && npm start",
+    "build": "npm run build:backend && npm run build:web",
+    "build:backend": "cd backend && npm run build",
+    "build:web": "cd frontend/web && npm run build",
+    "test": "npm run test:backend && npm run test:web",
+    "test:backend": "cd backend && npm test",
+    "test:web": "cd frontend/web && npm test -- --watchAll=false",
+    "test:mobile": "cd frontend/mobile && npm test",
+    "install:all": "npm install && npm run install:backend && npm run install:web && npm run install:mobile",
+    "install:backend": "cd backend && npm install",
+    "install:web": "cd frontend/web && npm install",
+    "install:mobile": "cd frontend/mobile && npm install",
+    "lint": "npm run lint:backend && npm run lint:web",
+    "lint:backend": "cd backend && npm run lint",
+    "lint:web": "cd frontend/web && npm run lint",
+    "lint:mobile": "cd frontend/mobile && npm run lint",
+    "start": "npm run dev",
     "docker:up": "docker-compose up -d",
     "docker:down": "docker-compose down",
-    "docker:logs": "docker-compose logs -f",
-    "setup:env": "node tools/scripts/setup-env.js",
-    "setup:dev": "bash tools/scripts/dev-setup.sh",
-    "setup:quick": "npm install && npm run setup:env",
-    "setup:gcp": "bash tools/scripts/setup-gcp-firebase.sh",
-    "setup:firebase": "node tools/scripts/update-firebase-config.js",
-    "tracker:init": "node tools/project-tracker/index.js init",
-    "tracker:status": "node tools/project-tracker/index.js status",
-    "tracker:report": "node tools/project-tracker/index.js report",
-    "tracker:update": "node tools/project-tracker/index.js update",
-    "tracker:analyze": "node tools/project-tracker/index.js analyze",
-    "tracker:example": "node tools/project-tracker/examples/usage-example.js"
+    "docker:logs": "docker-compose logs -f"
   },
+  "workspaces": [
+    "backend",
+    "frontend/web",
+    "frontend/mobile"
+  ],
   "devDependencies": {
-    "@react-native-community/eslint-config": "^3.2.0",
-    "@typescript-eslint/eslint-plugin": "^6.21.0",
-    "@typescript-eslint/parser": "^6.21.0",
-    "concurrently": "^8.2.0",
-    "eslint": "^8.45.0",
-    "eslint-config-prettier": "^9.0.0",
-    "eslint-import-resolver-typescript": "^4.4.3",
-    "eslint-plugin-import": "^2.28.0",
-    "eslint-plugin-jsx-a11y": "^6.7.0",
-    "eslint-plugin-react": "^7.33.0",
-    "eslint-plugin-react-hooks": "^4.6.0",
-    "eslint-plugin-react-native": "^4.1.0",
+    "concurrently": "^8.2.2",
     "husky": "^8.0.3",
-    "jest": "^29.6.0",
-    "lint-staged": "^13.2.3",
-    "prettier": "^3.0.0",
-    "rimraf": "^5.0.1",
-    "typescript": "^5.1.6"
-  },
-  "resolutions": {
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "@types/react": "^18.3.0"
-  },
-  "overrides": {
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "@types/react": "^18.3.0"
+    "lint-staged": "^15.2.0"
   },
   "lint-staged": {
-    "*.{ts,tsx,js,jsx}": [
-      "eslint --fix",
-      "prettier --write"
-    ],
-    "*.{json,md}": [
-      "prettier --write"
-    ]
+    "*.{js,jsx,ts,tsx}": ["eslint --fix", "prettier --write"],
+    "*.{json,md,css}": ["prettier --write"]
   },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "author": "Localite Team",
+  "license": "MIT",
   "keywords": [
     "ai",
-    "tourism",
-    "guide",
+    "tour-guide",
+    "travel",
+    "localization",
     "react",
     "react-native",
-    "nodejs",
-    "mongodb",
-    "gpt",
-    "vertex-ai"
-  ],
-  "author": "Localite Team",
-  "license": "ISC",
-  "dependencies": {
-    "firebase": "^11.9.0"
-  }
-}
+    "node.js",
+    "express"
+  ]
+} 

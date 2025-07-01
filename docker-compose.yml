@@ -1,129 +1,108 @@
 version: '3.8'
 
 services:
-  # MongoDB - 主要資料庫
+  # MongoDB 主資料庫
   mongodb:
     image: mongo:7.0
     container_name: localite-mongodb
     restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+      MONGO_INITDB_DATABASE: localite
     ports:
       - "27017:27017"
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: localite
-      MONGO_INITDB_ROOT_PASSWORD: localite123
-      MONGO_INITDB_DATABASE: localite
     volumes:
       - mongodb_data:/data/db
-      - ./tools/docker/mongodb/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+      - ./scripts/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
     networks:
       - localite-network
 
-  # Redis - 快取服務
-  redis:
-    image: redis:7-alpine
-    container_name: localite-redis
-    restart: unless-stopped
-    ports:
-      - "6379:6379"
-    command: redis-server --appendonly yes --requirepass localite123
-    volumes:
-      - redis_data:/data
-    networks:
-      - localite-network
-
-  # MySQL - 交易資料庫
+  # MySQL 交易資料庫
   mysql:
     image: mysql:8.0
     container_name: localite-mysql
     restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: localite
+      MYSQL_USER: localite
+      MYSQL_PASSWORD: password
     ports:
       - "3306:3306"
-    environment:
-      MYSQL_ROOT_PASSWORD: localite123
-      MYSQL_DATABASE: localite_transactions
-      MYSQL_USER: localite
-      MYSQL_PASSWORD: localite123
     volumes:
       - mysql_data:/var/lib/mysql
-      - ./tools/docker/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - ./scripts/mysql-init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     networks:
       - localite-network
 
-  # RabbitMQ - 消息隊列 (選用)
-  rabbitmq:
-    image: rabbitmq:3.12-management-alpine
-    container_name: localite-rabbitmq
+  # Redis 快取
+  redis:
+    image: redis:7.2-alpine
+    container_name: localite-redis
     restart: unless-stopped
     ports:
-      - "5672:5672"
-      - "15672:15672"  # 管理界面
-    environment:
-      RABBITMQ_DEFAULT_USER: localite
-      RABBITMQ_DEFAULT_PASS: localite123
+      - "6379:6379"
     volumes:
-      - rabbitmq_data:/var/lib/rabbitmq
+      - redis_data:/data
+    command: redis-server --appendonly yes
     networks:
       - localite-network
 
-  # MinIO - 本地對象存儲 (替代 Google Cloud Storage 用於開發)
-  minio:
-    image: minio/minio:latest
-    container_name: localite-minio
+  # Redis Commander (Redis GUI)
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: localite-redis-commander
     restart: unless-stopped
-    ports:
-      - "9000:9000"
-      - "9001:9001"  # 管理界面
     environment:
-      MINIO_ROOT_USER: localite
-      MINIO_ROOT_PASSWORD: localite123
-    command: server /data --console-address ":9001"
-    volumes:
-      - minio_data:/data
+      REDIS_HOSTS: local:redis:6379
+    ports:
+      - "8081:8081"
     networks:
       - localite-network
+    depends_on:
+      - redis
 
-  # 後端 API (開發時)
-  backend:
-    build:
-      context: .
-      dockerfile: apps/backend/Dockerfile
-    container_name: localite-backend
+  # phpMyAdmin (MySQL GUI)
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: localite-phpmyadmin
     restart: unless-stopped
-    ports:
-      - "3000:3000"
     environment:
-      NODE_ENV: development
-      PORT: 3000
-      MONGODB_URI: mongodb://localite:localite123@mongodb:27017/localite?authSource=admin
-      REDIS_URL: redis://:localite123@redis:6379
-      MYSQL_HOST: mysql
-      MYSQL_PORT: 3306
-      MYSQL_DATABASE: localite_transactions
-      MYSQL_USERNAME: localite
-      MYSQL_PASSWORD: localite123
-      RABBITMQ_URL: amqp://localite:localite123@rabbitmq:5672
-      MINIO_ENDPOINT: minio
-      MINIO_PORT: 9000
-      MINIO_ACCESS_KEY: localite
-      MINIO_SECRET_KEY: localite123
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_USER: root
+      PMA_PASSWORD: rootpassword
+    ports:
+      - "8080:80"
+    networks:
+      - localite-network
+    depends_on:
+      - mysql
+
+  # Mongo Express (MongoDB GUI)
+  mongo-express:
+    image: mongo-express:1.0.0-alpha
+    container_name: localite-mongo-express
+    restart: unless-stopped
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: admin
+      ME_CONFIG_MONGODB_ADMINPASSWORD: password
+      ME_CONFIG_MONGODB_URL: mongodb://admin:password@mongodb:27017/
+    ports:
+      - "8082:8081"
+    networks:
+      - localite-network
     depends_on:
       - mongodb
-      - redis
-      - mysql
-    volumes:
-      - ./apps/backend:/app
-      - /app/node_modules
-    networks:
-      - localite-network
-    profiles:
-      - backend
 
 volumes:
   mongodb_data:
-  redis_data:
+    driver: local
   mysql_data:
-  rabbitmq_data:
-  minio_data:
+    driver: local
+  redis_data:
+    driver: local
 
 networks:
   localite-network:
