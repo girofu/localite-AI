@@ -42,7 +42,7 @@ flowchart TD
     end
     
     subgraph AI["AI服務層"]
-        GPT[GPT API Service]
+        Google Ai studio[Gemini API Service]
         TTS[語音合成服務]
     end
     
@@ -71,7 +71,7 @@ flowchart TD
     API --> App
     App --> Queue
     App --> Cache
-    App --> GPT
+    App --> Gemini
     App --> TTS
     App --> MongoDB
     App --> MySQL
@@ -137,7 +137,7 @@ sequenceDiagram
         Cache-->>API: 返回快取內容
         API-->>App: 返回導覽內容
     else 快取未命中
-        API->>AI: 調用GPT
+        API->>AI: 調用Gemini
         AI->>DB: 獲取內容
         AI-->>API: 生成導覽內容
         API->>Cache: 存入快取
@@ -188,9 +188,9 @@ sequenceDiagram
 
 **AI 服務：**
 
-- GPT API：用於導覽內容生成
+- Google AI studio API：用於導覽內容生成
 
-- 語音合成：Azure Speech Service 或 Google Cloud TTS
+- 語音合成：Google Cloud TTS
 
 **付款服務：**
 
@@ -276,7 +276,7 @@ POST /api/v1/payments               # 創建支付
 
 - 使用 Firebase Auth 簡化認證開發
 
-- GPT API 整合 + 語音合成
+- Google AI studio API 整合 + 語音合成
 
 - 簡化的內容管理系統
 
