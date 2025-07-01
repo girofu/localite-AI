@@ -26,6 +26,16 @@ Guidelines for managing task lists in markdown files to track progress on comple
         git commit -m "feat: add payment validation logic" -m "- Validates card type and expiry" -m "- Adds unit tests for edge cases" -m "Related to T123 in PRD"
         ```
   3. Once all the subtasks are marked completed and changes have been committed, mark the **parent task** as completed.
+  4. **Knowledge Base Update**: After completing a parent task, ask the user: "在完成此任務過程中是否遇到需要記錄的錯誤與修正經驗？是否要更新 @fyi.mdc 文件？"
+    - If the user agrees, add a new section to `.cursor/rules/fyi.mdc` with:
+      - **Date and task context**: e.g., `## 錯誤修正記錄 (YYYY-MM-DD) - 任務 X.X [Task Name]`
+      - **Error documentation**: For each significant error encountered:
+        - **錯誤現象**: Exact error message or behavior observed
+        - **原因**: Root cause analysis of why the error occurred  
+        - **解決方案**: Step-by-step solution with code examples
+        - **相關影響**: Any side effects or related issues discovered
+      - **Best practices summary**: Key learnings and recommendations for future development
+    - Follow this format for consistency with existing error records in fyi.mdc
 - Stop after each sub‑task and wait for the user's go‑ahead.
 
 ## Task List Maintenance

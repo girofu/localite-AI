@@ -1,5 +1,5 @@
-const { getMessaging } = require("../config/firebase");
-const { logger } = require("../middleware/requestLogger");
+const { getMessaging } = require('../config/firebase');
+const { logger } = require('../middleware/requestLogger');
 
 /**
  * Firebase Cloud Messaging 服務類別
@@ -24,14 +24,14 @@ class MessagingService {
       this.messaging = getMessaging();
       this.initialized = true;
 
-      logger.info("Firebase Cloud Messaging 初始化成功");
+      logger.info('Firebase Cloud Messaging 初始化成功');
       return this.messaging;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "未知錯誤";
-      logger.error("Firebase Cloud Messaging 初始化失敗", {
+      const errorMessage = error instanceof Error ? error.message : '未知錯誤';
+      logger.error('Firebase Cloud Messaging 初始化失敗', {
         error: errorMessage,
       });
-      throw new Error("推播服務不可用");
+      throw new Error('推播服務不可用');
     }
   }
 
@@ -39,13 +39,13 @@ class MessagingService {
    * 驗證設備 token 格式
    */
   validateToken(token) {
-    if (!token || typeof token !== "string") {
-      throw new Error("設備 token 不能為空");
+    if (!token || typeof token !== 'string') {
+      throw new Error('設備 token 不能為空');
     }
 
     // FCM token 通常很長且包含特定字符
     if (token.length < 50) {
-      throw new Error("設備 token 格式不正確");
+      throw new Error('設備 token 格式不正確');
     }
 
     return true;
@@ -56,20 +56,20 @@ class MessagingService {
    */
   validateNotification(notification) {
     if (!notification) {
-      throw new Error("通知內容不能為空");
+      throw new Error('通知內容不能為空');
     }
 
     if (!notification.title && !notification.body) {
-      throw new Error("通知必須包含標題或內容");
+      throw new Error('通知必須包含標題或內容');
     }
 
     // 檢查字符限制
     if (notification.title && notification.title.length > 200) {
-      throw new Error("通知標題過長，最多 200 字符");
+      throw new Error('通知標題過長，最多 200 字符');
     }
 
     if (notification.body && notification.body.length > 4000) {
-      throw new Error("通知內容過長，最多 4000 字符");
+      throw new Error('通知內容過長，最多 4000 字符');
     }
 
     return true;
@@ -89,7 +89,7 @@ class MessagingService {
     this.notificationHistory.set(notificationId, {
       ...data,
       createdAt: new Date().toISOString(),
-      status: "sent",
+      status: 'sent',
     });
 
     // 限制歷史記錄數量（防止內存溢出）
@@ -111,7 +111,7 @@ class MessagingService {
       this.validateNotification(notification);
 
       const {
-        priority = "high",
+        priority = 'high',
         timeToLive = 3600, // 1小時
         collapseKey = null,
         dryRun = false,
@@ -119,7 +119,7 @@ class MessagingService {
 
       // 構建消息對象
       const message = {
-        token: token,
+        token,
         notification: {
           title: notification.title,
           body: notification.body,
@@ -127,21 +127,21 @@ class MessagingService {
         },
         ...(Object.keys(data).length > 0 && { data }),
         android: {
-          priority: priority,
+          priority,
           ttl: timeToLive * 1000, // Android 使用毫秒
           ...(collapseKey && { collapseKey }),
           notification: {
-            icon: notification.icon || "ic_notification",
-            color: notification.color || "#2196F3",
-            sound: notification.sound || "default",
+            icon: notification.icon || 'ic_notification',
+            color: notification.color || '#2196F3',
+            sound: notification.sound || 'default',
             clickAction:
-              notification.clickAction || "FLUTTER_NOTIFICATION_CLICK",
+              notification.clickAction || 'FLUTTER_NOTIFICATION_CLICK',
           },
         },
         apns: {
           headers: {
-            "apns-priority": priority === "high" ? "10" : "5",
-            "apns-expiration": Math.floor(Date.now() / 1000) + timeToLive,
+            'apns-priority': priority === 'high' ? '10' : '5',
+            'apns-expiration': Math.floor(Date.now() / 1000) + timeToLive,
           },
           payload: {
             aps: {
@@ -150,7 +150,7 @@ class MessagingService {
                 body: notification.body,
               },
               badge: notification.badge || 1,
-              sound: notification.sound || "default",
+              sound: notification.sound || 'default',
             },
           },
         },
@@ -161,7 +161,7 @@ class MessagingService {
           notification: {
             title: notification.title,
             body: notification.body,
-            icon: notification.icon || "/icon-192x192.png",
+            icon: notification.icon || '/icon-192x192.png',
             image: notification.imageUrl,
             requireInteraction: notification.requireInteraction || false,
             actions: notification.actions || [],
@@ -175,18 +175,18 @@ class MessagingService {
       // 記錄成功
       const notificationId = this.generateNotificationId();
       this.recordNotification(notificationId, {
-        type: "single",
-        token: token,
+        type: 'single',
+        token,
         notification,
         data,
         messageId: response,
         dryRun,
       });
 
-      logger.info("推播通知發送成功", {
+      logger.info('推播通知發送成功', {
         notificationId,
         messageId: response,
-        token: token.substring(0, 20) + "...",
+        token: `${token.substring(0, 20)}...`,
         dryRun,
       });
 
@@ -196,22 +196,22 @@ class MessagingService {
         notificationId,
       };
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "發送失敗";
+      const errorMessage = error instanceof Error ? error.message : '發送失敗';
 
       // 記錄錯誤類型
-      let errorType = "unknown";
-      if (error.code === "messaging/registration-token-not-registered") {
-        errorType = "invalid_token";
-      } else if (error.code === "messaging/invalid-argument") {
-        errorType = "invalid_argument";
-      } else if (error.code === "messaging/quota-exceeded") {
-        errorType = "quota_exceeded";
+      let errorType = 'unknown';
+      if (error.code === 'messaging/registration-token-not-registered') {
+        errorType = 'invalid_token';
+      } else if (error.code === 'messaging/invalid-argument') {
+        errorType = 'invalid_argument';
+      } else if (error.code === 'messaging/quota-exceeded') {
+        errorType = 'quota_exceeded';
       }
 
-      logger.error("推播通知發送失敗", {
+      logger.error('推播通知發送失敗', {
         error: errorMessage,
         errorType,
-        token: token ? token.substring(0, 20) + "..." : "unknown",
+        token: token ? `${token.substring(0, 20)}...` : 'unknown',
       });
 
       throw new Error(`通知發送失敗: ${errorMessage}`);
@@ -227,22 +227,22 @@ class MessagingService {
 
       // 驗證輸入
       if (!Array.isArray(tokens) || tokens.length === 0) {
-        throw new Error("設備 token 列表不能為空");
+        throw new Error('設備 token 列表不能為空');
       }
 
       if (tokens.length > 500) {
-        throw new Error("批量發送最多支持 500 個設備");
+        throw new Error('批量發送最多支持 500 個設備');
       }
 
       // 驗證每個 token
       tokens.forEach((token) => this.validateToken(token));
       this.validateNotification(notification);
 
-      const { priority = "high", timeToLive = 3600, dryRun = false } = options;
+      const { priority = 'high', timeToLive = 3600, dryRun = false } = options;
 
       // 構建多播消息
       const message = {
-        tokens: tokens,
+        tokens,
         notification: {
           title: notification.title,
           body: notification.body,
@@ -250,18 +250,18 @@ class MessagingService {
         },
         ...(Object.keys(data).length > 0 && { data }),
         android: {
-          priority: priority,
+          priority,
           ttl: timeToLive * 1000,
           notification: {
-            icon: notification.icon || "ic_notification",
-            color: notification.color || "#2196F3",
-            sound: notification.sound || "default",
+            icon: notification.icon || 'ic_notification',
+            color: notification.color || '#2196F3',
+            sound: notification.sound || 'default',
           },
         },
         apns: {
           headers: {
-            "apns-priority": priority === "high" ? "10" : "5",
-            "apns-expiration": Math.floor(Date.now() / 1000) + timeToLive,
+            'apns-priority': priority === 'high' ? '10' : '5',
+            'apns-expiration': Math.floor(Date.now() / 1000) + timeToLive,
           },
           payload: {
             aps: {
@@ -270,7 +270,7 @@ class MessagingService {
                 body: notification.body,
               },
               badge: notification.badge || 1,
-              sound: notification.sound || "default",
+              sound: notification.sound || 'default',
             },
           },
         },
@@ -284,7 +284,7 @@ class MessagingService {
         successCount: response.successCount,
         failureCount: response.failureCount,
         responses: response.responses.map((resp, index) => ({
-          token: tokens[index].substring(0, 20) + "...",
+          token: `${tokens[index].substring(0, 20)}...`,
           success: resp.success,
           messageId: resp.messageId,
           error: resp.error,
@@ -294,7 +294,7 @@ class MessagingService {
       // 記錄批量發送結果
       const notificationId = this.generateNotificationId();
       this.recordNotification(notificationId, {
-        type: "multicast",
+        type: 'multicast',
         tokenCount: tokens.length,
         notification,
         data,
@@ -302,7 +302,7 @@ class MessagingService {
         dryRun,
       });
 
-      logger.info("批量推播通知發送完成", {
+      logger.info('批量推播通知發送完成', {
         notificationId,
         successCount: response.successCount,
         failureCount: response.failureCount,
@@ -316,9 +316,8 @@ class MessagingService {
         ...results,
       };
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "批量發送失敗";
-      logger.error("批量推播通知發送失敗", {
+      const errorMessage = error instanceof Error ? error.message : '批量發送失敗';
+      logger.error('批量推播通知發送失敗', {
         error: errorMessage,
         tokenCount: tokens ? tokens.length : 0,
       });
@@ -335,20 +334,20 @@ class MessagingService {
 
       // 先解構配置以獲取 condition
       const {
-        priority = "high",
+        priority = 'high',
         timeToLive = 3600,
         condition = null,
         dryRun = false,
       } = options;
 
       // 驗證主題名稱
-      if (!topic || typeof topic !== "string") {
-        throw new Error("主題名稱不能為空");
+      if (!topic || typeof topic !== 'string') {
+        throw new Error('主題名稱不能為空');
       }
 
       // 如果是條件表達式，跳過格式驗證
       if (!condition && !/^[a-zA-Z0-9-_.~%]+$/.test(topic)) {
-        throw new Error("主題名稱格式不正確");
+        throw new Error('主題名稱格式不正確');
       }
 
       this.validateNotification(notification);
@@ -363,18 +362,18 @@ class MessagingService {
         },
         ...(Object.keys(data).length > 0 && { data }),
         android: {
-          priority: priority,
+          priority,
           ttl: timeToLive * 1000,
           notification: {
-            icon: notification.icon || "ic_notification",
-            color: notification.color || "#2196F3",
-            sound: notification.sound || "default",
+            icon: notification.icon || 'ic_notification',
+            color: notification.color || '#2196F3',
+            sound: notification.sound || 'default',
           },
         },
         apns: {
           headers: {
-            "apns-priority": priority === "high" ? "10" : "5",
-            "apns-expiration": Math.floor(Date.now() / 1000) + timeToLive,
+            'apns-priority': priority === 'high' ? '10' : '5',
+            'apns-expiration': Math.floor(Date.now() / 1000) + timeToLive,
           },
           payload: {
             aps: {
@@ -382,7 +381,7 @@ class MessagingService {
                 title: notification.title,
                 body: notification.body,
               },
-              sound: notification.sound || "default",
+              sound: notification.sound || 'default',
             },
           },
         },
@@ -394,7 +393,7 @@ class MessagingService {
       // 記錄主題發送
       const notificationId = this.generateNotificationId();
       this.recordNotification(notificationId, {
-        type: "topic",
+        type: 'topic',
         topic: condition || topic,
         notification,
         data,
@@ -402,7 +401,7 @@ class MessagingService {
         dryRun,
       });
 
-      logger.info("主題推播通知發送成功", {
+      logger.info('主題推播通知發送成功', {
         notificationId,
         messageId: response,
         topic: condition || topic,
@@ -415,9 +414,8 @@ class MessagingService {
         notificationId,
       };
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "主題發送失敗";
-      logger.error("主題推播通知發送失敗", {
+      const errorMessage = error instanceof Error ? error.message : '主題發送失敗';
+      logger.error('主題推播通知發送失敗', {
         error: errorMessage,
         topic,
       });
@@ -439,14 +437,14 @@ class MessagingService {
       // 驗證輸入
       tokens.forEach((token) => this.validateToken(token));
 
-      if (!topic || typeof topic !== "string") {
-        throw new Error("主題名稱不能為空");
+      if (!topic || typeof topic !== 'string') {
+        throw new Error('主題名稱不能為空');
       }
 
       // 訂閱主題
       const response = await messaging.subscribeToTopic(tokens, topic);
 
-      logger.info("主題訂閱成功", {
+      logger.info('主題訂閱成功', {
         topic,
         tokenCount: tokens.length,
         successCount: response.successCount,
@@ -460,8 +458,8 @@ class MessagingService {
         errors: response.errors,
       };
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "訂閱失敗";
-      logger.error("主題訂閱失敗", {
+      const errorMessage = error instanceof Error ? error.message : '訂閱失敗';
+      logger.error('主題訂閱失敗', {
         error: errorMessage,
         topic,
         tokenCount: Array.isArray(tokens) ? tokens.length : 1,
@@ -484,14 +482,14 @@ class MessagingService {
       // 驗證輸入
       tokens.forEach((token) => this.validateToken(token));
 
-      if (!topic || typeof topic !== "string") {
-        throw new Error("主題名稱不能為空");
+      if (!topic || typeof topic !== 'string') {
+        throw new Error('主題名稱不能為空');
       }
 
       // 取消訂閱
       const response = await messaging.unsubscribeFromTopic(tokens, topic);
 
-      logger.info("取消主題訂閱成功", {
+      logger.info('取消主題訂閱成功', {
         topic,
         tokenCount: tokens.length,
         successCount: response.successCount,
@@ -505,9 +503,8 @@ class MessagingService {
         errors: response.errors,
       };
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "取消訂閱失敗";
-      logger.error("取消主題訂閱失敗", {
+      const errorMessage = error instanceof Error ? error.message : '取消訂閱失敗';
+      logger.error('取消主題訂閱失敗', {
         error: errorMessage,
         topic,
         tokenCount: Array.isArray(tokens) ? tokens.length : 1,
@@ -522,28 +519,28 @@ class MessagingService {
   createNotificationTemplate(templateName, template) {
     const templates = {
       welcome: {
-        title: "歡迎加入 Localite！",
-        body: "開始您的個人化導覽之旅",
-        icon: "ic_welcome",
-        color: "#2196F3",
+        title: '歡迎加入 Localite！',
+        body: '開始您的個人化導覽之旅',
+        icon: 'ic_welcome',
+        color: '#2196F3',
       },
       tour_ready: {
-        title: "導覽準備就緒",
-        body: "您的個人化導覽已生成完成",
-        icon: "ic_tour",
-        color: "#4CAF50",
+        title: '導覽準備就緒',
+        body: '您的個人化導覽已生成完成',
+        icon: 'ic_tour',
+        color: '#4CAF50',
       },
       payment_success: {
-        title: "付款成功",
-        body: "感謝您的購買，訂單已確認",
-        icon: "ic_payment",
-        color: "#FF9800",
+        title: '付款成功',
+        body: '感謝您的購買，訂單已確認',
+        icon: 'ic_payment',
+        color: '#FF9800',
       },
       reminder: {
-        title: "別忘了完成您的導覽",
-        body: "您還有未完成的精彩導覽等著您",
-        icon: "ic_reminder",
-        color: "#9C27B0",
+        title: '別忘了完成您的導覽',
+        body: '您還有未完成的精彩導覽等著您',
+        icon: 'ic_reminder',
+        color: '#9C27B0',
       },
     };
 
@@ -552,7 +549,7 @@ class MessagingService {
       return template;
     }
 
-    return templates[templateName] || templates["reminder"];
+    return templates[templateName] || templates.reminder;
   }
 
   /**
@@ -572,58 +569,54 @@ class MessagingService {
       };
 
       // 根據目標類型發送
-      if (typeof target === "string") {
+      if (typeof target === 'string') {
         if (
-          target.startsWith("/topics/") ||
-          target.includes("&&") ||
-          target.includes("||")
+          target.startsWith('/topics/')
+          || target.includes('&&')
+          || target.includes('||')
         ) {
           // 主題或條件
-          const topicOrCondition = target.replace("/topics/", "");
+          const topicOrCondition = target.replace('/topics/', '');
           const sendOptions = { ...options };
 
           // 如果包含條件運算符，作為條件處理
-          if (target.includes("&&") || target.includes("||")) {
+          if (target.includes('&&') || target.includes('||')) {
             sendOptions.condition = topicOrCondition;
             // 使用一個簡單的主題名稱作為基礎
             return await this.sendToTopic(
-              "condition-based",
+              'condition-based',
               notification,
               options.data,
-              sendOptions
-            );
-          } else {
-            return await this.sendToTopic(
-              topicOrCondition,
-              notification,
-              options.data,
-              sendOptions
+              sendOptions,
             );
           }
-        } else {
-          // 單一設備
-          return await this.sendToDevice(
-            target,
+          return await this.sendToTopic(
+            topicOrCondition,
             notification,
             options.data,
-            options
+            sendOptions,
           );
         }
-      } else if (Array.isArray(target)) {
+        // 單一設備
+        return await this.sendToDevice(
+          target,
+          notification,
+          options.data,
+          options,
+        );
+      } if (Array.isArray(target)) {
         // 多個設備
         return await this.sendToMultipleDevices(
           target,
           notification,
           options.data,
-          options
+          options,
         );
-      } else {
-        throw new Error("無效的目標類型");
       }
+      throw new Error('無效的目標類型');
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "模板發送失敗";
-      logger.error("模板通知發送失敗", {
+      const errorMessage = error instanceof Error ? error.message : '模板發送失敗';
+      logger.error('模板通知發送失敗', {
         error: errorMessage,
         templateName,
         targetType: typeof target,
@@ -636,9 +629,7 @@ class MessagingService {
    * 替換模板變數
    */
   replaceVariables(text, variables) {
-    return text.replace(/\{\{(\w+)\}\}/g, (match, key) => {
-      return variables[key] || match;
-    });
+    return text.replace(/\{\{(\w+)\}\}/g, (match, key) => variables[key] || match);
   }
 
   /**
@@ -675,7 +666,7 @@ class MessagingService {
       }
     }
 
-    logger.info("通知歷史清理完成", {
+    logger.info('通知歷史清理完成', {
       remainingCount: this.notificationHistory.size,
     });
   }

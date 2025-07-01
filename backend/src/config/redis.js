@@ -30,9 +30,7 @@ class RedisConnection {
               return false;
             }
             const delay = Math.min(retries * 100, 3000);
-            console.log(
-              `🔄 Redis reconnecting in ${delay}ms (attempt ${retries})`,
-            );
+            console.log(`🔄 Redis reconnecting in ${delay}ms (attempt ${retries})`);
             return delay;
           },
           connectTimeout: 10000,
@@ -64,10 +62,8 @@ class RedisConnection {
       });
 
       this.client.on('reconnecting', () => {
-        this.reconnectAttempts++;
-        console.log(
-          `🔄 Redis reconnecting... (attempt ${this.reconnectAttempts})`,
-        );
+        this.reconnectAttempts += 1;
+        console.log(`🔄 Redis reconnecting... (attempt ${this.reconnectAttempts})`);
       });
 
       await this.client.connect();

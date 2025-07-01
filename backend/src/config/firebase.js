@@ -1,5 +1,5 @@
-const admin = require("firebase-admin");
-const { logger } = require("../middleware/requestLogger");
+const admin = require('firebase-admin');
+const { logger } = require('../middleware/requestLogger');
 
 /**
  * Firebase Admin 配置初始化
@@ -26,7 +26,7 @@ class FirebaseConfig {
       if (admin.apps.length > 0) {
         this.admin = admin;
         this.initialized = true;
-        logger.info("Firebase Admin SDK 已經初始化，使用現有實例");
+        logger.info('Firebase Admin SDK 已經初始化，使用現有實例');
         return this.admin;
       }
 
@@ -36,25 +36,25 @@ class FirebaseConfig {
       admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
         projectId:
-          process.env.FIREBASE_PROJECT_ID ||
-          process.env.GOOGLE_CLOUD_PROJECT_ID,
+          process.env.FIREBASE_PROJECT_ID
+          || process.env.GOOGLE_CLOUD_PROJECT_ID,
         storageBucket: process.env.GOOGLE_CLOUD_STORAGE_BUCKET,
       });
 
       this.admin = admin;
       this.initialized = true;
 
-      logger.info("Firebase Admin SDK 初始化成功", {
+      logger.info('Firebase Admin SDK 初始化成功', {
         projectId:
-          process.env.FIREBASE_PROJECT_ID ||
-          process.env.GOOGLE_CLOUD_PROJECT_ID,
+          process.env.FIREBASE_PROJECT_ID
+          || process.env.GOOGLE_CLOUD_PROJECT_ID,
         hasStorageBucket: !!process.env.GOOGLE_CLOUD_STORAGE_BUCKET,
       });
 
       return this.admin;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "未知錯誤";
-      logger.error("Firebase Admin SDK 初始化失敗", {
+      const errorMessage = error instanceof Error ? error.message : '未知錯誤';
+      logger.error('Firebase Admin SDK 初始化失敗', {
         error: errorMessage,
         projectId: process.env.FIREBASE_PROJECT_ID,
         hasPrivateKey: !!process.env.FIREBASE_PRIVATE_KEY,
@@ -73,29 +73,29 @@ class FirebaseConfig {
       try {
         return JSON.parse(process.env.FIREBASE_ADMIN_SDK_KEY);
       } catch (error) {
-        logger.warn("FIREBASE_ADMIN_SDK_KEY 格式錯誤，嘗試其他配置方式");
+        logger.warn('FIREBASE_ADMIN_SDK_KEY 格式錯誤，嘗試其他配置方式');
       }
     }
 
     // 方法 2: 從分散的環境變數構建配置物件
     if (process.env.FIREBASE_PRIVATE_KEY && process.env.FIREBASE_CLIENT_EMAIL) {
       return {
-        type: "service_account",
+        type: 'service_account',
         project_id: process.env.FIREBASE_PROJECT_ID,
         private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
-        private_key: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n"),
+        private_key: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
         client_email: process.env.FIREBASE_CLIENT_EMAIL,
         client_id: process.env.FIREBASE_CLIENT_ID,
         auth_uri:
-          process.env.FIREBASE_AUTH_URI ||
-          "https://accounts.google.com/oauth2/auth",
+          process.env.FIREBASE_AUTH_URI
+          || 'https://accounts.google.com/oauth2/auth',
         token_uri:
-          process.env.FIREBASE_TOKEN_URI ||
-          "https://oauth2.googleapis.com/token",
+          process.env.FIREBASE_TOKEN_URI
+          || 'https://oauth2.googleapis.com/token',
         auth_provider_x509_cert_url:
-          "https://www.googleapis.com/oauth2/v1/certs",
+          'https://www.googleapis.com/oauth2/v1/certs',
         client_x509_cert_url: `https://www.googleapis.com/robot/v1/metadata/x509/${encodeURIComponent(
-          process.env.FIREBASE_CLIENT_EMAIL
+          process.env.FIREBASE_CLIENT_EMAIL,
         )}`,
       };
     }
@@ -105,7 +105,7 @@ class FirebaseConfig {
       try {
         return require(process.env.GOOGLE_CLOUD_KEY_FILE);
       } catch (error) {
-        logger.warn("無法從檔案載入 Firebase 配置", {
+        logger.warn('無法從檔案載入 Firebase 配置', {
           file: process.env.GOOGLE_CLOUD_KEY_FILE,
         });
       }
@@ -113,8 +113,8 @@ class FirebaseConfig {
 
     // 開發環境預設路徑
     const defaultPaths = [
-      "../../config/firebase-service-account.json",
-      "../../../config/firebase-service-account.json",
+      '../../config/firebase-service-account.json',
+      '../../../config/firebase-service-account.json',
     ];
 
     for (const path of defaultPaths) {
@@ -125,7 +125,7 @@ class FirebaseConfig {
       }
     }
 
-    throw new Error("無法載入 Firebase 服務帳戶配置，請檢查環境變數或配置檔案");
+    throw new Error('無法載入 Firebase 服務帳戶配置，請檢查環境變數或配置檔案');
   }
 
   /**
@@ -181,11 +181,11 @@ class FirebaseConfig {
       // 嘗試獲取用戶列表來驗證配置
       await auth.listUsers(1);
 
-      logger.info("Firebase 配置驗證成功");
+      logger.info('Firebase 配置驗證成功');
       return true;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "未知錯誤";
-      logger.error("Firebase 配置驗證失敗", { error: errorMessage });
+      const errorMessage = error instanceof Error ? error.message : '未知錯誤';
+      logger.error('Firebase 配置驗證失敗', { error: errorMessage });
       return false;
     }
   }
@@ -199,11 +199,11 @@ class FirebaseConfig {
         await Promise.all(this.admin.apps.map((app) => app.delete()));
         this.initialized = false;
         this.admin = null;
-        logger.info("Firebase Admin SDK 資源清理完成");
+        logger.info('Firebase Admin SDK 資源清理完成');
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "未知錯誤";
-      logger.error("Firebase 資源清理失敗", { error: errorMessage });
+      const errorMessage = error instanceof Error ? error.message : '未知錯誤';
+      logger.error('Firebase 資源清理失敗', { error: errorMessage });
     }
   }
 }

@@ -1,17 +1,17 @@
 // 測試環境設置
-process.env.NODE_ENV = "test";
-process.env.JWT_SECRET = "test-jwt-secret";
-process.env.MONGODB_URI = "mongodb://localhost:27017/test";
-process.env.REDIS_URL = "redis://localhost:6379";
+process.env.NODE_ENV = 'test';
+process.env.JWT_SECRET = 'test-jwt-secret';
+process.env.MONGODB_URI = 'mongodb://localhost:27017/test';
+process.env.REDIS_URL = 'redis://localhost:6379';
 
 // 模擬配置管理器
-jest.mock("../config", () => {
+jest.mock('../config', () => {
   const mockConfigManager = {
     initialize: jest.fn().mockResolvedValue(true),
     shutdown: jest.fn().mockResolvedValue(true),
     isInitialized: true,
     healthCheck: jest.fn().mockResolvedValue({
-      status: "healthy",
+      status: 'healthy',
       timestamp: new Date().toISOString(),
       services: {
         initialized: true,
@@ -51,7 +51,7 @@ jest.mock("../config", () => {
 });
 
 // 模擬 winston logger
-jest.mock("../middleware/requestLogger", () => {
+jest.mock('../middleware/requestLogger', () => {
   const mockLogger = {
     info: jest.fn(),
     error: jest.fn(),

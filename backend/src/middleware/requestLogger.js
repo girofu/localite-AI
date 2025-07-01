@@ -1,29 +1,29 @@
-const winston = require("winston");
+const winston = require('winston');
 
 // 配置 winston logger
 const logger = winston.createLogger({
-  level: process.env.LOG_LEVEL || "info",
+  level: process.env.LOG_LEVEL || 'info',
   format: winston.format.combine(
     winston.format.timestamp(),
     winston.format.errors({ stack: true }),
-    winston.format.json()
+    winston.format.json(),
   ),
-  defaultMeta: { service: "localite-backend" },
+  defaultMeta: { service: 'localite-backend' },
   transports: [
-    new winston.transports.File({ filename: "logs/error.log", level: "error" }),
-    new winston.transports.File({ filename: "logs/combined.log" }),
+    new winston.transports.File({ filename: 'logs/error.log', level: 'error' }),
+    new winston.transports.File({ filename: 'logs/combined.log' }),
   ],
 });
 
 // 在開發環境添加控制台輸出
-if (process.env.NODE_ENV !== "production") {
+if (process.env.NODE_ENV !== 'production') {
   logger.add(
     new winston.transports.Console({
       format: winston.format.combine(
         winston.format.colorize(),
-        winston.format.simple()
+        winston.format.simple(),
       ),
-    })
+    }),
   );
 }
 
@@ -35,21 +35,21 @@ const requestLogger = (req, res, next) => {
 
   // 記錄請求開始
   logger.info({
-    type: "request_start",
+    type: 'request_start',
     method: req.method,
     url: req.originalUrl,
     ip: req.ip,
-    userAgent: req.get("User-Agent"),
+    userAgent: req.get('User-Agent'),
     timestamp: new Date().toISOString(),
   });
 
   // 監聽響應結束
-  res.on("finish", () => {
+  res.on('finish', () => {
     const duration = Date.now() - startTime;
-    const logLevel = res.statusCode >= 400 ? "error" : "info";
+    const logLevel = res.statusCode >= 400 ? 'error' : 'info';
 
     logger.log(logLevel, {
-      type: "request_complete",
+      type: 'request_complete',
       method: req.method,
       url: req.originalUrl,
       statusCode: res.statusCode,

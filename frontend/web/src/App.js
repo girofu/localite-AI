@@ -42,21 +42,21 @@ function App() {
               <Routes>
                 <Route path="/" element={<HomePage />} />
                 <Route path="/auth" element={<AuthPage />} />
-                <Route 
-                  path="/tour/:tourId" 
+                <Route
+                  path="/tour/:tourId"
                   element={
                     <ProtectedRoute>
                       <TourPage />
                     </ProtectedRoute>
-                  } 
+                  }
                 />
-                <Route 
-                  path="/merchant" 
+                <Route
+                  path="/merchant"
                   element={
                     <ProtectedRoute requiredRole="merchant">
                       <MerchantDashboard />
                     </ProtectedRoute>
-                  } 
+                  }
                 />
                 <Route path="*" element={<div>404 - Page Not Found</div>} />
               </Routes>
@@ -69,4 +69,4 @@ function App() {
   );
 }
 
-export default App; 
+export default App;

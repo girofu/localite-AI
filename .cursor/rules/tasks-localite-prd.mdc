@@ -14,6 +14,9 @@ alwaysApply: true
 - `backend/src/server.js` - Express 主伺服器設置與路由配置
 - `backend/.env.example` - 環境變數範例文件
 - `backend/.eslintrc.js` - 後端 ESLint 配置
+- `.eslintrc.js` - 根目錄 ESLint 配置，支援 monorepo 結構前後端
+- `.prettierrc.js` - Prettier 程式碼格式化配置
+- `.prettierignore` - Prettier 忽略文件清單
 - `frontend/web/package.json` - React 網頁應用依賴配置
 - `frontend/web/src/App.js` - React 網頁應用主組件
 - `frontend/web/src/index.js` - React 網頁應用入口文件
@@ -33,13 +36,18 @@ alwaysApply: true
 - `backend/src/services/storageService.test.js` - Firebase Storage 服務單元測試
 - `backend/src/services/messagingService.js` - Firebase Cloud Messaging 服務封裝（推播通知功能）
 - `backend/src/services/messagingService.test.js` - Firebase Cloud Messaging 服務單元測試
+- `backend/src/services/featureFlagService.js` - 功能旗標服務，支援金絲雀部署和功能控制
+- `backend/src/services/featureFlagService.test.js` - 功能旗標服務單元測試
+- `backend/src/middleware/featureFlagMiddleware.js` - 功能旗標中間件，用於路由級別的功能控制
+- `backend/src/middleware/featureFlagMiddleware.test.js` - 功能旗標中間件單元測試
+- `backend/src/routes/featureFlags.js` - 功能旗標管理 API 路由
 - `backend/src/routes/auth.js` - 用戶認證相關 API 路由 (待建立)
 - `backend/src/routes/auth.test.js` - 認證路由測試 (待建立)
 - `backend/src/routes/tours.js` - 導覽相關 API 路由 (待建立)
 - `backend/src/routes/tours.test.js` - 導覽路由測試 (待建立)
 - `backend/src/routes/merchants.js` - 商戶管理 API 路由 (待建立)
 - `backend/src/routes/merchants.test.js` - 商戶路由測試 (待建立)
-- `backend/src/services/aiService.js` - GPT API 整合服務 (待建立)
+- `backend/src/services/aiService.js` - Google AI studio API 整合服務 (待建立)
 - `backend/src/services/aiService.test.js` - AI 服務單元測試 (待建立)
 - `backend/src/services/ttsService.js` - 語音合成服務 (待建立)
 - `backend/src/services/ttsService.test.js` - TTS 服務測試 (待建立)
@@ -53,7 +61,7 @@ alwaysApply: true
 - `frontend/mobile/src/screens/TourScreen.js` - 手機端導覽畫面 (待建立)
 - `frontend/web/src/components/MerchantDashboard.js` - 網頁端商戶後台 (待建立)
 - `frontend/shared/i18n/` - 國際化配置檔案 (待建立)
-- `jest.config.js` - Jest 測試配置 (待建立)
+- `jest.config.js` - Jest 測試配置，支援 monorepo 結構的統一測試管理
 
 ### Notes
 
@@ -75,8 +83,13 @@ alwaysApply: true
     - [x] 1.4.2 建立 Firebase Authentication 中間件（JWT token 驗證與用戶認證）
     - [x] 1.4.3 建立 Firebase Storage 服務封裝（檔案上傳與下載功能）
     - [x] 1.4.4 建立 Firebase Cloud Messaging 服務封裝（推播通知功能）
-  - [ ] 1.5 配置 CI/CD 管道與自動化測試環境
-  - [ ] 1.6 實作功能旗標服務基礎架構
+  - [x] 1.5 配置 CI/CD 管道與自動化測試環境
+    - [x] 1.5.1 建立根目錄 Jest 配置文件
+    - [x] 1.5.2 建立根目錄 ESLint 和 Prettier 配置
+    - [x] 1.5.3 修復 GitHub Actions workflow 路徑問題
+    - [x] 1.5.4 完善測試腳本配置
+    - [x] 1.5.5 驗證 CI/CD pipeline 運作
+  - [x] 1.6 實作功能旗標服務基礎架構
   - [ ] 1.7 設置監控系統（日誌收集、效能監控、錯誤追蹤）
   - [ ] 1.8 建立 API 文檔框架（OpenAPI/Swagger 配置）
 
@@ -92,7 +105,7 @@ alwaysApply: true
 
 - [ ] 3.0 AI 導覽核心功能開發
 
-  - [ ] 3.1 整合 GPT API 服務（API 金鑰管理、請求速率限制）
+  - [ ] 3.1 整合 Google AI studio API 服務（API 金鑰管理、請求速率限制）
   - [ ] 3.2 實作導覽內容生成邏輯（個性化回答、上下文記憶）
   - [ ] 3.3 開發語音合成功能（Azure Speech Service 整合、多語言支援）
   - [ ] 3.4 建立內容快取機制（Redis 快取策略、快取失效管理）

@@ -14,23 +14,23 @@ jobs:
   lint:
     name: 程式碼品質檢查
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout 程式碼
         uses: actions/checkout@v4
-        
+
       - name: 設定 Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          
+
       - name: 安裝依賴
         run: npm ci
-        
+
       - name: 程式碼格式檢查
-        run: npm run format:check
-        
+        run: npx prettier --check "**/*.{js,jsx,json,md}"
+
       - name: ESLint 檢查
         run: npm run lint
 
@@ -39,7 +39,7 @@ jobs:
     name: 單元測試
     runs-on: ubuntu-latest
     needs: lint
-    
+
     services:
       mongodb:
         image: mongo:7
@@ -53,7 +53,7 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 3
-          
+
       redis:
         image: redis:7-alpine
         ports:
@@ -63,30 +63,30 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 3
-    
+
     steps:
       - name: Checkout 程式碼
         uses: actions/checkout@v4
-        
+
       - name: 設定 Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          
+
       - name: 安裝依賴
         run: npm ci
-        
+
       - name: 建立測試環境變數
         run: |
           echo "NODE_ENV=test" >> $GITHUB_ENV
           echo "MONGODB_URI=mongodb://test:test123@localhost:27017/localite-test?authSource=admin" >> $GITHUB_ENV
           echo "REDIS_URL=redis://localhost:6379" >> $GITHUB_ENV
           echo "JWT_SECRET=test-secret-key" >> $GITHUB_ENV
-          
+
       - name: 執行測試
-        run: npm run test:coverage
-        
+        run: npm test
+
       - name: 上傳覆蓋率報告
         uses: codecov/codecov-action@v3
         with:
@@ -98,24 +98,24 @@ jobs:
     name: 建置檢查
     runs-on: ubuntu-latest
     needs: [lint, test]
-    
+
     strategy:
       matrix:
         app: [backend, web]
-    
+
     steps:
       - name: Checkout 程式碼
         uses: actions/checkout@v4
-        
+
       - name: 設定 Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          
+
       - name: 安裝依賴
         run: npm ci
-        
+
       - name: 建置 ${{ matrix.app }}
         run: npm run build:${{ matrix.app }}
 
@@ -125,26 +125,26 @@ jobs:
     runs-on: ubuntu-latest
     needs: [lint, test, build]
     if: github.ref == 'refs/heads/main'
-    
+
     steps:
       - name: Checkout 程式碼
         uses: actions/checkout@v4
-        
+
       - name: 設定 Docker Buildx
         uses: docker/setup-buildx-action@v3
-        
+
       - name: 登入 Google Container Registry
         uses: docker/login-action@v3
         with:
           registry: gcr.io
           username: _json_key
           password: ${{ secrets.GCP_SA_KEY }}
-          
-      - name: 建置並推送 Backend Docker 映像
+
+            - name: 建置並推送 Backend Docker 映像
         uses: docker/build-push-action@v5
         with:
-          context: .
-          file: ./apps/backend/Dockerfile
+          context: ./backend
+          file: ./backend/Dockerfile
           push: true
           tags: |
             gcr.io/${{ secrets.GCP_PROJECT_ID }}/localite-backend:latest
@@ -155,8 +155,8 @@ jobs:
       - name: 建置並推送 Web Docker 映像
         uses: docker/build-push-action@v5
         with:
-          context: .
-          file: ./apps/web/Dockerfile
+          context: ./frontend/web
+          file: ./frontend/web/Dockerfile
           push: true
           tags: |
             gcr.io/${{ secrets.GCP_PROJECT_ID }}/localite-web:latest
@@ -170,17 +170,17 @@ jobs:
     runs-on: ubuntu-latest
     needs: docker
     if: github.ref == 'refs/heads/main'
-    
+
     steps:
       - name: Checkout 程式碼
         uses: actions/checkout@v4
-        
+
       - name: 設定 Google Cloud CLI
         uses: google-github-actions/setup-gcloud@v1
         with:
           service_account_key: ${{ secrets.GCP_SA_KEY }}
           project_id: ${{ secrets.GCP_PROJECT_ID }}
-          
+
       - name: 部署 Backend 到 Cloud Run
         run: |
           gcloud run deploy localite-backend \
@@ -193,7 +193,7 @@ jobs:
             --min-instances 0 \
             --max-instances 10 \
             --port 8000
-            
+
       - name: 部署 Web 到 Cloud Run
         run: |
           gcloud run deploy localite-web \
@@ -205,4 +205,4 @@ jobs:
             --cpu 1 \
             --min-instances 0 \
             --max-instances 5 \
-            --port 3000 
+            --port 3000

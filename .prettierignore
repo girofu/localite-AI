@@ -1,0 +1,54 @@
+# 依賴
+node_modules/
+package-lock.json
+yarn.lock
+
+# 建置輸出
+dist/
+build/
+coverage/
+
+# 日誌
+*.log
+logs/
+
+# 環境設定
+.env
+.env.local
+.env.production
+.env.test
+
+# IDE 設定
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS 檔案
+.DS_Store
+Thumbs.db
+
+# Firebase
+.firebase/
+firebase-debug.log
+
+# Docker
+Dockerfile*
+docker-compose*.yml
+
+# Git
+.git/
+.gitignore
+
+# 特定檔案類型
+*.min.js
+*.min.css
+*.bundle.js
+
+# 第三方檔案
+public/vendor/
+src/vendor/
+
+# 自動產生的檔案
+**/*.generated.*
+**/auto-imports.d.ts 

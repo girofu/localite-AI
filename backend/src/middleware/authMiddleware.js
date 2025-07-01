@@ -1,5 +1,5 @@
-const { getAuth } = require("../config/firebase");
-const { logger } = require("./requestLogger");
+const { getAuth } = require('../config/firebase');
+const { logger } = require('./requestLogger');
 
 /**
  * Firebase Authentication 中間件
@@ -18,8 +18,8 @@ class AuthMiddleware {
       try {
         this.auth = getAuth();
       } catch (error) {
-        logger.error("Firebase Auth 初始化失敗", { error: error.message });
-        throw new Error("認證服務不可用");
+        logger.error('Firebase Auth 初始化失敗', { error: error.message });
+        throw new Error('認證服務不可用');
       }
     }
     return this.auth;
@@ -35,7 +35,7 @@ class AuthMiddleware {
       return null;
     }
 
-    if (!authHeader.startsWith("Bearer ")) {
+    if (!authHeader.startsWith('Bearer ')) {
       return null;
     }
 
@@ -47,43 +47,43 @@ class AuthMiddleware {
    * 允許在開發環境使用特殊標頭跳過認證
    */
   handleTestUser(req) {
-    if (process.env.NODE_ENV !== "development") {
+    if (process.env.NODE_ENV !== 'development') {
       return null;
     }
 
-    const testHeader = req.headers["x-test-user"];
+    const testHeader = req.headers['x-test-user'];
     if (!testHeader) {
       return null;
     }
 
     // 根據測試標頭值返回模擬用戶資訊
     const testUsers = {
-      "test-user": {
-        uid: "test-user-123",
-        email: "test@localite.com",
+      'test-user': {
+        uid: 'test-user-123',
+        email: 'test@localite.com',
         email_verified: true,
-        role: "user",
-        name: "Test User",
+        role: 'user',
+        name: 'Test User',
       },
-      "test-merchant": {
-        uid: "test-merchant-123",
-        email: "merchant@localite.com",
+      'test-merchant': {
+        uid: 'test-merchant-123',
+        email: 'merchant@localite.com',
         email_verified: true,
-        role: "merchant",
-        name: "Test Merchant",
+        role: 'merchant',
+        name: 'Test Merchant',
       },
-      "test-admin": {
-        uid: "test-admin-123",
-        email: "admin@localite.com",
+      'test-admin': {
+        uid: 'test-admin-123',
+        email: 'admin@localite.com',
         email_verified: true,
-        role: "admin",
-        name: "Test Admin",
+        role: 'admin',
+        name: 'Test Admin',
       },
     };
 
     const testUser = testUsers[testHeader];
     if (testUser) {
-      logger.info("使用開發環境測試用戶", {
+      logger.info('使用開發環境測試用戶', {
         testUser: testHeader,
         uid: testUser.uid,
       });
@@ -101,28 +101,28 @@ class AuthMiddleware {
       const auth = this.getFirebaseAuth();
       const decodedToken = await auth.verifyIdToken(idToken);
 
-      logger.info("Firebase token 驗證成功", {
+      logger.info('Firebase token 驗證成功', {
         uid: decodedToken.uid,
         email: decodedToken.email,
       });
 
       return decodedToken;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "未知錯誤";
+      const errorMessage = error instanceof Error ? error.message : '未知錯誤';
 
       // 記錄具體的驗證失敗原因
-      if (error.code === "auth/id-token-expired") {
-        logger.warn("Firebase token 已過期", { error: errorMessage });
-        throw new Error("認證 token 已過期，請重新登入");
-      } else if (error.code === "auth/id-token-revoked") {
-        logger.warn("Firebase token 已被撤銷", { error: errorMessage });
-        throw new Error("認證 token 已被撤銷，請重新登入");
-      } else if (error.code === "auth/invalid-id-token") {
-        logger.warn("Firebase token 格式無效", { error: errorMessage });
-        throw new Error("認證 token 格式無效");
+      if (error.code === 'auth/id-token-expired') {
+        logger.warn('Firebase token 已過期', { error: errorMessage });
+        throw new Error('認證 token 已過期，請重新登入');
+      } else if (error.code === 'auth/id-token-revoked') {
+        logger.warn('Firebase token 已被撤銷', { error: errorMessage });
+        throw new Error('認證 token 已被撤銷，請重新登入');
+      } else if (error.code === 'auth/invalid-id-token') {
+        logger.warn('Firebase token 格式無效', { error: errorMessage });
+        throw new Error('認證 token 格式無效');
       } else {
-        logger.error("Firebase token 驗證失敗", { error: errorMessage });
-        throw new Error("認證驗證失敗");
+        logger.error('Firebase token 驗證失敗', { error: errorMessage });
+        throw new Error('認證驗證失敗');
       }
     }
   }
@@ -145,8 +145,8 @@ class AuthMiddleware {
         return res.status(401).json({
           success: false,
           error: {
-            message: "缺少認證 token",
-            code: "MISSING_TOKEN",
+            message: '缺少認證 token',
+            code: 'MISSING_TOKEN',
           },
         });
       }
@@ -162,7 +162,7 @@ class AuthMiddleware {
         name: decodedToken.name,
         picture: decodedToken.picture,
         // 從自定義聲明中獲取角色資訊
-        role: decodedToken.role || "user",
+        role: decodedToken.role || 'user',
         // Firebase token 的其他資訊
         firebase: {
           identities: decodedToken.firebase?.identities,
@@ -170,7 +170,7 @@ class AuthMiddleware {
         },
       };
 
-      logger.info("用戶認證成功", {
+      logger.info('用戶認證成功', {
         uid: req.user.uid,
         email: req.user.email,
         role: req.user.role,
@@ -178,9 +178,9 @@ class AuthMiddleware {
 
       next();
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "認證失敗";
+      const errorMessage = error instanceof Error ? error.message : '認證失敗';
 
-      logger.error("認證中間件錯誤", {
+      logger.error('認證中間件錯誤', {
         error: errorMessage,
         path: req.path,
         method: req.method,
@@ -190,7 +190,7 @@ class AuthMiddleware {
         success: false,
         error: {
           message: errorMessage,
-          code: "AUTHENTICATION_FAILED",
+          code: 'AUTHENTICATION_FAILED',
         },
       });
     }
@@ -208,15 +208,15 @@ class AuthMiddleware {
         return res.status(401).json({
           success: false,
           error: {
-            message: "未認證的用戶",
-            code: "UNAUTHENTICATED",
+            message: '未認證的用戶',
+            code: 'UNAUTHENTICATED',
           },
         });
       }
 
-      const userRole = req.user.role || "user";
+      const userRole = req.user.role || 'user';
       if (!roles.includes(userRole)) {
-        logger.warn("用戶權限不足", {
+        logger.warn('用戶權限不足', {
           uid: req.user.uid,
           userRole,
           requiredRoles: roles,
@@ -226,8 +226,8 @@ class AuthMiddleware {
         return res.status(403).json({
           success: false,
           error: {
-            message: "權限不足",
-            code: "INSUFFICIENT_PERMISSIONS",
+            message: '權限不足',
+            code: 'INSUFFICIENT_PERMISSIONS',
             required: roles,
             current: userRole,
           },
@@ -266,13 +266,13 @@ class AuthMiddleware {
         email_verified: decodedToken.email_verified,
         name: decodedToken.name,
         picture: decodedToken.picture,
-        role: decodedToken.role || "user",
+        role: decodedToken.role || 'user',
       };
 
       next();
     } catch (error) {
       // 可選認證失敗時，記錄錯誤但繼續執行
-      logger.warn("可選認證失敗", { error: error.message });
+      logger.warn('可選認證失敗', { error: error.message });
       next();
     }
   };

@@ -11,18 +11,23 @@
     "build": "npm run build:backend && npm run build:web",
     "build:backend": "cd backend && npm run build",
     "build:web": "cd frontend/web && npm run build",
-    "test": "npm run test:backend && npm run test:web",
-    "test:backend": "cd backend && npm test",
-    "test:web": "cd frontend/web && npm test -- --watchAll=false",
-    "test:mobile": "cd frontend/mobile && npm test",
+    "test": "jest",
+    "test:backend": "jest --selectProjects backend",
+    "test:web": "jest --selectProjects web",
+    "test:mobile": "jest --selectProjects mobile",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
     "install:all": "npm install && npm run install:backend && npm run install:web && npm run install:mobile",
     "install:backend": "cd backend && npm install",
     "install:web": "cd frontend/web && npm install",
     "install:mobile": "cd frontend/mobile && npm install",
-    "lint": "npm run lint:backend && npm run lint:web",
+    "lint": "eslint . --ext .js,.jsx",
+    "lint:fix": "eslint . --ext .js,.jsx --fix",
     "lint:backend": "cd backend && npm run lint",
     "lint:web": "cd frontend/web && npm run lint",
     "lint:mobile": "cd frontend/mobile && npm run lint",
+    "format": "prettier --write \"**/*.{js,jsx,json,md}\"",
+    "format:check": "prettier --check \"**/*.{js,jsx,json,md}\"",
     "start": "npm run dev",
     "docker:up": "docker-compose up -d",
     "docker:down": "docker-compose down",
@@ -34,13 +39,31 @@
     "frontend/mobile"
   ],
   "devDependencies": {
+    "@react-native-community/eslint-config": "^3.2.0",
+    "@testing-library/jest-dom": "^6.1.5",
+    "babel-jest": "^29.7.0",
     "concurrently": "^8.2.2",
+    "eslint": "^8.55.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-plugin-import": "^2.29.0",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-react": "^7.33.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-native": "^4.1.0",
     "husky": "^8.0.3",
-    "lint-staged": "^15.2.0"
+    "identity-obj-proxy": "^3.0.0",
+    "jest": "^29.7.0",
+    "lint-staged": "^15.2.0",
+    "prettier": "^3.1.0"
   },
   "lint-staged": {
-    "*.{js,jsx,ts,tsx}": ["eslint --fix", "prettier --write"],
-    "*.{json,md,css}": ["prettier --write"]
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,css}": [
+      "prettier --write"
+    ]
   },
   "husky": {
     "hooks": {
@@ -62,5 +85,8 @@
     "react-native",
     "node.js",
     "express"
-  ]
-} 
+  ],
+  "dependencies": {
+    "axios": "^1.10.0"
+  }
+}

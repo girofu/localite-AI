@@ -1,7 +1,7 @@
-const { getStorage } = require("../config/firebase");
-const { logger } = require("../middleware/requestLogger");
-const path = require("path");
-const multer = require("multer");
+const path = require('path');
+const multer = require('multer');
+const { getStorage } = require('../config/firebase');
+const { logger } = require('../middleware/requestLogger');
 
 /**
  * Firebase Storage 服務類別
@@ -24,18 +24,17 @@ class StorageService {
 
     try {
       this.storage = getStorage();
-      const bucketName =
-        process.env.FIREBASE_STORAGE_BUCKET ||
-        `${process.env.GOOGLE_CLOUD_PROJECT_ID}.appspot.com`;
+      const bucketName = process.env.FIREBASE_STORAGE_BUCKET
+        || `${process.env.GOOGLE_CLOUD_PROJECT_ID}.appspot.com`;
       this.bucket = this.storage.bucket(bucketName);
       this.initialized = true;
 
-      logger.info("Firebase Storage 初始化成功", { bucket: bucketName });
+      logger.info('Firebase Storage 初始化成功', { bucket: bucketName });
       return this.bucket;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "未知錯誤";
-      logger.error("Firebase Storage 初始化失敗", { error: errorMessage });
-      throw new Error("儲存服務不可用");
+      const errorMessage = error instanceof Error ? error.message : '未知錯誤';
+      logger.error('Firebase Storage 初始化失敗', { error: errorMessage });
+      throw new Error('儲存服務不可用');
     }
   }
 
@@ -44,44 +43,44 @@ class StorageService {
    */
   validateFileType(
     mimetype,
-    allowedTypes = ["image", "video", "audio", "application"]
+    allowedTypes = ['image', 'video', 'audio', 'application'],
   ) {
-    const fileType = mimetype.split("/")[0];
+    const fileType = mimetype.split('/')[0];
     const allowedMimeTypes = [
       // 圖片類型
-      "image/jpeg",
-      "image/png",
-      "image/gif",
-      "image/webp",
-      "image/svg+xml",
+      'image/jpeg',
+      'image/png',
+      'image/gif',
+      'image/webp',
+      'image/svg+xml',
       // 影片類型
-      "video/mp4",
-      "video/avi",
-      "video/mov",
-      "video/wmv",
-      "video/webm",
+      'video/mp4',
+      'video/avi',
+      'video/mov',
+      'video/wmv',
+      'video/webm',
       // 音訊類型
-      "audio/mp3",
-      "audio/wav",
-      "audio/aac",
-      "audio/ogg",
-      "audio/mpeg",
+      'audio/mp3',
+      'audio/wav',
+      'audio/aac',
+      'audio/ogg',
+      'audio/mpeg',
       // 文件類型
-      "application/pdf",
-      "application/msword",
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-      "application/vnd.ms-excel",
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      "application/json",
-      "text/plain",
-      "text/csv",
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/json',
+      'text/plain',
+      'text/csv',
     ];
 
     if (!allowedMimeTypes.includes(mimetype)) {
       throw new Error(`不支援的檔案類型: ${mimetype}`);
     }
 
-    if (!allowedTypes.includes(fileType) && fileType !== "text") {
+    if (!allowedTypes.includes(fileType) && fileType !== 'text') {
       throw new Error(`不允許的檔案類別: ${fileType}`);
     }
 
@@ -103,16 +102,16 @@ class StorageService {
   /**
    * 生成唯一檔案名稱
    */
-  generateFileName(originalName, prefix = "", userId = "") {
+  generateFileName(originalName, prefix = '', userId = '') {
     const timestamp = Date.now();
     const random = Math.random().toString(36).substring(2, 8);
     const ext = path.extname(originalName);
     const baseName = path
       .basename(originalName, ext)
-      .replace(/[^a-zA-Z0-9]/g, "-");
+      .replace(/[^a-zA-Z0-9]/g, '-');
 
     const parts = [prefix, userId, timestamp, random, baseName].filter(Boolean);
-    return `${parts.join("-")}${ext}`.toLowerCase();
+    return `${parts.join('-')}${ext}`.toLowerCase();
   }
 
   /**
@@ -123,11 +122,11 @@ class StorageService {
       const bucket = this.initialize();
 
       const {
-        folder = "uploads",
-        userId = "",
-        prefix = "",
+        folder = 'uploads',
+        userId = '',
+        prefix = '',
         maxSize = 50 * 1024 * 1024,
-        allowedTypes = ["image", "video", "audio", "application"],
+        allowedTypes = ['image', 'video', 'audio', 'application'],
         makePublic = false,
       } = options;
 
@@ -150,23 +149,23 @@ class StorageService {
             originalName: file.originalname,
             uploadedBy: userId,
             uploadedAt: new Date().toISOString(),
-            folder: folder,
+            folder,
           },
         },
         resumable: false, // 對於小檔案使用非恢復上傳
       });
 
       return new Promise((resolve, reject) => {
-        stream.on("error", (error) => {
-          logger.error("檔案上傳失敗", {
+        stream.on('error', (error) => {
+          logger.error('檔案上傳失敗', {
             error: error.message,
             filePath,
             fileSize: file.size,
           });
-          reject(new Error("檔案上傳失敗"));
+          reject(new Error('檔案上傳失敗'));
         });
 
-        stream.on("finish", async () => {
+        stream.on('finish', async () => {
           try {
             // 設定檔案為公開可讀（如果需要）
             if (makePublic) {
@@ -179,16 +178,16 @@ class StorageService {
               : await this.getDownloadUrl(filePath);
 
             const result = {
-              fileName: fileName,
-              filePath: filePath,
-              downloadUrl: downloadUrl,
+              fileName,
+              filePath,
+              downloadUrl,
               size: file.size,
               mimetype: file.mimetype,
-              folder: folder,
+              folder,
               uploadedAt: new Date().toISOString(),
             };
 
-            logger.info("檔案上傳成功", {
+            logger.info('檔案上傳成功', {
               fileName,
               filePath,
               size: file.size,
@@ -197,8 +196,8 @@ class StorageService {
 
             resolve(result);
           } catch (error) {
-            logger.error("檔案後處理失敗", { error: error.message, filePath });
-            reject(new Error("檔案處理失敗"));
+            logger.error('檔案後處理失敗', { error: error.message, filePath });
+            reject(new Error('檔案處理失敗'));
           }
         });
 
@@ -206,8 +205,8 @@ class StorageService {
         stream.end(file.buffer);
       });
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "上傳失敗";
-      logger.error("檔案上傳錯誤", { error: errorMessage });
+      const errorMessage = error instanceof Error ? error.message : '上傳失敗';
+      logger.error('檔案上傳錯誤', { error: errorMessage });
       throw error;
     }
   }
@@ -224,20 +223,19 @@ class StorageService {
       // 檢查檔案是否存在
       const [exists] = await file.exists();
       if (!exists) {
-        throw new Error("檔案不存在");
+        throw new Error('檔案不存在');
       }
 
       // 生成簽名 URL
       const [url] = await file.getSignedUrl({
-        action: "read",
+        action: 'read',
         expires: Date.now() + expiresIn * 1000,
       });
 
       return url;
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "獲取下載連結失敗";
-      logger.error("獲取下載 URL 失敗", {
+      const errorMessage = error instanceof Error ? error.message : '獲取下載連結失敗';
+      logger.error('獲取下載 URL 失敗', {
         error: errorMessage,
         filePath,
       });
@@ -256,7 +254,7 @@ class StorageService {
       // 檢查檔案是否存在
       const [exists] = await file.exists();
       if (!exists) {
-        throw new Error("檔案不存在");
+        throw new Error('檔案不存在');
       }
 
       // 獲取檔案內容
@@ -265,7 +263,7 @@ class StorageService {
       // 獲取檔案元數據
       const [metadata] = await file.getMetadata();
 
-      logger.info("檔案下載成功", { filePath });
+      logger.info('檔案下載成功', { filePath });
 
       return {
         contents,
@@ -277,8 +275,8 @@ class StorageService {
         },
       };
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "下載失敗";
-      logger.error("檔案下載失敗", {
+      const errorMessage = error instanceof Error ? error.message : '下載失敗';
+      logger.error('檔案下載失敗', {
         error: errorMessage,
         filePath,
       });
@@ -297,29 +295,29 @@ class StorageService {
       // 檢查檔案是否存在
       const [exists] = await file.exists();
       if (!exists) {
-        logger.warn("嘗試刪除不存在的檔案", { filePath });
+        logger.warn('嘗試刪除不存在的檔案', { filePath });
         return false;
       }
 
       // 刪除檔案
       await file.delete();
 
-      logger.info("檔案刪除成功", { filePath });
+      logger.info('檔案刪除成功', { filePath });
       return true;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "未知錯誤";
-      logger.error("檔案刪除失敗", {
+      const errorMessage = error instanceof Error ? error.message : '未知錯誤';
+      logger.error('檔案刪除失敗', {
         error: errorMessage,
         filePath,
       });
-      throw new Error("刪除失敗");
+      throw new Error('刪除失敗');
     }
   }
 
   /**
    * 列出資料夾中的檔案
    */
-  async listFiles(folder = "", options = {}) {
+  async listFiles(folder = '', options = {}) {
     try {
       const bucket = this.initialize();
 
@@ -354,13 +352,13 @@ class StorageService {
                 created: fileMetadata.timeCreated,
               };
             } catch (error) {
-              logger.warn("無法獲取檔案元數據", { fileName: file.name });
+              logger.warn('無法獲取檔案元數據', { fileName: file.name });
               return basicInfo;
             }
           }
 
           return basicInfo;
-        })
+        }),
       );
 
       return {
@@ -369,9 +367,8 @@ class StorageService {
         totalResults: files.length,
       };
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "列表查詢失敗";
-      logger.error("列出檔案失敗", {
+      const errorMessage = error instanceof Error ? error.message : '列表查詢失敗';
+      logger.error('列出檔案失敗', {
         error: errorMessage,
         folder,
       });
@@ -389,7 +386,7 @@ class StorageService {
 
       const [exists] = await file.exists();
       if (!exists) {
-        throw new Error("檔案不存在");
+        throw new Error('檔案不存在');
       }
 
       const [metadata] = await file.getMetadata();
@@ -404,9 +401,8 @@ class StorageService {
         customMetadata: metadata.metadata || {},
       };
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "獲取元數據失敗";
-      logger.error("獲取檔案元數據失敗", {
+      const errorMessage = error instanceof Error ? error.message : '獲取元數據失敗';
+      logger.error('獲取檔案元數據失敗', {
         error: errorMessage,
         filePath,
       });
@@ -420,7 +416,7 @@ class StorageService {
   createMulterConfig(options = {}) {
     const {
       maxSize = 50 * 1024 * 1024, // 50MB
-      allowedTypes = ["image", "video", "audio", "application"],
+      allowedTypes = ['image', 'video', 'audio', 'application'],
     } = options;
 
     return multer({

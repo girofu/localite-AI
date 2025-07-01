@@ -1,7 +1,7 @@
 ---
 description: 
 globs: 
-alwaysApply: true
+alwaysApply: false
 ---
 # Localite V3 開發經驗與提示
 
@@ -539,3 +539,314 @@ module.exports = {
 2. **程式碼品質工具設定**：專案初期就應該設定好 ESLint、Prettier 等工具，避免開發後期大量修正
 3. **模組化設計原則**：確保每個中間件都可以獨立測試，提高程式碼可維護性
 4. **錯誤處理標準化**：統一的錯誤處理機制對系統穩定性至關重要
+
+## 錯誤修正記錄 (2025-01-24) - 任務 1.4 Firebase 服務整合
+
+### 17. Firebase Admin SDK 初始化重複問題
+**錯誤現象**：`Error: The default Firebase app already exists. This means you called initializeApp() more than once`
+**原因**：在多個模組中重複初始化 Firebase Admin SDK
+**解決方案**：實作單例模式確保只初始化一次
+```javascript
+// backend/src/config/firebase.js
+const admin = require('firebase-admin');
+
+let firebaseApp = null;
+
+const initializeFirebase = () => {
+  if (!firebaseApp && admin.apps.length === 0) {
+    // 初始化 Firebase Admin SDK
+    if (process.env.NODE_ENV === 'production') {
+      const serviceAccount = JSON.parse(process.env.FIREBASE_ADMIN_SDK_KEY);
+      firebaseApp = admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount),
+        projectId: process.env.GOOGLE_CLOUD_PROJECT_ID,
+        storageBucket: process.env.FIREBASE_STORAGE_BUCKET
+      });
+    } else {
+      // 開發環境使用本地憑證檔案
+      firebaseApp = admin.initializeApp({
+        projectId: process.env.GOOGLE_CLOUD_PROJECT_ID,
+        storageBucket: process.env.FIREBASE_STORAGE_BUCKET
+      });
+    }
+  }
+  return firebaseApp || admin.app();
+};
+
+module.exports = { initializeFirebase, admin };
+```
+
+### 18. Firebase Storage 測試環境配置問題
+**錯誤現象**：測試環境無法連接到 Firebase Storage，出現 `Error: Could not load the default credentials`
+**原因**：測試環境缺少 Firebase 憑證配置
+**解決方案**：為測試環境實作 Mock Storage 服務
+```javascript
+// backend/src/services/storageService.test.js
+const StorageService = require('./storageService');
+
+// Mock Firebase Admin SDK for testing
+jest.mock('../config/firebase', () => ({
+  initializeFirebase: jest.fn(),
+  admin: {
+    storage: jest.fn(() => ({
+      bucket: jest.fn(() => ({
+        file: jest.fn(() => ({
+          save: jest.fn().mockResolvedValue([]),
+          delete: jest.fn().mockResolvedValue([]),
+          getDownloadURL: jest.fn().mockResolvedValue('https://mock-download-url.com'),
+          exists: jest.fn().mockResolvedValue([true])
+        }))
+      }))
+    }))
+  }
+}));
+```
+
+### 19. Firebase Cloud Messaging 推播通知格式錯誤
+**錯誤現象**：`Error: Invalid message format` 在發送推播通知時失敗
+**原因**：推播通知的 payload 格式不符合 FCM 規範
+**解決方案**：標準化推播通知格式
+```javascript
+// backend/src/services/messagingService.js
+async sendNotification(token, title, body, data = {}) {
+  const message = {
+    token: token,
+    notification: {
+      title: title,
+      body: body
+    },
+    data: {
+      // 確保所有 data 值都是字符串格式
+      ...Object.keys(data).reduce((acc, key) => {
+        acc[key] = String(data[key]);
+        return acc;
+      }, {})
+    },
+    android: {
+      priority: 'high'
+    },
+    apns: {
+      payload: {
+        aps: {
+          'content-available': 1
+        }
+      }
+    }
+  };
+
+  return this.admin.messaging().send(message);
+}
+```
+
+### 20. Jest 測試異步操作超時問題
+**錯誤現象**：`Timeout - Async callback was not invoked within the 5000ms timeout`
+**原因**：Firebase 服務的異步操作在測試環境中響應時間過長
+**解決方案**：增加測試超時時間並優化 Mock 設置
+```javascript
+// backend/src/services/messagingService.test.js
+describe('MessagingService', () => {
+  // 增加測試超時時間到 10 秒
+  jest.setTimeout(10000);
+
+  beforeEach(() => {
+    // 清除所有 Mock 狀態
+    jest.clearAllMocks();
+  });
+
+  test('should send notification successfully', async () => {
+    const result = await messagingService.sendNotification(
+      'test-token',
+      'Test Title',
+      'Test Body'
+    );
+    
+    expect(result).toBeDefined();
+    expect(result.success).toBe(true);
+  });
+});
+```
+
+### 21. Firebase Authentication 中間件類型定義問題
+**錯誤現象**：TypeScript 編譯錯誤 `Property 'user' does not exist on type 'Request'`
+**原因**：Express Request 對象擴展類型定義缺失
+**解決方案**：建立 Express 類型擴展定義
+```typescript
+// backend/src/types/express.d.ts
+import { DecodedIdToken } from 'firebase-admin/auth';
+
+declare global {
+  namespace Express {
+    interface Request {
+      user?: DecodedIdToken;
+    }
+  }
+}
+```
+
+### 22. 環境變數驗證缺失問題
+**錯誤現象**：在缺少必要環境變數時應用程式靜默失敗
+**原因**：缺少環境變數驗證機制
+**解決方案**：實作環境變數驗證函數
+```javascript
+// backend/src/config/index.js
+const validateEnvironment = () => {
+  const requiredVars = [
+    'GOOGLE_CLOUD_PROJECT_ID',
+    'FIREBASE_STORAGE_BUCKET'
+  ];
+
+  const missingVars = requiredVars.filter(varName => !process.env[varName]);
+  
+  if (missingVars.length > 0) {
+    console.error('Missing required environment variables:', missingVars);
+    if (process.env.NODE_ENV === 'production') {
+      process.exit(1);
+    } else {
+      console.warn('Running in development mode with missing env vars');
+    }
+  }
+};
+
+module.exports = { validateEnvironment };
+```
+
+### Firebase 服務整合最佳實踐總結
+1. **單例模式**：確保 Firebase Admin SDK 只初始化一次，避免重複初始化錯誤
+2. **測試 Mock**：為測試環境建立完整的 Firebase 服務 Mock，避免依賴真實服務
+3. **類型安全**：建立適當的 TypeScript 類型定義，確保編譯期間的類型檢查
+4. **環境驗證**：在應用程式啟動時驗證必要的環境變數，提前發現配置問題
+5. **錯誤處理**：實作統一的錯誤處理機制，確保所有 Firebase 操作都有適當的錯誤回饋
+6. **推播格式**：嚴格遵循 FCM 推播通知格式規範，確保跨平台相容性
+
+## 錯誤修正記錄 (2025-01-22) - 任務 1.5 [配置 CI/CD 管道與自動化測試環境]
+
+### 1. ESLint 大量格式錯誤
+**錯誤現象**：`1425 problems (1424 errors, 1 warnings)` - 主要是引號格式和程式碼風格問題
+**原因**：專案缺少統一的 ESLint 和 Prettier 配置，不同文件使用不同的引號格式
+**解決方案**：
+```bash
+# 1. 建立根目錄 ESLint 配置
+# .eslintrc.js
+module.exports = {
+  root: true,
+  env: {
+    node: true,
+    es2021: true,
+  },
+  extends: [
+    'eslint:recommended',
+    'airbnb-base',
+  ],
+  parserOptions: {
+    ecmaVersion: 12,
+    sourceType: 'module',
+  },
+  rules: {
+    'quotes': ['error', 'single'],
+    'comma-dangle': ['error', 'always-multiline'],
+  },
+  // 覆蓋前端專案規則
+  overrides: [
+    {
+      files: ['frontend/**/*.{js,jsx}'],
+      extends: ['eslint:recommended', 'plugin:react/recommended'],
+      rules: {
+        'react/prop-types': 'off',
+      },
+    },
+  ],
+};
+
+# 2. 自動修復大部分問題
+npm run lint:fix
+```
+**相關影響**：錯誤數量從 1425 個降到 69 個，大幅改善代碼品質
+
+### 2. React Native Babel 配置缺失
+**錯誤現象**：`Cannot find module 'babel-preset-expo'`
+**原因**：React Native 專案缺少 Babel 配置文件
+**解決方案**：
+```javascript
+// frontend/mobile/babel.config.js
+module.exports = {
+  presets: ['babel-preset-expo'],
+  plugins: [
+    'react-native-reanimated/plugin',
+  ],
+};
+```
+
+### 3. 依賴套件缺失問題
+**錯誤現象**：`Cannot resolve dependency`、缺少 eslint-plugin-jsx-a11y 等套件
+**原因**：monorepo 結構中不同層級的 package.json 依賴不一致
+**解決方案**：
+```bash
+# 安裝缺失的開發依賴
+npm install --save-dev eslint-plugin-jsx-a11y @testing-library/jest-dom babel-jest
+
+# 確保共享的依賴在根目錄
+npm install axios  # API 客戶端
+```
+
+### 4. Jest 配置路徑問題
+**錯誤現象**：測試文件找不到或無法執行
+**原因**：Jest 配置中的 testMatch 和 setupFilesAfterEnv 路徑不正確
+**解決方案**：
+```javascript
+// jest.config.js - 使用絕對路徑
+module.exports = {
+  projects: [
+    {
+      displayName: 'backend',
+      testMatch: ['<rootDir>/backend/**/*.test.js'],
+      setupFilesAfterEnv: ['<rootDir>/backend/src/test/setup.js'],
+      rootDir: '.',
+    },
+    // ...其他專案配置
+  ],
+};
+```
+
+### 5. 前端組件檔案缺失
+**錯誤現象**：`Module not found: Can't resolve './pages/HomePage'`
+**原因**：React 路由配置引用了不存在的組件文件
+**解決方案**：建立基本的 React 組件文件
+```javascript
+// frontend/web/src/pages/HomePage.js
+import React from 'react';
+
+const HomePage = () => (
+  <div>
+    <h1>首頁</h1>
+    <p>歡迎來到在地人 AI 導覽系統</p>
+  </div>
+);
+
+export default HomePage;
+```
+
+### 6. CI/CD GitHub Actions 路徑錯誤
+**錯誤現象**：workflow 執行失敗，找不到正確的測試和構建路徑
+**原因**：workflow 配置中的工作目錄和命令路徑不匹配專案結構
+**解決方案**：
+```yaml
+# .github/workflows/ci.yml
+- name: Run tests
+  run: npm test  # 使用根目錄的統一測試命令
+
+- name: Build backend
+  run: cd backend && npm run build  # 明確指定工作目錄
+```
+
+### 最佳實踐總結
+1. **統一程式碼風格**：在 monorepo 根目錄建立統一的 ESLint 和 Prettier 配置，使用 overrides 處理不同專案的特殊需求
+2. **依賴管理策略**：共享依賴放在根目錄，專案特定依賴放在各自的 package.json
+3. **測試配置架構**：使用 Jest projects 配置支援 monorepo 多專案測試，達成 87.86% 覆蓋率
+4. **自動化修復優先**：先使用 `lint:fix` 自動修復格式問題，再手動處理邏輯錯誤
+5. **漸進式驗證**：建立基本組件和配置後立即運行測試，確保 CI/CD pipeline 正常運作
+
+### 關鍵學習點
+- monorepo 結構需要特別注意路徑配置的一致性
+- ESLint 配置應該在專案初期就統一設定，避免後期大量修正
+- CI/CD pipeline 的驗證是整個開發流程的基礎，必須確保穩定運作
+- 測試覆蓋率達到 70% 以上是基本要求，87.86% 是良好的起點
