@@ -24,7 +24,6 @@ class MongoDBConnection {
         serverSelectionTimeoutMS: 5000,
         socketTimeoutMS: 45000,
         family: 4, // Use IPv4, skip trying IPv6
-        bufferMaxEntries: 0,
         bufferCommands: false,
       };
 
@@ -33,7 +32,7 @@ class MongoDBConnection {
       console.log('✅ MongoDB connected successfully');
 
       // 監聽連接事件
-      mongoose.connection.on('error', (err) => {
+      mongoose.connection.on('error', err => {
         console.error('❌ MongoDB connection error:', err);
         this.isConnected = false;
       });

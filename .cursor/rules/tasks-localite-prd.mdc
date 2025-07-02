@@ -1,8 +1,9 @@
 ---
-description: 
-globs: 
+description:
+globs:
 alwaysApply: true
 ---
+
 # Tasks - 在地人 AI 導覽系統
 
 ## Relevant Files
@@ -70,6 +71,9 @@ alwaysApply: true
 - `frontend/web/src/components/MerchantDashboard.js` - 網頁端商戶後台 (待建立)
 - `frontend/shared/i18n/` - 國際化配置檔案 (待建立)
 - `jest.config.js` - Jest 測試配置，支援 monorepo 結構的統一測試管理
+- `backend/src/config/swagger.js` - Swagger/OpenAPI 配置檔案（完整的 API 文檔定義和 Schema）
+- `backend/src/test/swagger.test.js` - Swagger 配置單元測試
+- `docs/api-documentation-guide.md` - API 文檔使用指南（開發者指南和最佳實踐）
 
 ### Notes
 
@@ -82,7 +86,6 @@ alwaysApply: true
 ## Tasks
 
 - [ ] 1.0 系統基礎建設與架構設置
-
   - [x] 1.1 設置開發環境與專案結構（建立 Node.js 後端專案、React Native 和 React 前端專案）
   - [x] 1.2 配置資料庫連接（MongoDB 主庫、MySQL 交易庫、Redis 快取）
   - [x] 1.3 建立 Express 伺服器基礎架構與中間件配置
@@ -104,10 +107,14 @@ alwaysApply: true
     - [x] 1.7.3 實作系統健康檢查端點
     - [x] 1.7.4 建立錯誤追蹤和通知系統
     - [x] 1.7.5 設置監控指標收集API
-  - [ ] 1.8 建立 API 文檔框架（OpenAPI/Swagger 配置）
+  - [x] 1.8 建立 API 文檔框架（OpenAPI/Swagger 配置）
+    - [x] 1.8.1 為功能旗標路由添加 OpenAPI/Swagger 註解文檔
+    - [x] 1.8.2 為監控路由添加 OpenAPI/Swagger 註解文檔
+    - [x] 1.8.3 完善 Swagger 配置（添加更多 schema 定義）
+    - [x] 1.8.4 測試 API 文檔功能並驗證文檔完整性
+    - [x] 1.8.5 建立 API 文檔使用指南
 
 - [ ] 2.0 用戶管理與認證系統
-
   - [ ] 2.1 實作用戶註冊功能（Email 驗證、社交媒體登入整合）
   - [ ] 2.2 建立安全認證機制（JWT token 管理、Session 處理）
   - [ ] 2.3 實作權限管理系統（一般用戶 vs 商戶用戶角色區分）
@@ -117,7 +124,6 @@ alwaysApply: true
   - [ ] 2.7 實作前端認證界面（登入/註冊表單、狀態管理）
 
 - [ ] 3.0 AI 導覽核心功能開發
-
   - [ ] 3.1 整合 Google AI studio API 服務（API 金鑰管理、請求速率限制）
   - [ ] 3.2 實作導覽內容生成邏輯（個性化回答、上下文記憶）
   - [ ] 3.3 開發語音合成功能（Azure Speech Service 整合、多語言支援）
@@ -128,7 +134,6 @@ alwaysApply: true
   - [ ] 3.8 建立內容審核機制（不當內容過濾、品質控制）
 
 - [ ] 4.0 商戶後台管理系統
-
   - [ ] 4.1 實作商戶註冊與認證流程（身份驗證、商戶審核）
   - [ ] 4.2 開發內容管理系統（導覽內容上傳、編輯、刪除）
   - [ ] 4.3 建立檔案上傳功能（圖片、影片處理、S3 儲存整合）

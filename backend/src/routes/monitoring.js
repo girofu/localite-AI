@@ -10,6 +10,221 @@ const ErrorTrackingService = require('../services/errorTrackingService');
 const router = express.Router();
 const logger = createComponentLogger('monitoring-routes');
 
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     PerformanceMetrics:
+ *       type: object
+ *       properties:
+ *         timestamp:
+ *           type: string
+ *           format: date-time
+ *           description: 指標收集時間
+ *         memory:
+ *           type: object
+ *           properties:
+ *             used:
+ *               type: number
+ *               description: 已使用記憶體 (MB)
+ *             total:
+ *               type: number
+ *               description: 總記憶體 (MB)
+ *         cpu:
+ *           type: object
+ *           properties:
+ *             usage:
+ *               type: number
+ *               description: CPU 使用率百分比
+ *         responseTime:
+ *           type: object
+ *           properties:
+ *             average:
+ *               type: number
+ *               description: 平均響應時間 (ms)
+ *             max:
+ *               type: number
+ *               description: 最大響應時間 (ms)
+ *
+ *     HealthCheck:
+ *       type: object
+ *       properties:
+ *         status:
+ *           type: string
+ *           enum: [healthy, unhealthy]
+ *           description: 健康狀態
+ *         timestamp:
+ *           type: string
+ *           format: date-time
+ *           description: 檢查時間
+ *         uptime:
+ *           type: number
+ *           description: 系統運行時間 (秒)
+ *         memory:
+ *           type: object
+ *           properties:
+ *             used:
+ *               type: number
+ *               description: 已使用記憶體 (MB)
+ *             total:
+ *               type: number
+ *               description: 總記憶體 (MB)
+ *         version:
+ *           type: string
+ *           description: 應用程式版本
+ *         environment:
+ *           type: string
+ *           description: 運行環境
+ *         responseTime:
+ *           type: number
+ *           description: 檢查響應時間 (ms)
+ *
+ *     DetailedHealthCheck:
+ *       allOf:
+ *         - $ref: '#/components/schemas/HealthCheck'
+ *         - type: object
+ *           properties:
+ *             application:
+ *               type: object
+ *               properties:
+ *                 nodeVersion:
+ *                   type: string
+ *                   description: Node.js 版本
+ *                 pid:
+ *                   type: number
+ *                   description: 進程 ID
+ *             system:
+ *               type: object
+ *               properties:
+ *                 platform:
+ *                   type: string
+ *                   description: 作業系統平台
+ *                 architecture:
+ *                   type: string
+ *                   description: 系統架構
+ *                 cpus:
+ *                   type: number
+ *                   description: CPU 核心數
+ *                 totalMemory:
+ *                   type: number
+ *                   description: 系統總記憶體 (GB)
+ *                 freeMemory:
+ *                   type: number
+ *                   description: 系統可用記憶體 (GB)
+ *
+ *     ErrorStats:
+ *       type: object
+ *       properties:
+ *         summary:
+ *           type: object
+ *           properties:
+ *             total:
+ *               type: number
+ *               description: 錯誤總數
+ *         byLevel:
+ *           type: object
+ *           properties:
+ *             critical:
+ *               type: number
+ *             high:
+ *               type: number
+ *             medium:
+ *               type: number
+ *             low:
+ *               type: number
+ *         timeframe:
+ *           type: number
+ *           description: 統計時間範圍 (毫秒)
+ *
+ *     ErrorDetails:
+ *       type: object
+ *       properties:
+ *         trackingId:
+ *           type: string
+ *           description: 錯誤追蹤 ID
+ *         message:
+ *           type: string
+ *           description: 錯誤訊息
+ *         severity:
+ *           type: string
+ *           enum: [critical, high, medium, low]
+ *           description: 錯誤嚴重程度
+ *         timestamp:
+ *           type: string
+ *           format: date-time
+ *           description: 錯誤發生時間
+ *         context:
+ *           type: object
+ *           description: 錯誤上下文資訊
+ *         count:
+ *           type: number
+ *           description: 相同錯誤出現次數
+ *
+ *     LogFile:
+ *       type: object
+ *       properties:
+ *         name:
+ *           type: string
+ *           description: 日誌檔案名稱
+ *         size:
+ *           type: number
+ *           description: 檔案大小 (KB)
+ *         modified:
+ *           type: string
+ *           format: date-time
+ *           description: 最後修改時間
+ *
+ *   securitySchemes:
+ *     bearerAuth:
+ *       type: http
+ *       scheme: bearer
+ *       bearerFormat: JWT
+ *       description: Firebase ID Token
+ *
+ *   responses:
+ *     UnauthorizedError:
+ *       description: 需要身份驗證
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               success:
+ *                 type: boolean
+ *                 example: false
+ *               error:
+ *                 type: string
+ *                 example: "需要身份驗證"
+ *
+ *     ForbiddenError:
+ *       description: 權限不足
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               success:
+ *                 type: boolean
+ *                 example: false
+ *               error:
+ *                 type: string
+ *                 example: "權限不足，僅管理員可以執行此操作"
+ *
+ *     ServerError:
+ *       description: 伺服器內部錯誤
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               success:
+ *                 type: boolean
+ *                 example: false
+ *               error:
+ *                 type: string
+ *                 example: "內部伺服器錯誤"
+ */
+
 // 創建錯誤追蹤服務實例
 const errorTrackingService = new ErrorTrackingService({
   enabled: process.env.NODE_ENV !== 'test',
@@ -23,9 +238,44 @@ const errorTrackingService = new ErrorTrackingService({
 });
 
 /**
- * @route GET /api/v1/monitoring/performance
- * @desc 獲取系統效能指標
- * @access Private (需要認證)
+ * @swagger
+ * /api/v1/monitoring/performance:
+ *   get:
+ *     summary: 獲取系統效能指標
+ *     description: 獲取當前系統的效能監控指標，包括記憶體使用率、CPU 使用率、響應時間等
+ *     tags:
+ *       - Monitoring
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: 成功獲取效能指標
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   $ref: '#/components/schemas/PerformanceMetrics'
+ *             example:
+ *               success: true
+ *               data:
+ *                 timestamp: "2025-01-24T10:00:00.000Z"
+ *                 memory:
+ *                   used: 128
+ *                   total: 512
+ *                 cpu:
+ *                   usage: 25.5
+ *                 responseTime:
+ *                   average: 150
+ *                   max: 500
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
  */
 router.get('/performance', authMiddleware, (req, res) => {
   logger.info('效能指標查詢請求', {
@@ -38,9 +288,35 @@ router.get('/performance', authMiddleware, (req, res) => {
 });
 
 /**
- * @route POST /api/v1/monitoring/performance/reset
- * @desc 重置效能指標
- * @access Private (需要認證，僅管理員)
+ * @swagger
+ * /api/v1/monitoring/performance/reset:
+ *   post:
+ *     summary: 重置效能指標
+ *     description: 重置系統效能監控指標，清空歷史數據（僅管理員可執行）
+ *     tags:
+ *       - Monitoring
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: 成功重置效能指標
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "效能指標已重置"
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       403:
+ *         $ref: '#/components/responses/ForbiddenError'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
  */
 router.post('/performance/reset', authMiddleware, (req, res) => {
   // 檢查是否為管理員
@@ -66,9 +342,57 @@ router.post('/performance/reset', authMiddleware, (req, res) => {
 });
 
 /**
- * @route GET /api/v1/monitoring/health
- * @desc 系統健康檢查端點
- * @access Public
+ * @swagger
+ * /api/v1/monitoring/health:
+ *   get:
+ *     summary: 系統健康檢查
+ *     description: 基本的系統健康檢查端點，返回系統運行狀態和基本指標
+ *     tags:
+ *       - Monitoring
+ *     responses:
+ *       200:
+ *         description: 系統健康狀態正常
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   $ref: '#/components/schemas/HealthCheck'
+ *             example:
+ *               success: true
+ *               data:
+ *                 status: "healthy"
+ *                 timestamp: "2025-01-24T10:00:00.000Z"
+ *                 uptime: 3600
+ *                 memory:
+ *                   used: 128
+ *                   total: 512
+ *                 version: "1.0.0"
+ *                 environment: "production"
+ *                 responseTime: 5
+ *       503:
+ *         description: 系統健康狀態異常
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 status:
+ *                   type: string
+ *                   example: "unhealthy"
+ *                 error:
+ *                   type: string
+ *                   example: "系統健康檢查失敗"
+ *                 timestamp:
+ *                   type: string
+ *                   format: date-time
  */
 router.get('/health', (req, res) => {
   const startTime = Date.now();
@@ -113,9 +437,63 @@ router.get('/health', (req, res) => {
 });
 
 /**
- * @route GET /api/v1/monitoring/health/detailed
- * @desc 詳細系統健康檢查
- * @access Private (需要認證)
+ * @swagger
+ * /api/v1/monitoring/health/detailed:
+ *   get:
+ *     summary: 詳細系統健康檢查
+ *     description: 獲取詳細的系統健康狀態，包括應用程式、系統、進程等完整資訊
+ *     tags:
+ *       - Monitoring
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: 成功獲取詳細健康狀態
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   $ref: '#/components/schemas/DetailedHealthCheck'
+ *             example:
+ *               success: true
+ *               data:
+ *                 status: "healthy"
+ *                 timestamp: "2025-01-24T10:00:00.000Z"
+ *                 application:
+ *                   uptime: 3600
+ *                   version: "1.0.0"
+ *                   environment: "production"
+ *                   nodeVersion: "v18.17.0"
+ *                   pid: 12345
+ *                 system:
+ *                   platform: "linux"
+ *                   architecture: "x64"
+ *                   cpus: 4
+ *                   totalMemory: 8
+ *                   freeMemory: 4
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       503:
+ *         description: 詳細健康檢查失敗
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 status:
+ *                   type: string
+ *                   example: "unhealthy"
+ *                 error:
+ *                   type: string
+ *                   example: "詳細健康檢查失敗"
  */
 router.get('/health/detailed', authMiddleware, async (req, res) => {
   const startTime = Date.now();
@@ -261,9 +639,53 @@ router.get('/logs', authMiddleware, (req, res) => {
 });
 
 /**
- * @route GET /api/v1/monitoring/errors/stats
- * @desc 獲取錯誤統計資訊
- * @access Private (需要認證，僅管理員)
+ * @swagger
+ * /api/v1/monitoring/errors/stats:
+ *   get:
+ *     summary: 獲取錯誤統計資訊
+ *     description: 獲取系統錯誤的統計資訊，包括錯誤總數、分級統計等（僅管理員可訪問）
+ *     tags:
+ *       - Monitoring
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: timeframe
+ *         schema:
+ *           type: integer
+ *           default: 3600000
+ *         description: 統計時間範圍（毫秒），預設為1小時
+ *         example: 3600000
+ *     responses:
+ *       200:
+ *         description: 成功獲取錯誤統計
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   $ref: '#/components/schemas/ErrorStats'
+ *             example:
+ *               success: true
+ *               data:
+ *                 summary:
+ *                   total: 42
+ *                 byLevel:
+ *                   critical: 2
+ *                   high: 8
+ *                   medium: 15
+ *                   low: 17
+ *                 timeframe: 3600000
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       403:
+ *         $ref: '#/components/responses/ForbiddenError'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
  */
 router.get('/errors/stats', authMiddleware, (req, res) => {
   // 檢查是否為管理員
@@ -308,9 +730,55 @@ router.get('/errors/stats', authMiddleware, (req, res) => {
 });
 
 /**
- * @route GET /api/v1/monitoring/errors/:trackingId
- * @desc 獲取特定錯誤的詳細資訊
- * @access Private (需要認證，僅管理員)
+ * @swagger
+ * /api/v1/monitoring/errors/{trackingId}:
+ *   get:
+ *     summary: 獲取特定錯誤詳情
+ *     description: 根據追蹤 ID 獲取特定錯誤的詳細資訊（僅管理員可訪問）
+ *     tags:
+ *       - Monitoring
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: trackingId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: 錯誤追蹤 ID
+ *         example: "error_20250124_001"
+ *     responses:
+ *       200:
+ *         description: 成功獲取錯誤詳情
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   $ref: '#/components/schemas/ErrorDetails'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       403:
+ *         $ref: '#/components/responses/ForbiddenError'
+ *       404:
+ *         description: 找不到指定的錯誤記錄
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: "找不到指定的錯誤記錄"
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
  */
 router.get('/errors/:trackingId', authMiddleware, (req, res) => {
   // 檢查是否為管理員
@@ -363,9 +831,79 @@ router.get('/errors/:trackingId', authMiddleware, (req, res) => {
 });
 
 /**
- * @route POST /api/v1/monitoring/errors/track
- * @desc 手動記錄錯誤（用於測試）
- * @access Private (需要認證，僅管理員)
+ * @swagger
+ * /api/v1/monitoring/errors/track:
+ *   post:
+ *     summary: 手動記錄錯誤
+ *     description: 手動記錄一個錯誤到錯誤追蹤系統（用於測試，僅管理員可執行）
+ *     tags:
+ *       - Monitoring
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - message
+ *             properties:
+ *               message:
+ *                 type: string
+ *                 description: 錯誤訊息
+ *                 example: "測試錯誤訊息"
+ *               severity:
+ *                 type: string
+ *                 enum: [critical, high, medium, low]
+ *                 default: medium
+ *                 description: 錯誤嚴重程度
+ *               context:
+ *                 type: object
+ *                 description: 額外的上下文資訊
+ *                 example:
+ *                   component: "test-component"
+ *                   action: "manual-test"
+ *     responses:
+ *       200:
+ *         description: 成功記錄錯誤
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     trackingId:
+ *                       type: string
+ *                       description: 錯誤追蹤 ID
+ *                       example: "error_20250124_001"
+ *                     message:
+ *                       type: string
+ *                       example: "錯誤已記錄"
+ *       400:
+ *         description: 請求參數錯誤
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: "錯誤訊息不能為空"
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       403:
+ *         $ref: '#/components/responses/ForbiddenError'
+ *       500:
+ *         $ref: '#/components/responses/ServerError'
  */
 router.post('/errors/track', authMiddleware, async (req, res) => {
   // 檢查是否為管理員
