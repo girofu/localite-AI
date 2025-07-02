@@ -28,6 +28,7 @@ class AuthMiddleware {
   /**
    * 從請求中提取 Bearer Token
    */
+  // eslint-disable-next-line class-methods-use-this
   extractToken(req) {
     const authHeader = req.headers.authorization;
 
@@ -44,10 +45,11 @@ class AuthMiddleware {
 
   /**
    * 開發環境測試用戶 bypass
-   * 允許在開發環境使用特殊標頭跳過認證
+   * 允許在開發環境和測試環境使用特殊標頭跳過認證
    */
+  // eslint-disable-next-line class-methods-use-this
   handleTestUser(req) {
-    if (process.env.NODE_ENV !== 'development') {
+    if (process.env.NODE_ENV !== 'development' && process.env.NODE_ENV !== 'test') {
       return null;
     }
 
@@ -83,9 +85,10 @@ class AuthMiddleware {
 
     const testUser = testUsers[testHeader];
     if (testUser) {
-      logger.info('使用開發環境測試用戶', {
+      logger.info('使用測試用戶', {
         testUser: testHeader,
         uid: testUser.uid,
+        environment: process.env.NODE_ENV,
       });
       return testUser;
     }
@@ -176,7 +179,7 @@ class AuthMiddleware {
         role: req.user.role,
       });
 
-      next();
+      return next();
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '認證失敗';
 
@@ -200,6 +203,7 @@ class AuthMiddleware {
    * 角色檢查中間件工廠函數
    * @param {string|string[]} allowedRoles 允許的角色
    */
+  // eslint-disable-next-line class-methods-use-this
   requireRole = (allowedRoles) => {
     const roles = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
 
@@ -234,7 +238,7 @@ class AuthMiddleware {
         });
       }
 
-      next();
+      return next();
     };
   };
 
@@ -269,11 +273,11 @@ class AuthMiddleware {
         role: decodedToken.role || 'user',
       };
 
-      next();
+      return next();
     } catch (error) {
       // 可選認證失敗時，記錄錯誤但繼續執行
       logger.warn('可選認證失敗', { error: error.message });
-      next();
+      return next();
     }
   };
 }

@@ -1,5 +1,7 @@
 const express = require('express');
 const cors = require('cors');
+const mongoose = require('mongoose');
+const authRoutes = require('../routes/auth');
 
 // 簡化的錯誤處理中間件
 const errorHandler = (err, req, res, _next) => {
@@ -34,96 +36,187 @@ const mockRequestLogger = (req, res, next) => {
   next();
 };
 
-const app = express();
+// 模擬認證中間件
+const mockAuthMiddleware = (req, res, next) => {
+  // 檢查測試用戶標頭
+  const testUser = req.headers['x-test-user'];
+  if (testUser) {
+    req.user = {
+      uid: 'test-user-123',
+      email: 'test@example.com',
+      emailVerified: true,
+    };
+  }
+  next();
+};
 
-// 信任代理
-app.set('trust proxy', 1);
+function createTestApp() {
+  const app = express();
 
-// 安全性中間件
-app.use(securityHeaders);
-app.use(cors(corsOptions));
+  // 信任代理
+  app.set('trust proxy', 1);
 
-// 請求記錄（模擬）
-app.use(mockRequestLogger);
+  // 安全性中間件
+  app.use(securityHeaders);
+  app.use(cors(corsOptions));
 
-// 速率限制
-app.use('/api/', apiLimiter);
+  // 請求記錄（模擬）
+  app.use(mockRequestLogger);
 
-// 輸入清理
-app.use(sanitizeInput);
+  // 速率限制
+  app.use('/api/', apiLimiter);
 
-// 請求解析中間件
-app.use(
-  express.json({
-    limit: '10mb',
-    verify: (req, res, buf) => {
-      req.rawBody = buf;
-    },
-  })
-);
-app.use(
-  express.urlencoded({
-    extended: true,
-    limit: '10mb',
-  })
-);
+  // 輸入清理
+  app.use(sanitizeInput);
 
-// 模擬健康檢查端點
-app.get('/health', (req, res) => {
-  res.status(200).json({
-    status: 'healthy',
-    timestamp: new Date().toISOString(),
-    services: {
-      initialized: true,
-      mongodb: true,
-      mysql: true,
-      redis: true,
-    },
-    allHealthy: true,
+  // 請求解析中間件
+  app.use(
+    express.json({
+      limit: '10mb',
+      verify: (req, res, buf) => {
+        req.rawBody = buf;
+      },
+    }),
+  );
+  app.use(
+    express.urlencoded({
+      extended: true,
+      limit: '10mb',
+    }),
+  );
+
+  // 模擬認證中間件 - 應用到所有 API 路由
+  app.use('/api', mockAuthMiddleware);
+
+  // 模擬健康檢查端點
+  app.get('/health', (req, res) => {
+    res.status(200).json({
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+      services: {
+        initialized: true,
+        mongodb: true,
+        mysql: true,
+        redis: true,
+      },
+      allHealthy: true,
+    });
   });
-});
 
-// 基本資訊端點
-app.get('/', (req, res) => {
-  res.json({
-    name: 'Localite AI 導覽系統 API',
-    version: '1.0.0',
-    status: 'running',
-    timestamp: new Date().toISOString(),
-    endpoints: {
-      health: '/health',
-      apiDocs: '/api-docs',
-      api: '/api/v1',
-    },
+  // 基本資訊端點
+  app.get('/', (req, res) => {
+    res.json({
+      name: 'Localite AI 導覽系統 API',
+      version: '1.0.0',
+      status: 'running',
+      timestamp: new Date().toISOString(),
+      endpoints: {
+        health: '/health',
+        apiDocs: '/api-docs',
+        api: '/api/v1',
+      },
+    });
   });
-});
 
-// API 路由（測試用）
-app.use('/api/v1', (req, res) => {
-  res.json({
-    message: 'Localite API v1 測試模式',
-    availableEndpoints: {
-      auth: '/api/v1/auth',
-      tours: '/api/v1/tours',
-      merchants: '/api/v1/merchants',
-      users: '/api/v1/users',
-    },
-    documentation: '/api-docs',
+  // 認證路由
+  app.use('/api/v1/auth', authRoutes);
+
+  // API 路由（測試用）
+  app.use('/api/v1', (req, res) => {
+    res.json({
+      message: 'Localite API v1 測試模式',
+      availableEndpoints: {
+        auth: '/api/v1/auth',
+        tours: '/api/v1/tours',
+        merchants: '/api/v1/merchants',
+        users: '/api/v1/users',
+      },
+      documentation: '/api-docs',
+    });
   });
-});
 
-app.get('/test', (req, res, _next) => {
-  res.json({ message: 'Test endpoint working' });
-});
+  app.get('/test', (req, res, _next) => {
+    res.json({ message: 'Test endpoint working' });
+  });
 
-app.use('/api/test', (req, res, _next) => {
-  res.json({ message: 'API test endpoint working' });
-});
+  app.use('/api/test', (req, res, _next) => {
+    res.json({ message: 'API test endpoint working' });
+  });
 
-// 404 處理
-app.use('*', notFound);
+  // 404 處理
+  app.use('*', notFound);
 
-// 全域錯誤處理
-app.use(errorHandler);
+  // 全域錯誤處理
+  app.use(errorHandler);
 
-module.exports = app;
+  return app;
+}
+
+/**
+ * 清理所有集合
+ */
+async function clearCollections() {
+  const { collections } = mongoose.connection;
+  const collectionNames = Object.keys(collections);
+
+  await Promise.all(
+    collectionNames.map(async (name) => {
+      const collection = collections[name];
+      await collection.deleteMany({});
+    }),
+  );
+}
+
+/**
+ * 設置測試應用程序
+ */
+async function setupTestApp() {
+  try {
+    // 設置測試環境變數
+    process.env.NODE_ENV = 'test';
+    process.env.MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/localite_test';
+
+    // 連接到測試資料庫
+    if (mongoose.connection.readyState === 0) {
+      await mongoose.connect(process.env.MONGODB_URI, {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+      });
+    }
+
+    // 清理測試資料庫
+    if (mongoose.connection.readyState === 1) {
+      await clearCollections();
+    }
+
+    // 創建並返回測試應用
+    return createTestApp();
+  } catch (error) {
+    console.error('測試應用設置失敗:', error);
+    throw error;
+  }
+}
+
+/**
+ * 清理測試環境
+ */
+async function teardownTestApp() {
+  try {
+    // 清理測試資料
+    if (mongoose.connection.readyState === 1) {
+      await clearCollections();
+    }
+
+    // 關閉資料庫連接
+    if (mongoose.connection.readyState !== 0) {
+      await mongoose.disconnect();
+    }
+  } catch (error) {
+    console.error('測試環境清理失敗:', error);
+    throw error;
+  }
+}
+
+module.exports = createTestApp();
+module.exports.setupTestApp = setupTestApp;
+module.exports.teardownTestApp = teardownTestApp;

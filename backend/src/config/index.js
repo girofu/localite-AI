@@ -41,7 +41,7 @@ class ConfigManager {
         } catch (error) {
           console.warn(
             '⚠️  Database initialization failed, but continuing for API documentation:',
-            error.message
+            error.message,
           );
           // 在 API 文檔模式下，即使資料庫連接失敗也繼續運行
           if (process.env.API_DOCS_MODE === 'true') {

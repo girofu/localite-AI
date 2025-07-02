@@ -101,9 +101,11 @@ async function initializeApp() {
     // API 路由
     const featureFlagRoutes = require('./routes/featureFlags');
     const { router: monitoringRoutes } = require('./routes/monitoring');
+    const authRoutes = require('./routes/auth');
 
     app.use('/api/v1/feature-flags', featureFlagRoutes);
     app.use('/api/v1/monitoring', monitoringRoutes);
+    app.use('/api/v1/auth', authRoutes);
 
     // API 基本資訊端點
     app.get('/api/v1', (req, res) => {
@@ -111,6 +113,7 @@ async function initializeApp() {
         message: 'Localite API v1',
         version: '1.0.0',
         availableEndpoints: {
+          auth: '/api/v1/auth',
           'feature-flags': '/api/v1/feature-flags',
           monitoring: '/api/v1/monitoring',
           health: '/health',

@@ -185,6 +185,78 @@ NODE_ENV=
    - 準備備案方案
    - 監控 API 使用量和成本
 
+## 錯誤修正記錄 (2025-01-02) - 任務 1.0 系統基礎建設與架構設置
+
+### ESLint 程式碼規範修正
+
+**錯誤現象**：執行 `npm run lint` 發現 110 個 ESLint 錯誤
+
+- 箭頭函數缺少括號：`Missing parentheses around arrow function parameters`
+- 行長度超過限制：`Line too long (>X characters)`
+- 變數命名不一致：`camelCase naming conventions`
+- 不必要的空白行和格式問題
+
+**原因**：
+
+1. 專案初期缺少 ESLint 配置統一檢查
+2. 部分自動生成代碼未遵循專案的程式碼風格
+3. 手動編寫代碼時未配置 IDE 自動格式化
+
+**解決方案**：
+
+1. **創建 `.eslintignore` 文件排除不必要檢查的文件**：
+
+```bash
+# 排除 coverage、logs、node_modules 等目錄
+coverage/
+logs/
+*.log
+node_modules/
+dist/
+build/
+```
+
+2. **修正箭頭函數格式**：
+
+```javascript
+// 錯誤寫法
+const connectToMongoDB = () => {
+// 正確寫法
+const connectToMongoDB = () => {
+```
+
+3. **處理行長度問題**：
+
+```javascript
+// 將長行分割為多行
+const errorMessage =
+  `MongoDB connection failed: ${error.message}. ` +
+  `Please check your connection string and network connectivity.`;
+```
+
+4. **統一變數命名**：
+
+```javascript
+// 使用 camelCase 命名
+const databaseConfig = {
+  mongoUri: process.env.MONGODB_URI,
+};
+```
+
+**相關影響**：
+
+- 提升程式碼可讀性和一致性
+- 減少團隊協作時的格式衝突
+- 建立了程式碼品質自動檢查機制
+
+**最佳實踐總結**：
+
+1. **專案初期就要建立 ESLint 配置**：避免後期大量修正
+2. **配置 IDE 自動格式化**：使用 Prettier 與 ESLint 整合
+3. **Git pre-commit hooks**：在提交前自動檢查程式碼格式
+4. **定期執行 lint 檢查**：`npm run lint` 應納入 CI/CD 流程
+5. **團隊統一開發工具配置**：使用 `.vscode/settings.json` 統一 VS Code 設定
+
 ## 錯誤修正記錄 (2025-06-15)
 
 ### 1. MongoDB 端口佔用問題
