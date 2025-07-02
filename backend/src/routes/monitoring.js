@@ -600,7 +600,7 @@ router.get('/logs', authMiddleware, (req, res) => {
       });
     }
 
-    const logFiles = fs.readdirSync(logDir).map(file => {
+    const logFiles = fs.readdirSync(logDir).map((file) => {
       const filePath = path.join(logDir, file);
       const stats = fs.statSync(filePath);
 
@@ -939,7 +939,7 @@ router.post('/errors/track', authMiddleware, async (req, res) => {
         route: req.originalUrl,
         method: req.method,
       },
-      severity
+      severity,
     );
 
     logger.info('手動錯誤記錄', {

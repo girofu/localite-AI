@@ -6,10 +6,7 @@ module.exports = {
     es2021: true,
     jest: true,
   },
-  extends: [
-    'eslint:recommended',
-    'airbnb-base',
-  ],
+  extends: ['eslint:recommended', 'airbnb-base'],
   parserOptions: {
     ecmaVersion: 'latest',
     sourceType: 'module',
@@ -21,25 +18,31 @@ module.exports = {
     'no-console': process.env.NODE_ENV === 'production' ? 'error' : 'warn',
     'no-debugger': process.env.NODE_ENV === 'production' ? 'error' : 'warn',
     'no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
-    'max-len': ['error', {
-      code: 100,
-      ignoreUrls: true,
-      ignoreComments: true,
-      ignoreStrings: true,
-      ignoreTemplateLiterals: true,
-    }],
-    'import/no-extraneous-dependencies': ['error', {
-      devDependencies: [
-        '**/*.test.js',
-        '**/*.test.jsx',
-        '**/*.spec.js',
-        '**/*.spec.jsx',
-        '**/test/**',
-        '**/tests/**',
-        'jest.config.js',
-        '**/*.config.js',
-      ],
-    }],
+    'max-len': [
+      'error',
+      {
+        code: 100,
+        ignoreUrls: true,
+        ignoreComments: true,
+        ignoreStrings: true,
+        ignoreTemplateLiterals: true,
+      },
+    ],
+    'import/no-extraneous-dependencies': [
+      'error',
+      {
+        devDependencies: [
+          '**/*.test.js',
+          '**/*.test.jsx',
+          '**/*.spec.js',
+          '**/*.spec.jsx',
+          '**/test/**',
+          '**/tests/**',
+          'jest.config.js',
+          '**/*.config.js',
+        ],
+      },
+    ],
     'prefer-const': 'error',
     'no-var': 'error',
     'object-shorthand': 'error',
@@ -60,10 +63,7 @@ module.exports = {
     // 前端 React 配置
     {
       files: ['frontend/web/**/*.{js,jsx}'],
-      extends: [
-        'plugin:react/recommended',
-        'plugin:react-hooks/recommended',
-      ],
+      extends: ['plugin:react/recommended', 'plugin:react-hooks/recommended'],
       env: {
         browser: true,
         node: false,

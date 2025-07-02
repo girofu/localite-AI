@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 
 // 簡化的錯誤處理中間件
-const errorHandler = (err, req, res, next) => {
+const errorHandler = (err, req, res, _next) => {
   res.status(err.statusCode || 500).json({
     success: false,
     error: {
@@ -12,7 +12,7 @@ const errorHandler = (err, req, res, next) => {
   });
 };
 
-const notFound = (req, res, next) => {
+const notFound = (req, res, _next) => {
   res.status(404).json({
     success: false,
     error: {
@@ -28,15 +28,6 @@ const {
   apiLimiter,
   sanitizeInput,
 } = require('../middleware/security');
-
-// 模擬 logger
-const mockLogger = {
-  info: () => {},
-  error: () => {},
-  warn: () => {},
-  debug: () => {},
-  log: () => {},
-};
 
 // 模擬請求記錄中間件
 const mockRequestLogger = (req, res, next) => {
@@ -68,13 +59,13 @@ app.use(
     verify: (req, res, buf) => {
       req.rawBody = buf;
     },
-  }),
+  })
 );
 app.use(
   express.urlencoded({
     extended: true,
     limit: '10mb',
-  }),
+  })
 );
 
 // 模擬健康檢查端點
@@ -119,6 +110,14 @@ app.use('/api/v1', (req, res) => {
     },
     documentation: '/api-docs',
   });
+});
+
+app.get('/test', (req, res, _next) => {
+  res.json({ message: 'Test endpoint working' });
+});
+
+app.use('/api/test', (req, res, _next) => {
+  res.json({ message: 'API test endpoint working' });
 });
 
 // 404 處理

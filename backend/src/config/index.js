@@ -28,7 +28,7 @@ class ConfigManager {
 
       // 檢查是否為測試模式或 API 文檔模式
       const isTestMode = process.env.NODE_ENV === 'test' || process.env.SKIP_DB_INIT === 'true';
-      
+
       if (isTestMode) {
         console.log('🧪 Running in test mode - skipping database initialization');
       } else {
@@ -39,7 +39,10 @@ class ConfigManager {
           // 初始化 Redis 連接
           await redisConnection.connect();
         } catch (error) {
-          console.warn('⚠️  Database initialization failed, but continuing for API documentation:', error.message);
+          console.warn(
+            '⚠️  Database initialization failed, but continuing for API documentation:',
+            error.message
+          );
           // 在 API 文檔模式下，即使資料庫連接失敗也繼續運行
           if (process.env.API_DOCS_MODE === 'true') {
             console.log('📖 API Documentation mode - continuing without database');

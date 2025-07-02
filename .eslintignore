@@ -1,0 +1,29 @@
+# 依賴
+node_modules/
+dist/
+build/
+coverage/
+
+# 日誌與設定
+*.log
+logs/
+.env*
+
+# 文檔檔案
+*.md
+*.mdc
+docs/
+
+# 第三方與自動產生檔案
+public/vendor/
+src/vendor/
+**/*.generated.*
+**/auto-imports.d.ts
+
+# Docker 相關
+docker-compose*.yml
+
+# 建置產出
+*.min.js
+*.min.css
+*.bundle.js 

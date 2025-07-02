@@ -22,25 +22,23 @@ jest.mock('../config/logger', () => ({
   }),
 }));
 
-jest.mock('../services/errorTrackingService', () => {
-  return jest.fn().mockImplementation(() => ({
-    trackError: jest.fn().mockResolvedValue('mock-tracking-id'),
-    getErrorStats: jest.fn().mockReturnValue({
-      summary: { total: 0 },
-      bySeverity: {},
-      byType: {},
-      topErrors: [],
-    }),
-    getErrorDetails: jest.fn().mockReturnValue(null),
-    cleanup: jest.fn(),
-    getStatus: jest.fn().mockReturnValue({
-      enabled: false,
-      environment: 'test',
-      errorHistorySize: 0,
-      activeCounters: 0,
-    }),
-  }));
-});
+jest.mock('../services/errorTrackingService', () => jest.fn().mockImplementation(() => ({
+  trackError: jest.fn().mockResolvedValue('mock-tracking-id'),
+  getErrorStats: jest.fn().mockReturnValue({
+    summary: { total: 0 },
+    bySeverity: {},
+    byType: {},
+    topErrors: [],
+  }),
+  getErrorDetails: jest.fn().mockReturnValue(null),
+  cleanup: jest.fn(),
+  getStatus: jest.fn().mockReturnValue({
+    enabled: false,
+    environment: 'test',
+    errorHistorySize: 0,
+    activeCounters: 0,
+  }),
+})));
 
 const { router: monitoringRoutes } = require('./monitoring');
 

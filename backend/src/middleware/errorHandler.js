@@ -19,11 +19,7 @@ class AppError extends Error {
  */
 const handleValidationError = (err) => {
   const errors = Object.values(err.errors).map((error) => error.message);
-  return new AppError(
-    `驗證錯誤: ${errors.join(', ')}`,
-    400,
-    'VALIDATION_ERROR',
-  );
+  return new AppError(`驗證錯誤: ${errors.join(', ')}`, 400, 'VALIDATION_ERROR');
 };
 
 /**
@@ -44,7 +40,7 @@ const handleJWTExpiredError = () => new AppError('Token 已過期', 401, 'EXPIRE
 /**
  * 錯誤處理中間件
  */
-const errorHandler = (err, req, res, next) => {
+const errorHandler = (err, req, res, _next) => {
   let error = { ...err };
   error.message = err.message;
 
@@ -94,11 +90,7 @@ const errorHandler = (err, req, res, next) => {
  * 處理未捕獲的路由
  */
 const notFound = (req, res, next) => {
-  const error = new AppError(
-    `路由 ${req.originalUrl} 不存在`,
-    404,
-    'ROUTE_NOT_FOUND',
-  );
+  const error = new AppError(`路由 ${req.originalUrl} 不存在`, 404, 'ROUTE_NOT_FOUND');
   next(error);
 };
 

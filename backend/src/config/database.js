@@ -1,3 +1,4 @@
+/* eslint-disable max-classes-per-file */
 const mongoose = require('mongoose');
 const mysql = require('mysql2/promise');
 require('dotenv').config();
@@ -32,7 +33,7 @@ class MongoDBConnection {
       console.log('✅ MongoDB connected successfully');
 
       // 監聽連接事件
-      mongoose.connection.on('error', err => {
+      mongoose.connection.on('error', (err) => {
         console.error('❌ MongoDB connection error:', err);
         this.isConnected = false;
       });
@@ -59,6 +60,9 @@ class MongoDBConnection {
   }
 
   getConnection() {
+    if (!this.isConnected) {
+      throw new Error('MongoDB not connected. Call connect() first.');
+    }
     return mongoose.connection;
   }
 }

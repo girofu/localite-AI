@@ -225,7 +225,7 @@ class ErrorTrackingService {
     const now = new Date();
     const cutoff = new Date(now.getTime() - timeframe);
 
-    const recentErrors = this.errorHistory.filter(error => new Date(error.timestamp) >= cutoff);
+    const recentErrors = this.errorHistory.filter((error) => new Date(error.timestamp) >= cutoff);
 
     // 按嚴重程度分組
     const bySeverity = recentErrors.reduce((acc, error) => {
@@ -270,7 +270,7 @@ class ErrorTrackingService {
    * @returns {Object|null}
    */
   getErrorDetails(trackingId) {
-    return this.errorHistory.find(error => error.trackingId === trackingId) || null;
+    return this.errorHistory.find((error) => error.trackingId === trackingId) || null;
   }
 
   /**
@@ -281,7 +281,7 @@ class ErrorTrackingService {
     // 預設24小時
     const cutoff = new Date(Date.now() - maxAge);
 
-    this.errorHistory = this.errorHistory.filter(error => new Date(error.timestamp) >= cutoff);
+    this.errorHistory = this.errorHistory.filter((error) => new Date(error.timestamp) >= cutoff);
 
     // 清理錯誤計數器
     const activeKeys = [];
@@ -292,7 +292,7 @@ class ErrorTrackingService {
     });
 
     this.errorCounts.clear();
-    activeKeys.forEach(key => {
+    activeKeys.forEach((key) => {
       this.errorCounts.set(key, { count: 0, lastSeen: new Date() });
     });
 

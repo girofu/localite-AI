@@ -68,7 +68,7 @@ describe('ErrorTrackingService', () => {
         expect.objectContaining({
           enabled: true,
           environment: 'test',
-        })
+        }),
       );
     });
   });
@@ -129,7 +129,7 @@ describe('ErrorTrackingService', () => {
           trackingId: 'mock-uuid-123',
           severity: 'critical',
           message: 'Test error',
-        })
+        }),
       );
     });
   });
@@ -229,7 +229,7 @@ describe('ErrorTrackingService', () => {
         expect.objectContaining({
           title: 'CRITICAL Error Alert',
           message: expect.stringContaining('Critical error occurred'),
-        })
+        }),
       );
     });
 
@@ -301,7 +301,7 @@ describe('ErrorTrackingService', () => {
           severity: 'high',
           count: 5,
           trackingId: 'test-123',
-        })
+        }),
       );
     });
 
@@ -320,7 +320,7 @@ describe('ErrorTrackingService', () => {
         expect.objectContaining({
           error: 'Notification failed',
           originalError: 'Test error',
-        })
+        }),
       );
     });
 
@@ -334,7 +334,7 @@ describe('ErrorTrackingService', () => {
 
       // Should not throw error
       await expect(
-        errorTrackingService.sendNotification('medium', errorRecord, 3)
+        errorTrackingService.sendNotification('medium', errorRecord, 3),
       ).resolves.toBeUndefined();
 
       expect(logger.warn).toHaveBeenCalledWith(
@@ -342,7 +342,7 @@ describe('ErrorTrackingService', () => {
         expect.objectContaining({
           severity: 'medium',
           count: 3,
-        })
+        }),
       );
     });
   });
@@ -371,7 +371,7 @@ describe('ErrorTrackingService', () => {
 
     test('should filter by timeframe', async () => {
       // 等待一小段時間讓錯誤變舊
-      await new Promise(resolve => setTimeout(resolve, 50));
+      await new Promise((resolve) => setTimeout(resolve, 50));
 
       const stats = errorTrackingService.getErrorStats({ timeframe: 10 }); // 10ms ago
 
@@ -416,7 +416,7 @@ describe('ErrorTrackingService', () => {
 
     test('should clean up old errors', async () => {
       // 等待一小段時間讓錯誤變舊
-      await new Promise(resolve => setTimeout(resolve, 50));
+      await new Promise((resolve) => setTimeout(resolve, 50));
 
       // Set a very short max age to force cleanup
       errorTrackingService.cleanup(10); // 10ms
@@ -429,7 +429,7 @@ describe('ErrorTrackingService', () => {
         expect.objectContaining({
           remainingErrors: 0,
           remainingCounters: 0,
-        })
+        }),
       );
     });
 
@@ -467,7 +467,7 @@ describe('ErrorTrackingService', () => {
 
       expect(errorTrackingService.notificationService).toBe(service);
       expect(logger.info).toHaveBeenCalledWith(
-        'Notification service configured for error tracking'
+        'Notification service configured for error tracking',
       );
     });
   });

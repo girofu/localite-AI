@@ -8,7 +8,7 @@ describe('Swagger 配置測試', () => {
   });
 
   test('應該包含基本的 API 資訊', () => {
-    const specs = swaggerSetup.specs;
+    const { specs } = swaggerSetup;
 
     expect(specs.info).toBeDefined();
     expect(specs.info.title).toBe('Localite AI 導覽系統 API');
@@ -17,18 +17,18 @@ describe('Swagger 配置測試', () => {
   });
 
   test('應該包含伺服器配置', () => {
-    const specs = swaggerSetup.specs;
+    const { specs } = swaggerSetup;
 
     expect(specs.servers).toBeDefined();
     expect(Array.isArray(specs.servers)).toBe(true);
     expect(specs.servers.length).toBeGreaterThan(0);
 
-    const devServer = specs.servers.find(server => server.description === '開發環境');
+    const devServer = specs.servers.find((server) => server.description === '開發環境');
     expect(devServer).toBeDefined();
   });
 
   test('應該包含安全配置', () => {
-    const specs = swaggerSetup.specs;
+    const { specs } = swaggerSetup;
 
     expect(specs.components).toBeDefined();
     expect(specs.components.securitySchemes).toBeDefined();
@@ -38,7 +38,7 @@ describe('Swagger 配置測試', () => {
   });
 
   test('應該包含基本的 Schema 定義', () => {
-    const specs = swaggerSetup.specs;
+    const { specs } = swaggerSetup;
 
     expect(specs.components.schemas).toBeDefined();
 
@@ -57,7 +57,7 @@ describe('Swagger 配置測試', () => {
   });
 
   test('應該包含路由路徑配置', () => {
-    const specs = swaggerSetup.specs;
+    const { specs } = swaggerSetup;
 
     expect(specs.paths).toBeDefined();
 
@@ -67,12 +67,12 @@ describe('Swagger 配置測試', () => {
   });
 
   test('應該包含所有標籤定義', () => {
-    const specs = swaggerSetup.specs;
+    const { specs } = swaggerSetup;
 
     expect(specs.tags).toBeDefined();
     expect(Array.isArray(specs.tags)).toBe(true);
 
-    const tagNames = specs.tags.map(tag => tag.name);
+    const tagNames = specs.tags.map((tag) => tag.name);
 
     // 檢查主要標籤
     expect(tagNames).toContain('Feature Flags');

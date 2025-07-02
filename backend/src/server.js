@@ -52,20 +52,20 @@ async function initializeApp() {
         verify: (req, res, buf) => {
           req.rawBody = buf;
         },
-      })
+      }),
     );
     app.use(
       express.urlencoded({
         extended: true,
         limit: '10mb',
-      })
+      }),
     );
 
     // API 文檔
     app.use(
       '/api-docs',
       swaggerSetup.swaggerUi.serve,
-      swaggerSetup.swaggerUi.setup(swaggerSetup.specs, swaggerSetup.customOptions)
+      swaggerSetup.swaggerUi.setup(swaggerSetup.specs, swaggerSetup.customOptions),
     );
 
     // 健康檢查端點
@@ -148,7 +148,7 @@ async function startServer() {
     });
 
     // 優雅關閉處理
-    const gracefulShutdown = async signal => {
+    const gracefulShutdown = async (signal) => {
       logger.info(`收到 ${signal} 信號，開始優雅關閉...`);
 
       server.close(async () => {
@@ -176,7 +176,7 @@ async function startServer() {
     process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
     // 處理未捕獲的異常
-    process.on('uncaughtException', error => {
+    process.on('uncaughtException', (error) => {
       logger.error('未捕獲的異常:', error);
       gracefulShutdown('UNCAUGHT_EXCEPTION');
     });

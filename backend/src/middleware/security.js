@@ -118,10 +118,7 @@ const validateRequest = (req, res, next) => {
  * 常用驗證規則
  */
 const validationRules = {
-  email: body('email')
-    .isEmail()
-    .normalizeEmail()
-    .withMessage('請輸入有效的電子郵件地址'),
+  email: body('email').isEmail().normalizeEmail().withMessage('請輸入有效的電子郵件地址'),
 
   password: body('password')
     .isLength({ min: 8 })
@@ -129,9 +126,7 @@ const validationRules = {
     .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
     .withMessage('密碼必須包含大小寫字母和數字'),
 
-  phone: body('phone')
-    .isMobilePhone('zh-TW')
-    .withMessage('請輸入有效的手機號碼'),
+  phone: body('phone').isMobilePhone('zh-TW').withMessage('請輸入有效的手機號碼'),
 
   required: (field) => body(field).notEmpty().withMessage(`${field} 為必填欄位`),
 
@@ -145,10 +140,7 @@ const sanitizeInput = (req, res, next) => {
   // 移除可能的 XSS 攻擊字符
   const sanitize = (obj) => {
     if (typeof obj === 'string') {
-      return obj.replace(
-        /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi,
-        '',
-      );
+      return obj.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
     }
     if (typeof obj === 'object' && obj !== null) {
       Object.keys(obj).forEach((key) => {
