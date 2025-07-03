@@ -752,7 +752,7 @@ describe('User Model', () => {
     it('should find active users only', async () => {
       const activeUsers = await User.findActiveUsers();
       expect(activeUsers).toHaveLength(2); // active-1 和 merchant-1
-      expect(activeUsers.every((user) => user.status === 'active')).toBe(true);
+      expect(activeUsers.every(user => user.status === 'active')).toBe(true);
     });
 
     it('should find user by firebase uid', async () => {

@@ -1,10 +1,68 @@
 const express = require('express');
-const User = require('../models/User');
 const { getAuth } = require('../config/firebase');
-const { authenticate } = require('../middleware/authMiddleware');
+const User = require('../models/User');
+const { authMiddleware: authenticate } = require('../middleware/authMiddleware');
 const { logger } = require('../middleware/requestLogger');
+const jwtService = require('../services/jwtService');
+const { securityEnhancement } = require('../middleware/securityEnhancement');
+const { rateLimitMiddleware } = require('../middleware/rateLimitMiddleware');
 
 const router = express.Router();
+
+// Rate limiting 配置
+const generalLimiter = rateLimitMiddleware?.createLimiter
+  ? rateLimitMiddleware.createLimiter({
+      windowMs: 15 * 60 * 1000, // 15分鐘
+      maxRequests: 100,
+      message: '請求過於頻繁，請稍後再試',
+    })
+  : (req, res, next) => next(); // 備用中間件
+
+const authLimiter = rateLimitMiddleware?.createLimiter
+  ? rateLimitMiddleware.createLimiter({
+      windowMs: 15 * 60 * 1000, // 15分鐘
+      maxRequests: 10,
+      message: '認證請求過於頻繁，請稍後再試',
+    })
+  : (req, res, next) => next(); // 備用中間件
+
+const sensitiveOperationLimiter = rateLimitMiddleware?.createLimiter
+  ? rateLimitMiddleware.createLimiter({
+      windowMs: 15 * 60 * 1000, // 15分鐘
+      maxRequests: 5, // 更嚴格的限制
+      message: '敏感操作請求過於頻繁，請稍後再試',
+    })
+  : (req, res, next) => next(); // 備用中間件
+
+// 設備指紋提取中間件
+const extractDeviceFingerprint = (req, res, next) => {
+  // 從請求頭中提取設備指紋相關資訊
+  const userAgent = req.get('User-Agent') || '';
+  const acceptLanguage = req.get('Accept-Language') || '';
+  const acceptEncoding = req.get('Accept-Encoding') || '';
+
+  // 簡單的設備指紋生成（實際應用中可以使用更複雜的演算法）
+  // eslint-disable-next-line global-require
+  const fingerprint = require('crypto')
+    .createHash('sha256')
+    .update(`${userAgent}${acceptLanguage}${acceptEncoding}`)
+    .digest('hex')
+    .substring(0, 16);
+
+  req.deviceFingerprint = fingerprint;
+  next();
+};
+
+// 請求上下文提取中間件
+const extractRequestContext = (req, res, next) => {
+  req.securityContext = {
+    ipAddress: req.ip || req.connection.remoteAddress,
+    deviceFingerprint: req.deviceFingerprint,
+    userAgent: req.get('User-Agent'),
+    timestamp: new Date().toISOString(),
+  };
+  next();
+};
 
 /**
  * @swagger
@@ -240,138 +298,145 @@ const router = express.Router();
  *       500:
  *         description: 伺服器錯誤
  */
-router.post('/register', authenticate, async (req, res) => {
-  try {
-    const {
-      firebaseUid,
-      email,
-      role = 'user',
-      profile,
-      preferences,
-      merchantInfo,
-      agreementAccepted,
-      marketingConsent,
-    } = req.body;
+router.post(
+  '/register',
+  authLimiter, // 增加rate limiting
+  extractDeviceFingerprint, // 提取設備指紋
+  extractRequestContext, // 提取請求上下文
+  authenticate,
+  async (req, res) => {
+    try {
+      const {
+        firebaseUid,
+        email,
+        role = 'user',
+        profile,
+        preferences,
+        merchantInfo,
+        agreementAccepted,
+        marketingConsent,
+      } = req.body;
 
-    // 基本參數驗證
-    if (!firebaseUid || !email) {
-      return res.status(400).json({
-        success: false,
-        error: {
-          message: 'firebaseUid 和 email 為必填欄位',
-          code: 'MISSING_REQUIRED_FIELDS',
-        },
+      // 基本參數驗證
+      if (!firebaseUid || !email) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            message: 'firebaseUid 和 email 為必填欄位',
+            code: 'MISSING_REQUIRED_FIELDS',
+          },
+        });
+      }
+
+      // 檢查是否已存在相同用戶
+      const existingUser = await User.findOne({
+        $or: [{ firebaseUid }, { email: email.toLowerCase() }],
       });
-    }
 
-    // 檢查是否已存在相同用戶
-    const existingUser = await User.findOne({
-      $or: [{ firebaseUid }, { email: email.toLowerCase() }],
-    });
+      if (existingUser) {
+        return res.status(409).json({
+          success: false,
+          error: {
+            message: '用戶已存在',
+            code: 'USER_ALREADY_EXISTS',
+          },
+        });
+      }
 
-    if (existingUser) {
-      return res.status(409).json({
-        success: false,
-        error: {
-          message: '用戶已存在',
-          code: 'USER_ALREADY_EXISTS',
-        },
-      });
-    }
+      // 商戶註冊需要商戶資訊
+      if (role === 'merchant' && (!merchantInfo || !merchantInfo.businessName)) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            message: '商戶註冊需要提供商戶資訊',
+            code: 'MERCHANT_INFO_REQUIRED',
+          },
+        });
+      }
 
-    // 商戶註冊需要商戶資訊
-    if (role === 'merchant' && (!merchantInfo || !merchantInfo.businessName)) {
-      return res.status(400).json({
-        success: false,
-        error: {
-          message: '商戶註冊需要提供商戶資訊',
-          code: 'MERCHANT_INFO_REQUIRED',
-        },
-      });
-    }
+      // 從 Firebase token 獲取用戶資訊
+      const firebaseUser = req.user;
 
-    // 從 Firebase token 獲取用戶資訊
-    const firebaseUser = req.user;
-
-    // 建立新用戶
-    const userData = {
-      firebaseUid,
-      email: email.toLowerCase(),
-      emailVerified: firebaseUser.email_verified || false,
-      role,
-      profile: profile || {},
-      preferences: preferences || {},
-      providers: [
-        {
-          providerId: firebaseUser.firebase?.sign_in_provider || 'password',
-          providerUid: firebaseUser.uid,
-          connectedAt: new Date(),
-        },
-      ],
-    };
-
-    // 添加商戶資訊
-    if (role === 'merchant' && merchantInfo) {
-      userData.merchantInfo = merchantInfo;
-    }
-
-    // 設定同意條款
-    if (agreementAccepted) {
-      userData.agreements = {
-        termsAcceptedAt: new Date(),
-        privacyAcceptedAt: new Date(),
+      // 建立新用戶
+      const userData = {
+        firebaseUid,
+        email: email.toLowerCase(),
+        emailVerified: firebaseUser.email_verified || false,
+        role,
+        profile: profile || {},
+        preferences: preferences || {},
+        providers: [
+          {
+            providerId: firebaseUser.firebase?.sign_in_provider || 'password',
+            providerUid: firebaseUser.uid,
+            connectedAt: new Date(),
+          },
+        ],
       };
-    }
 
-    if (marketingConsent) {
-      userData.agreements = {
-        ...userData.agreements,
-        marketingConsentAt: new Date(),
-      };
-    }
+      // 添加商戶資訊
+      if (role === 'merchant' && merchantInfo) {
+        userData.merchantInfo = merchantInfo;
+      }
 
-    const newUser = new User(userData);
-    await newUser.save();
+      // 設定同意條款
+      if (agreementAccepted) {
+        userData.agreements = {
+          termsAcceptedAt: new Date(),
+          privacyAcceptedAt: new Date(),
+        };
+      }
 
-    logger.info('用戶註冊成功', {
-      uid: newUser.firebaseUid,
-      email: newUser.email,
-      role: newUser.role,
-    });
+      if (marketingConsent) {
+        userData.agreements = {
+          ...userData.agreements,
+          marketingConsentAt: new Date(),
+        };
+      }
 
-    return res.status(201).json({
-      success: true,
-      message: '用戶註冊成功',
-      data: {
-        user: newUser.toJSON(),
-      },
-    });
-  } catch (error) {
-    logger.error('用戶註冊失敗', {
-      error: error.message,
-      email: req.body?.email,
-    });
+      const newUser = new User(userData);
+      await newUser.save();
 
-    if (error.name === 'ValidationError') {
-      return res.status(400).json({
+      logger.info('用戶註冊成功', {
+        uid: newUser.firebaseUid,
+        email: newUser.email,
+        role: newUser.role,
+      });
+
+      return res.status(201).json({
+        success: true,
+        message: '用戶註冊成功',
+        data: {
+          user: newUser.toJSON(),
+        },
+      });
+    } catch (error) {
+      logger.error('用戶註冊失敗', {
+        error: error.message,
+        email: req.body?.email,
+      });
+
+      if (error.name === 'ValidationError') {
+        return res.status(400).json({
+          success: false,
+          error: {
+            message: '資料驗證失敗',
+            code: 'VALIDATION_ERROR',
+            details: Object.values(error.errors).map(err => err.message),
+          },
+        });
+      }
+
+      return res.status(500).json({
         success: false,
         error: {
-          message: '資料驗證失敗',
-          code: 'VALIDATION_ERROR',
-          details: Object.values(error.errors).map(err => err.message),
+          message: '伺服器錯誤',
+          code: 'INTERNAL_SERVER_ERROR',
         },
       });
     }
-
-    return res.status(500).json({
-      success: false,
-      error: {
-        message: '伺服器錯誤',
-        code: 'INTERNAL_SERVER_ERROR',
-      },
-    });
   }
-});
+);
 
 /**
  * @swagger
@@ -405,7 +470,7 @@ router.post('/register', authenticate, async (req, res) => {
  *       500:
  *         description: 伺服器錯誤
  */
-router.get('/profile', authenticate, async (req, res) => {
+router.get('/profile', generalLimiter, authenticate, async (req, res) => {
   try {
     const user = await User.findByFirebaseUid(req.user.uid);
 
@@ -471,7 +536,7 @@ router.get('/profile', authenticate, async (req, res) => {
  *       500:
  *         description: 伺服器錯誤
  */
-router.post('/verify-email', authenticate, async (req, res) => {
+router.post('/verify-email', sensitiveOperationLimiter, authenticate, async (req, res) => {
   try {
     const firebaseAuth = getAuth();
     const user = await User.findByFirebaseUid(req.user.uid);
@@ -583,79 +648,142 @@ router.post('/verify-email', authenticate, async (req, res) => {
  *       500:
  *         description: 伺服器錯誤
  */
-router.post('/login', authenticate, async (req, res) => {
-  try {
-    const { firebaseUid, providerId } = req.body;
+router.post(
+  '/login',
+  authLimiter, // 認證限制器
+  extractDeviceFingerprint,
+  extractRequestContext,
+  authenticate,
+  async (req, res) => {
+    try {
+      const { firebaseUid, providerId } = req.body;
+      const userIdentifier = firebaseUid || req.user.uid;
 
-    const user = await User.findByFirebaseUid(firebaseUid || req.user.uid);
+      // 檢查帳號是否被鎖定
+      const lockCheck = await securityEnhancement.checkAccountLock(userIdentifier);
+      if (lockCheck.locked) {
+        logger.warn('嘗試登入被鎖定的帳號', {
+          identifier: userIdentifier,
+          lockReason: lockCheck.reason,
+          ip: req.securityContext.ipAddress,
+        });
 
-    if (!user) {
-      return res.status(404).json({
+        return res.status(423).json({
+          success: false,
+          error: {
+            message: `帳號已被鎖定：${lockCheck.reason}`,
+            code: 'ACCOUNT_LOCKED',
+            lockedUntil: lockCheck.lockedUntil,
+          },
+        });
+      }
+
+      const user = await User.findByFirebaseUid(userIdentifier);
+
+      if (!user) {
+        // 記錄登入失敗
+        await securityEnhancement.recordLoginFailure(userIdentifier, {
+          ...req.securityContext,
+          reason: 'user_not_found',
+        });
+
+        return res.status(404).json({
+          success: false,
+          error: {
+            message: '用戶不存在，請先註冊',
+            code: 'USER_NOT_FOUND',
+          },
+        });
+      }
+
+      // 檢查帳戶狀態
+      if (user.status === 'suspended') {
+        return res.status(403).json({
+          success: false,
+          error: {
+            message: '帳戶已被暫停',
+            code: 'ACCOUNT_SUSPENDED',
+          },
+        });
+      }
+
+      if (user.status === 'inactive') {
+        return res.status(403).json({
+          success: false,
+          error: {
+            message: '帳戶未啟用',
+            code: 'ACCOUNT_INACTIVE',
+          },
+        });
+      }
+
+      // 分析登入模式（檢查可疑活動）
+      const loginAnalysis = await securityEnhancement.analyzeLoginPattern(user.firebaseUid, {
+        ...req.securityContext,
+        providerId: providerId || 'password',
+      });
+
+      if (loginAnalysis.suspicious) {
+        logger.warn('檢測到可疑登入模式', {
+          uid: user.firebaseUid,
+          riskScore: loginAnalysis.riskScore,
+          reasons: loginAnalysis.reasons,
+          ip: req.securityContext.ipAddress,
+        });
+
+        // 如果風險分數過高，可以要求額外驗證或通知用戶
+        if (loginAnalysis.riskScore >= 60) {
+          // 記錄高風險登入事件
+          await securityEnhancement.recordSecurityEvent(user.firebaseUid, 'high_risk_login', {
+            ...req.securityContext,
+            riskScore: loginAnalysis.riskScore,
+            reasons: loginAnalysis.reasons,
+          });
+        }
+      }
+
+      // 清除之前的登入失敗記錄
+      await securityEnhancement.clearLoginFailures(user.firebaseUid);
+
+      // 更新登入統計
+      await user.updateLoginStats();
+
+      // 添加登入提供者（如果是新的）
+      if (providerId) {
+        await user.addProvider(providerId);
+      }
+
+      logger.info('用戶登入成功', {
+        uid: user.firebaseUid,
+        email: user.email,
+        loginCount: user.stats.loginCount,
+        riskScore: loginAnalysis.riskScore || 0,
+        suspicious: loginAnalysis.suspicious || false,
+      });
+
+      return res.json({
+        success: true,
+        message: '登入成功',
+        data: {
+          user: user.toJSON(),
+        },
+      });
+    } catch (error) {
+      logger.error('用戶登入失敗', {
+        error: error.message,
+        uid: req.user?.uid,
+      });
+
+      return res.status(500).json({
         success: false,
         error: {
-          message: '用戶不存在，請先註冊',
-          code: 'USER_NOT_FOUND',
+          message: '登入失敗',
+          code: 'LOGIN_FAILED',
         },
       });
     }
-
-    // 檢查帳戶狀態
-    if (user.status === 'suspended') {
-      return res.status(403).json({
-        success: false,
-        error: {
-          message: '帳戶已被暫停',
-          code: 'ACCOUNT_SUSPENDED',
-        },
-      });
-    }
-
-    if (user.status === 'inactive') {
-      return res.status(403).json({
-        success: false,
-        error: {
-          message: '帳戶未啟用',
-          code: 'ACCOUNT_INACTIVE',
-        },
-      });
-    }
-
-    // 更新登入統計
-    await user.updateLoginStats();
-
-    // 添加登入提供者（如果是新的）
-    if (providerId) {
-      await user.addProvider(providerId);
-    }
-
-    logger.info('用戶登入成功', {
-      uid: user.firebaseUid,
-      email: user.email,
-      loginCount: user.stats.loginCount,
-    });
-
-    return res.json({
-      success: true,
-      message: '登入成功',
-      data: {
-        user: user.toJSON(),
-      },
-    });
-  } catch (error) {
-    logger.error('用戶登入失敗', {
-      error: error.message,
-      uid: req.user?.uid,
-    });
-
-    return res.status(500).json({
-      success: false,
-      error: {
-        message: '登入失敗',
-        code: 'LOGIN_FAILED',
-      },
-    });
   }
-});
+);
 
 /**
  * @swagger
@@ -714,5 +842,781 @@ router.post('/logout', authenticate, async (req, res) => {
     });
   }
 });
+
+// ============ JWT Token 管理路由 ============
+
+/**
+ * @swagger
+ * /api/v1/auth/generate-tokens:
+ *   post:
+ *     summary: 生成 JWT Token 對
+ *     description: 為已認證用戶生成 JWT access token 和 refresh token
+ *     tags: [JWT Management]
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Token 生成成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Token 生成成功
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     accessToken:
+ *                       type: string
+ *                       description: JWT Access Token
+ *                     refreshToken:
+ *                       type: string
+ *                       description: JWT Refresh Token
+ *                     tokenType:
+ *                       type: string
+ *                       example: Bearer
+ *                     expiresIn:
+ *                       type: number
+ *                       description: Token 過期時間（秒）
+ *                     sessionId:
+ *                       type: string
+ *                       description: Session ID
+ *       401:
+ *         description: 認證失敗
+ *       500:
+ *         description: Token 生成失敗
+ */
+router.post(
+  '/generate-tokens',
+  sensitiveOperationLimiter, // 敏感操作限制器
+  extractDeviceFingerprint,
+  extractRequestContext,
+  authenticate,
+  async (req, res) => {
+    try {
+      const user = await User.findByFirebaseUid(req.user.uid);
+
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          error: {
+            message: '用戶不存在',
+            code: 'USER_NOT_FOUND',
+          },
+        });
+      }
+
+      // 提取請求上下文
+      const { deviceFingerprint } = req.body;
+      const requestContext = {
+        ipAddress: req.ip || req.connection.remoteAddress,
+        deviceFingerprint,
+        userAgent: req.get('User-Agent'),
+        loginMethod: 'jwt_generation',
+      };
+
+      // 生成 JWT token 對（帶上下文）
+      const tokenPair = await jwtService.generateTokenPair(
+        {
+          firebaseUid: user.firebaseUid,
+          email: user.email,
+          role: user.role,
+          permissions: user.permissions || [],
+        },
+        requestContext
+      );
+
+      logger.info('JWT Token 對生成成功', {
+        uid: user.firebaseUid,
+        email: user.email,
+        sessionId: tokenPair.sessionId,
+        ipAddress: requestContext.ipAddress,
+      });
+
+      return res.json({
+        success: true,
+        message: 'Token 生成成功',
+        data: tokenPair,
+      });
+    } catch (error) {
+      logger.error('JWT Token 生成失敗', {
+        error: error.message,
+        uid: req.user?.uid,
+      });
+
+      return res.status(500).json({
+        success: false,
+        error: {
+          message: 'Token 生成失敗',
+          code: 'TOKEN_GENERATION_FAILED',
+        },
+      });
+    }
+  }
+);
+
+/**
+ * @swagger
+ * /api/v1/auth/refresh-token:
+ *   post:
+ *     summary: 刷新 Access Token
+ *     description: 使用 refresh token 獲取新的 access token
+ *     tags: [JWT Management]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - refreshToken
+ *             properties:
+ *               refreshToken:
+ *                 type: string
+ *                 description: Refresh Token
+ *     responses:
+ *       200:
+ *         description: Token 刷新成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Token 刷新成功
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     accessToken:
+ *                       type: string
+ *                       description: 新的 JWT Access Token
+ *                     tokenType:
+ *                       type: string
+ *                       example: Bearer
+ *                     expiresIn:
+ *                       type: number
+ *                       description: Token 過期時間（秒）
+ *       400:
+ *         description: 請求參數錯誤
+ *       401:
+ *         description: Refresh token 無效或已過期
+ *       500:
+ *         description: Token 刷新失敗
+ */
+router.post('/refresh-token', async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          message: '缺少 refresh token',
+          code: 'MISSING_REFRESH_TOKEN',
+        },
+      });
+    }
+
+    // 刷新 access token
+    const newToken = await jwtService.refreshAccessToken(refreshToken);
+
+    logger.info('Access Token 刷新成功');
+
+    return res.json({
+      success: true,
+      message: 'Token 刷新成功',
+      data: newToken,
+    });
+  } catch (error) {
+    logger.error('Token 刷新失敗', {
+      error: error.message,
+    });
+
+    return res.status(401).json({
+      success: false,
+      error: {
+        message: error.message || 'Token 刷新失敗',
+        code: 'TOKEN_REFRESH_FAILED',
+      },
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/v1/auth/revoke-token:
+ *   post:
+ *     summary: 撤銷 Token
+ *     description: 撤銷指定的 access token 或 refresh token
+ *     tags: [JWT Management]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               token:
+ *                 type: string
+ *                 description: 要撤銷的 token（可選，預設撤銷當前 token）
+ *     responses:
+ *       200:
+ *         description: Token 撤銷成功
+ *       401:
+ *         description: 認證失敗
+ *       500:
+ *         description: Token 撤銷失敗
+ */
+router.post('/revoke-token', sensitiveOperationLimiter, authenticate, async (req, res) => {
+  try {
+    const { token } = req.body;
+
+    // 如果沒有指定 token，撤銷當前請求的 token
+    const tokenToRevoke = token || req.headers.authorization?.slice(7);
+
+    if (!tokenToRevoke) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          message: '缺少要撤銷的 token',
+          code: 'MISSING_TOKEN',
+        },
+      });
+    }
+
+    await jwtService.revokeToken(tokenToRevoke);
+
+    logger.info('Token 撤銷成功', {
+      uid: req.user.uid,
+      email: req.user.email,
+    });
+
+    return res.json({
+      success: true,
+      message: 'Token 撤銷成功',
+    });
+  } catch (error) {
+    logger.error('Token 撤銷失敗', {
+      error: error.message,
+      uid: req.user?.uid,
+    });
+
+    return res.status(500).json({
+      success: false,
+      error: {
+        message: 'Token 撤銷失敗',
+        code: 'TOKEN_REVOCATION_FAILED',
+      },
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/v1/auth/revoke-all-tokens:
+ *   post:
+ *     summary: 撤銷所有 Token
+ *     description: 撤銷用戶的所有 JWT token（登出所有設備）
+ *     tags: [JWT Management]
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: 所有 Token 撤銷成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: 所有 Token 撤銷成功
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     revokedTokens:
+ *                       type: number
+ *                       description: 撤銷的 token 數量
+ *       401:
+ *         description: 認證失敗
+ *       500:
+ *         description: Token 撤銷失敗
+ */
+router.post('/revoke-all-tokens', authenticate, async (req, res) => {
+  try {
+    const revokedCount = await jwtService.revokeAllUserTokens(req.user.uid);
+
+    logger.info('撤銷用戶所有 Token', {
+      uid: req.user.uid,
+      email: req.user.email,
+      revokedCount,
+    });
+
+    return res.json({
+      success: true,
+      message: '所有 Token 撤銷成功',
+      data: {
+        revokedTokens: revokedCount,
+      },
+    });
+  } catch (error) {
+    logger.error('撤銷所有 Token 失敗', {
+      error: error.message,
+      uid: req.user?.uid,
+    });
+
+    return res.status(500).json({
+      success: false,
+      error: {
+        message: '撤銷所有 Token 失敗',
+        code: 'TOKEN_REVOCATION_FAILED',
+      },
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/v1/auth/session-info:
+ *   get:
+ *     summary: 獲取 Session 資訊
+ *     description: 獲取當前用戶的 session 資訊
+ *     tags: [JWT Management]
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Session 資訊獲取成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Session 資訊獲取成功
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     sessions:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           sessionId:
+ *                             type: string
+ *                           createdAt:
+ *                             type: string
+ *                             format: date-time
+ *                           lastActivity:
+ *                             type: string
+ *                             format: date-time
+ *       401:
+ *         description: 認證失敗
+ *       500:
+ *         description: 獲取 Session 資訊失敗
+ */
+router.get('/session-info', generalLimiter, authenticate, async (req, res) => {
+  try {
+    const sessions = await jwtService.getUserSessions(req.user.uid);
+
+    // 增強的 session 資訊
+    const enhancedSessions = sessions.map(session => ({
+      sessionId: session.sessionId,
+      createdAt: session.createdAt,
+      lastActivity: session.lastActivity,
+      isActive: session.isActive,
+      deviceFingerprint: session.deviceFingerprint
+        ? `${session.deviceFingerprint.substring(0, 8)}...`
+        : null, // 只顯示部分指紋
+      ipAddress: session.ipAddress || null,
+      loginMethod: session.loginMethod || 'unknown',
+      securityFlags: session.securityFlags || {},
+      isCurrent: session.sessionId === req.user.sessionId, // 標記當前 session
+    }));
+
+    return res.json({
+      success: true,
+      message: 'Session 資訊獲取成功',
+      data: {
+        sessions: enhancedSessions,
+        totalSessions: enhancedSessions.length,
+        maxConcurrentSessions: jwtService.maxConcurrentSessions,
+      },
+    });
+  } catch (error) {
+    logger.error('獲取 Session 資訊失敗', {
+      error: error.message,
+      uid: req.user?.uid,
+    });
+
+    return res.status(500).json({
+      success: false,
+      error: {
+        message: '獲取 Session 資訊失敗',
+        code: 'SESSION_INFO_FAILED',
+      },
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/v1/auth/revoke-session:
+ *   post:
+ *     summary: 撤銷指定 Session
+ *     description: 撤銷指定的 session，可以撤銷其他設備的登入
+ *     tags: [Session Management]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - sessionId
+ *             properties:
+ *               sessionId:
+ *                 type: string
+ *                 description: 要撤銷的 Session ID
+ *     responses:
+ *       200:
+ *         description: Session 撤銷成功
+ *       400:
+ *         description: 參數錯誤
+ *       401:
+ *         description: 認證失敗
+ *       403:
+ *         description: 無權限撤銷該 Session
+ *       404:
+ *         description: Session 不存在
+ *       500:
+ *         description: 伺服器錯誤
+ */
+router.post(
+  '/revoke-session',
+  sensitiveOperationLimiter,
+  extractDeviceFingerprint,
+  extractRequestContext,
+  authenticate,
+  async (req, res) => {
+    try {
+      const { sessionId } = req.body;
+
+      if (!sessionId) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            message: '缺少 sessionId 參數',
+            code: 'MISSING_SESSION_ID',
+          },
+        });
+      }
+
+      // 驗證 session 屬於當前用戶
+      const session = await jwtService.getSession(sessionId);
+      if (!session) {
+        return res.status(404).json({
+          success: false,
+          error: {
+            message: 'Session 不存在',
+            code: 'SESSION_NOT_FOUND',
+          },
+        });
+      }
+
+      if (session.uid !== req.user.uid) {
+        return res.status(403).json({
+          success: false,
+          error: {
+            message: '無權限撤銷該 Session',
+            code: 'PERMISSION_DENIED',
+          },
+        });
+      }
+
+      // 不允許撤銷當前 session
+      if (sessionId === req.user.sessionId) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            message: '無法撤銷當前 Session，請使用登出功能',
+            code: 'CANNOT_REVOKE_CURRENT_SESSION',
+          },
+        });
+      }
+
+      await jwtService.revokeSession(sessionId);
+
+      logger.info('用戶撤銷 Session', {
+        uid: req.user.uid,
+        revokedSessionId: sessionId,
+        currentSessionId: req.user.sessionId,
+      });
+
+      return res.json({
+        success: true,
+        message: 'Session 撤銷成功',
+        data: {
+          revokedSessionId: sessionId,
+        },
+      });
+    } catch (error) {
+      logger.error('撤銷 Session 失敗', {
+        error: error.message,
+        uid: req.user?.uid,
+        sessionId: req.body?.sessionId,
+      });
+
+      return res.status(500).json({
+        success: false,
+        error: {
+          message: 'Session 撤銷失敗',
+          code: 'SESSION_REVOCATION_FAILED',
+        },
+      });
+    }
+  }
+);
+
+/**
+ * @swagger
+ * /api/v1/auth/revoke-all-other-sessions:
+ *   post:
+ *     summary: 撤銷所有其他 Session
+ *     description: 撤銷當前用戶的所有其他 session，保留當前 session
+ *     tags: [Session Management]
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: 所有其他 Session 撤銷成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: 所有其他 Session 撤銷成功
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     revokedCount:
+ *                       type: number
+ *                       description: 撤銷的 Session 數量
+ *       401:
+ *         description: 認證失敗
+ *       500:
+ *         description: 伺服器錯誤
+ */
+router.post(
+  '/revoke-all-other-sessions',
+  sensitiveOperationLimiter,
+  extractDeviceFingerprint,
+  extractRequestContext,
+  authenticate,
+  async (req, res) => {
+    try {
+      const currentSessionId = req.user.sessionId;
+
+      if (!currentSessionId) {
+        // 如果沒有 sessionId（可能是 Firebase token），撤銷所有 session
+        const revokedCount = await jwtService.revokeAllUserTokens(req.user.uid);
+
+        return res.json({
+          success: true,
+          message: '所有 Session 撤銷成功',
+          data: {
+            revokedCount,
+          },
+        });
+      }
+
+      const revokedCount = await jwtService.revokeOtherUserSessions(req.user.uid, currentSessionId);
+
+      logger.info('用戶撤銷所有其他 Session', {
+        uid: req.user.uid,
+        currentSessionId,
+        revokedCount,
+      });
+
+      return res.json({
+        success: true,
+        message: '所有其他 Session 撤銷成功',
+        data: {
+          revokedCount,
+          currentSessionId,
+        },
+      });
+    } catch (error) {
+      logger.error('撤銷所有其他 Session 失敗', {
+        error: error.message,
+        uid: req.user?.uid,
+      });
+
+      return res.status(500).json({
+        success: false,
+        error: {
+          message: '撤銷所有其他 Session 失敗',
+          code: 'REVOKE_ALL_SESSIONS_FAILED',
+        },
+      });
+    }
+  }
+);
+
+/**
+ * @swagger
+ * /api/v1/auth/validate-session:
+ *   post:
+ *     summary: 驗證 Session 安全性
+ *     description: 驗證當前 session 的安全性，包括 IP 和設備指紋檢查
+ *     tags: [Session Management]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               deviceFingerprint:
+ *                 type: string
+ *                 description: 設備指紋
+ *               forceValidation:
+ *                 type: boolean
+ *                 description: 強制執行驗證
+ *                 default: false
+ *     responses:
+ *       200:
+ *         description: Session 驗證成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     valid:
+ *                       type: boolean
+ *                     warnings:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                     securityFlags:
+ *                       type: object
+ *       401:
+ *         description: 認證失敗或 Session 無效
+ *       500:
+ *         description: 伺服器錯誤
+ */
+router.post(
+  '/validate-session',
+  generalLimiter,
+  extractDeviceFingerprint,
+  extractRequestContext,
+  authenticate,
+  async (req, res) => {
+    try {
+      const { sessionId } = req.user;
+
+      if (!sessionId) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            message: 'Session ID 不存在，無法驗證',
+            code: 'MISSING_SESSION_ID',
+          },
+        });
+      }
+
+      const { deviceFingerprint, forceValidation = false } = req.body;
+
+      // 使用已提取的請求上下文，並合併body中的設備指紋
+      const requestContext = {
+        ...req.securityContext,
+        deviceFingerprint: deviceFingerprint || req.securityContext.deviceFingerprint,
+      };
+
+      const sessionValidation = await jwtService.validateSessionSecurity(sessionId, requestContext);
+
+      // 如果 session 無效且不是強制驗證，返回認證錯誤
+      if (!sessionValidation.valid && !forceValidation) {
+        return res.status(401).json({
+          success: false,
+          error: {
+            message: 'Session 無效',
+            code: 'INVALID_SESSION',
+            reason: sessionValidation.reason,
+          },
+        });
+      }
+
+      logger.info('Session 安全驗證完成', {
+        sessionId,
+        uid: req.user.uid,
+        valid: sessionValidation.valid,
+        warnings: sessionValidation.warnings || [],
+      });
+
+      return res.json({
+        success: true,
+        message: 'Session 驗證完成',
+        data: {
+          valid: sessionValidation.valid,
+          warnings: sessionValidation.warnings || [],
+          securityFlags: sessionValidation.securityFlags || {},
+          requestContext: {
+            ipAddress: requestContext.ipAddress,
+            timestamp: requestContext.timestamp,
+          },
+        },
+      });
+    } catch (error) {
+      logger.error('Session 驗證失敗', {
+        error: error.message,
+        uid: req.user?.uid,
+        sessionId: req.user?.sessionId,
+      });
+
+      return res.status(500).json({
+        success: false,
+        error: {
+          message: 'Session 驗證失敗',
+          code: 'SESSION_VALIDATION_FAILED',
+        },
+      });
+    }
+  }
+);
 
 module.exports = router;

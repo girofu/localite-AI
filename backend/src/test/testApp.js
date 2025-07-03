@@ -41,9 +41,10 @@ const mockAuthMiddleware = (req, res, next) => {
   // 檢查測試用戶標頭
   const testUser = req.headers['x-test-user'];
   if (testUser) {
+    // 使用與 JWT 測試中一致的 UID
     req.user = {
-      uid: 'test-user-123',
-      email: 'test@example.com',
+      uid: 'jwt-test-user-123',
+      email: 'jwt-test@localite.com',
       emailVerified: true,
     };
   }
@@ -76,13 +77,13 @@ function createTestApp() {
       verify: (req, res, buf) => {
         req.rawBody = buf;
       },
-    }),
+    })
   );
   app.use(
     express.urlencoded({
       extended: true,
       limit: '10mb',
-    }),
+    })
   );
 
   // 模擬認證中間件 - 應用到所有 API 路由
@@ -160,10 +161,10 @@ async function clearCollections() {
   const collectionNames = Object.keys(collections);
 
   await Promise.all(
-    collectionNames.map(async (name) => {
+    collectionNames.map(async name => {
       const collection = collections[name];
       await collection.deleteMany({});
-    }),
+    })
   );
 }
 

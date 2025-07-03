@@ -1,10 +1,6 @@
 ---
-description: 
-globs: 
-alwaysApply: true
+alwaysApply: false
 ---
-
-
 # 在地人 AI 導覽系統 - 單工程師工程工作細項規劃
 
 ## 第一階段：基礎架構與核心功能（第1個月）

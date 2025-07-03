@@ -17,16 +17,12 @@ jest.mock('./requestLogger', () => ({
   },
 }));
 
-const {
-  authenticate,
-  requireRole,
-  optionalAuth,
-  AuthMiddleware,
-} = require('./authMiddleware');
+const { authenticate, requireRole, optionalAuth, AuthMiddleware } = require('./authMiddleware');
 
 describe('AuthMiddleware', () => {
-  let req; let res; let
-    next;
+  let req;
+  let res;
+  let next;
 
   beforeEach(() => {
     req = {
@@ -71,6 +67,7 @@ describe('AuthMiddleware', () => {
         name: 'Test User',
         picture: undefined,
         role: 'user',
+        tokenType: 'firebase',
         firebase: {
           identities: undefined,
           sign_in_provider: undefined,
@@ -124,7 +121,7 @@ describe('AuthMiddleware', () => {
       expect(res.json).toHaveBeenCalledWith({
         success: false,
         error: {
-          message: '認證 token 已過期，請重新登入',
+          message: '所有認證方式都失敗',
           code: 'AUTHENTICATION_FAILED',
         },
       });
@@ -145,7 +142,7 @@ describe('AuthMiddleware', () => {
       expect(res.json).toHaveBeenCalledWith({
         success: false,
         error: {
-          message: '認證 token 已被撤銷，請重新登入',
+          message: '所有認證方式都失敗',
           code: 'AUTHENTICATION_FAILED',
         },
       });
@@ -331,17 +328,17 @@ describe('AuthMiddleware', () => {
       ];
 
       testCases.forEach(({ input, expected }) => {
-        const req = { headers: { authorization: input } };
-        const result = authMiddleware.extractToken(req);
+        const testReq = { headers: { authorization: input } };
+        const result = authMiddleware.extractToken(testReq);
         expect(result).toBe(expected);
       });
     });
 
     test('handleTestUser 應該在開發環境返回測試用戶', () => {
       process.env.NODE_ENV = 'development';
-      const req = { headers: { 'x-test-user': 'test-admin' } };
+      const testReq = { headers: { 'x-test-user': 'test-admin' } };
 
-      const result = authMiddleware.handleTestUser(req);
+      const result = authMiddleware.handleTestUser(testReq);
 
       expect(result).toEqual({
         uid: 'test-admin-123',
@@ -354,18 +351,18 @@ describe('AuthMiddleware', () => {
 
     test('handleTestUser 應該在生產環境返回 null', () => {
       process.env.NODE_ENV = 'production';
-      const req = { headers: { 'x-test-user': 'test-user' } };
+      const testReq = { headers: { 'x-test-user': 'test-user' } };
 
-      const result = authMiddleware.handleTestUser(req);
+      const result = authMiddleware.handleTestUser(testReq);
 
       expect(result).toBe(null);
     });
 
     test('handleTestUser 應該在無效測試用戶時返回 null', () => {
       process.env.NODE_ENV = 'development';
-      const req = { headers: { 'x-test-user': 'invalid-user' } };
+      const testReq = { headers: { 'x-test-user': 'invalid-user' } };
 
-      const result = authMiddleware.handleTestUser(req);
+      const result = authMiddleware.handleTestUser(testReq);
 
       expect(result).toBe(null);
     });

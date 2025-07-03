@@ -1,5 +1,6 @@
 const { getAuth } = require('../config/firebase');
 const { logger } = require('./requestLogger');
+const jwtService = require('../services/jwtService');
 
 /**
  * Firebase Authentication 中間件
@@ -97,6 +98,35 @@ class AuthMiddleware {
   }
 
   /**
+   * 驗證 JWT Access Token（系統內部 token）
+   */
+  // eslint-disable-next-line class-methods-use-this
+  async verifyJWTToken(accessToken) {
+    try {
+      const decoded = await jwtService.verifyAccessToken(accessToken);
+
+      logger.info('JWT token 驗證成功', {
+        uid: decoded.uid,
+        email: decoded.email,
+        sessionId: decoded.sessionId,
+      });
+
+      return {
+        uid: decoded.uid,
+        email: decoded.email,
+        role: decoded.role || 'user',
+        permissions: decoded.permissions || [],
+        sessionId: decoded.sessionId,
+        tokenType: 'jwt',
+      };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : '未知錯誤';
+      logger.warn('JWT token 驗證失敗', { error: errorMessage });
+      throw new Error(`JWT 驗證失敗: ${errorMessage}`);
+    }
+  }
+
+  /**
    * 驗證 Firebase ID Token
    */
   async verifyFirebaseToken(idToken) {
@@ -154,24 +184,45 @@ class AuthMiddleware {
         });
       }
 
-      // 驗證 token
-      const decodedToken = await this.verifyFirebaseToken(idToken);
+      // 雙重驗證：優先嘗試 JWT，後備到 Firebase
+      let user;
+
+      try {
+        // 優先嘗試 JWT 驗證
+        user = await this.verifyJWTToken(idToken);
+        logger.info('使用 JWT token 認證');
+      } catch (jwtError) {
+        logger.info('JWT 驗證失敗，嘗試 Firebase 驗證', {
+          jwtError: jwtError.message,
+        });
+
+        try {
+          // 後備到 Firebase 驗證
+          const decodedToken = await this.verifyFirebaseToken(idToken);
+          user = {
+            uid: decodedToken.uid,
+            email: decodedToken.email,
+            email_verified: decodedToken.email_verified,
+            name: decodedToken.name,
+            picture: decodedToken.picture,
+            role: decodedToken.role || 'user',
+            tokenType: 'firebase',
+            firebase: {
+              identities: decodedToken.firebase?.identities,
+              sign_in_provider: decodedToken.firebase?.sign_in_provider,
+            },
+          };
+          logger.info('使用 Firebase token 認證');
+        } catch (firebaseError) {
+          logger.error('Firebase 驗證也失敗', {
+            firebaseError: firebaseError.message,
+          });
+          throw new Error('所有認證方式都失敗');
+        }
+      }
 
       // 將用戶資訊附加到 request 對象
-      req.user = {
-        uid: decodedToken.uid,
-        email: decodedToken.email,
-        email_verified: decodedToken.email_verified,
-        name: decodedToken.name,
-        picture: decodedToken.picture,
-        // 從自定義聲明中獲取角色資訊
-        role: decodedToken.role || 'user',
-        // Firebase token 的其他資訊
-        firebase: {
-          identities: decodedToken.firebase?.identities,
-          sign_in_provider: decodedToken.firebase?.sign_in_provider,
-        },
-      };
+      req.user = user;
 
       logger.info('用戶認證成功', {
         uid: req.user.uid,
@@ -204,7 +255,7 @@ class AuthMiddleware {
    * @param {string|string[]} allowedRoles 允許的角色
    */
   // eslint-disable-next-line class-methods-use-this
-  requireRole = (allowedRoles) => {
+  requireRole = allowedRoles => {
     const roles = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
 
     return (req, res, next) => {
@@ -287,6 +338,7 @@ const authMiddleware = new AuthMiddleware();
 
 module.exports = {
   authenticate: authMiddleware.authenticate,
+  authMiddleware: authMiddleware.authenticate,
   requireRole: authMiddleware.requireRole,
   optionalAuth: authMiddleware.optionalAuth,
   AuthMiddleware, // 導出類別以便測試

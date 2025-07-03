@@ -60,11 +60,7 @@ module.exports = {
     },
   },
   // 忽略的檔案和目錄
-  testPathIgnorePatterns: [
-    '<rootDir>/node_modules/',
-    '<rootDir>/dist/',
-    '<rootDir>/build/',
-  ],
-  // 測試超時設定 (10 秒)
-  testTimeout: 10000,
+  testPathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/dist/', '<rootDir>/build/'],
+  // 測試超時設定 (30 秒) - 增加以支援資料庫操作
+  testTimeout: 30000,
 };
