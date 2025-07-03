@@ -1,7 +1,7 @@
 const express = require('express');
 const { getAuth } = require('../config/firebase');
 const User = require('../models/User');
-const { authMiddleware: authenticate } = require('../middleware/authMiddleware');
+const { authMiddleware: authenticate, requireRole } = require('../middleware/authMiddleware');
 const { logger } = require('../middleware/requestLogger');
 const jwtService = require('../services/jwtService');
 const { securityEnhancement } = require('../middleware/securityEnhancement');
@@ -1613,6 +1613,613 @@ router.post(
         error: {
           message: 'Session 驗證失敗',
           code: 'SESSION_VALIDATION_FAILED',
+        },
+      });
+    }
+  }
+);
+
+// ============ 帳號鎖定管理 API ============
+
+/**
+ * @swagger
+ * /api/v1/auth/account-security-status:
+ *   get:
+ *     summary: 獲取帳號安全狀態
+ *     description: 獲取當前用戶的帳號安全狀態，包括鎖定狀態、失敗記錄、風險評估等
+ *     tags: [Account Security]
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: 成功獲取帳號安全狀態
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     userIdentifier:
+ *                       type: string
+ *                     lockStatus:
+ *                       type: object
+ *                       properties:
+ *                         locked:
+ *                           type: boolean
+ *                         reason:
+ *                           type: string
+ *                         lockedUntil:
+ *                           type: string
+ *                           format: date-time
+ *                     failureHistory:
+ *                       type: object
+ *                       properties:
+ *                         attempts:
+ *                           type: number
+ *                         lastFailure:
+ *                           type: object
+ *                         recentFailures:
+ *                           type: array
+ *                     riskAssessment:
+ *                       type: object
+ *                       properties:
+ *                         level:
+ *                           type: string
+ *                           enum: [low, medium, high, critical]
+ *                         score:
+ *                           type: number
+ *                         factors:
+ *                           type: array
+ *                           items:
+ *                             type: string
+ *       401:
+ *         description: 認證失敗
+ *       500:
+ *         description: 伺服器錯誤
+ */
+router.get('/account-security-status', generalLimiter, authenticate, async (req, res) => {
+  try {
+    const userIdentifier = req.user.uid;
+    const securityStatus = await securityEnhancement.getAccountSecurityStatus(userIdentifier);
+
+    return res.json({
+      success: true,
+      message: '帳號安全狀態獲取成功',
+      data: securityStatus,
+    });
+  } catch (error) {
+    logger.error('獲取帳號安全狀態失敗', {
+      error: error.message,
+      uid: req.user?.uid,
+    });
+
+    return res.status(500).json({
+      success: false,
+      error: {
+        message: '獲取帳號安全狀態失敗',
+        code: 'SECURITY_STATUS_FAILED',
+      },
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/v1/auth/admin/unlock-account:
+ *   post:
+ *     summary: 解鎖帳號（管理員）
+ *     description: 管理員解鎖被鎖定的帳號
+ *     tags: [Account Security]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - userIdentifier
+ *             properties:
+ *               userIdentifier:
+ *                 type: string
+ *                 description: 要解鎖的用戶標識（firebaseUid 或 email）
+ *               reason:
+ *                 type: string
+ *                 description: 解鎖原因
+ *                 default: 管理員解鎖
+ *     responses:
+ *       200:
+ *         description: 帳號解鎖成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     userIdentifier:
+ *                       type: string
+ *                     unlocked:
+ *                       type: boolean
+ *                     reason:
+ *                       type: string
+ *       400:
+ *         description: 參數錯誤
+ *       401:
+ *         description: 認證失敗
+ *       403:
+ *         description: 權限不足
+ *       404:
+ *         description: 帳號未鎖定
+ *       500:
+ *         description: 伺服器錯誤
+ */
+router.post(
+  '/admin/unlock-account',
+  sensitiveOperationLimiter,
+  authenticate,
+  requireRole('admin'),
+  async (req, res) => {
+    try {
+      const { userIdentifier, reason = '管理員解鎖' } = req.body;
+
+      if (!userIdentifier) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            message: '缺少 userIdentifier 參數',
+            code: 'MISSING_USER_IDENTIFIER',
+          },
+        });
+      }
+
+      const adminUser = req.user.uid;
+      const unlocked = await securityEnhancement.unlockAccount(userIdentifier, adminUser, reason);
+
+      if (!unlocked) {
+        return res.status(404).json({
+          success: false,
+          error: {
+            message: '帳號未被鎖定或解鎖失敗',
+            code: 'ACCOUNT_NOT_LOCKED',
+          },
+        });
+      }
+
+      logger.info('管理員解鎖帳號', {
+        adminUser,
+        userIdentifier,
+        reason,
+      });
+
+      return res.json({
+        success: true,
+        message: '帳號解鎖成功',
+        data: {
+          userIdentifier,
+          unlocked: true,
+          reason,
+          adminUser,
+        },
+      });
+    } catch (error) {
+      logger.error('管理員解鎖帳號失敗', {
+        error: error.message,
+        adminUser: req.user?.uid,
+        userIdentifier: req.body?.userIdentifier,
+      });
+
+      return res.status(500).json({
+        success: false,
+        error: {
+          message: '解鎖帳號失敗',
+          code: 'UNLOCK_ACCOUNT_FAILED',
+        },
+      });
+    }
+  }
+);
+
+/**
+ * @swagger
+ * /api/v1/auth/admin/lock-account:
+ *   post:
+ *     summary: 鎖定帳號（管理員）
+ *     description: 管理員手動鎖定用戶帳號
+ *     tags: [Account Security]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - userIdentifier
+ *               - duration
+ *               - reason
+ *             properties:
+ *               userIdentifier:
+ *                 type: string
+ *                 description: 要鎖定的用戶標識（firebaseUid 或 email）
+ *               duration:
+ *                 type: number
+ *                 description: 鎖定時間（秒）
+ *                 minimum: 60
+ *                 maximum: 86400
+ *               reason:
+ *                 type: string
+ *                 description: 鎖定原因
+ *     responses:
+ *       200:
+ *         description: 帳號鎖定成功
+ *       400:
+ *         description: 參數錯誤
+ *       401:
+ *         description: 認證失敗
+ *       403:
+ *         description: 權限不足
+ *       409:
+ *         description: 帳號已被鎖定
+ *       500:
+ *         description: 伺服器錯誤
+ */
+router.post(
+  '/admin/lock-account',
+  sensitiveOperationLimiter,
+  authenticate,
+  requireRole('admin'),
+  async (req, res) => {
+    try {
+      const { userIdentifier, duration, reason } = req.body;
+
+      if (!userIdentifier || !duration || !reason) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            message: '缺少必要參數: userIdentifier, duration, reason',
+            code: 'MISSING_REQUIRED_PARAMETERS',
+          },
+        });
+      }
+
+      // 驗證鎖定時間範圍
+      if (duration < 60 || duration > 86400) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            message: '鎖定時間必須在 60 秒到 24 小時之間',
+            code: 'INVALID_DURATION',
+          },
+        });
+      }
+
+      const adminUser = req.user.uid;
+      const locked = await securityEnhancement.manualLockAccount(
+        userIdentifier,
+        duration,
+        reason,
+        adminUser
+      );
+
+      if (!locked) {
+        return res.status(409).json({
+          success: false,
+          error: {
+            message: '帳號已經被鎖定或鎖定失敗',
+            code: 'ACCOUNT_ALREADY_LOCKED',
+          },
+        });
+      }
+
+      logger.info('管理員鎖定帳號', {
+        adminUser,
+        userIdentifier,
+        duration,
+        reason,
+      });
+
+      return res.json({
+        success: true,
+        message: '帳號鎖定成功',
+        data: {
+          userIdentifier,
+          locked: true,
+          duration,
+          reason,
+          adminUser,
+          lockedUntil: new Date(Date.now() + duration * 1000),
+        },
+      });
+    } catch (error) {
+      logger.error('管理員鎖定帳號失敗', {
+        error: error.message,
+        adminUser: req.user?.uid,
+        userIdentifier: req.body?.userIdentifier,
+      });
+
+      return res.status(500).json({
+        success: false,
+        error: {
+          message: '鎖定帳號失敗',
+          code: 'LOCK_ACCOUNT_FAILED',
+        },
+      });
+    }
+  }
+);
+
+/**
+ * @swagger
+ * /api/v1/auth/admin/security-events/{userIdentifier}:
+ *   get:
+ *     summary: 獲取用戶安全事件記錄（管理員）
+ *     description: 管理員查看特定用戶的安全事件記錄
+ *     tags: [Account Security]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userIdentifier
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: 用戶標識
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: number
+ *           default: 50
+ *         description: 返回記錄數量限制
+ *       - in: query
+ *         name: eventType
+ *         schema:
+ *           type: string
+ *         description: 篩選事件類型
+ *       - in: query
+ *         name: severityLevel
+ *         schema:
+ *           type: string
+ *           enum: [low, medium, high, critical]
+ *         description: 篩選嚴重程度
+ *     responses:
+ *       200:
+ *         description: 成功獲取安全事件記錄
+ *       401:
+ *         description: 認證失敗
+ *       403:
+ *         description: 權限不足
+ *       404:
+ *         description: 無安全事件記錄
+ *       500:
+ *         description: 伺服器錯誤
+ */
+router.get(
+  '/admin/security-events/:userIdentifier',
+  generalLimiter,
+  authenticate,
+  requireRole('admin'),
+  async (req, res) => {
+    try {
+      const { userIdentifier } = req.params;
+      const { limit = 50, eventType, severityLevel } = req.query;
+
+      const securityEvents = await securityEnhancement.getSecurityEvents(userIdentifier, {
+        limit: parseInt(limit),
+        eventType,
+        severityLevel,
+      });
+
+      if (!securityEvents) {
+        return res.status(404).json({
+          success: false,
+          error: {
+            message: '無安全事件記錄',
+            code: 'NO_SECURITY_EVENTS',
+          },
+        });
+      }
+
+      logger.info('管理員查看安全事件記錄', {
+        adminUser: req.user.uid,
+        userIdentifier,
+        eventCount: securityEvents.totalEvents,
+      });
+
+      return res.json({
+        success: true,
+        message: '安全事件記錄獲取成功',
+        data: securityEvents,
+      });
+    } catch (error) {
+      logger.error('獲取安全事件記錄失敗', {
+        error: error.message,
+        adminUser: req.user?.uid,
+        userIdentifier: req.params?.userIdentifier,
+      });
+
+      return res.status(500).json({
+        success: false,
+        error: {
+          message: '獲取安全事件記錄失敗',
+          code: 'SECURITY_EVENTS_FAILED',
+        },
+      });
+    }
+  }
+);
+
+/**
+ * @swagger
+ * /api/v1/auth/admin/login-failures/{userIdentifier}:
+ *   get:
+ *     summary: 獲取用戶登入失敗記錄（管理員）
+ *     description: 管理員查看特定用戶的登入失敗記錄
+ *     tags: [Account Security]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userIdentifier
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: 用戶標識
+ *     responses:
+ *       200:
+ *         description: 成功獲取登入失敗記錄
+ *       401:
+ *         description: 認證失敗
+ *       403:
+ *         description: 權限不足
+ *       404:
+ *         description: 無登入失敗記錄
+ *       500:
+ *         description: 伺服器錯誤
+ */
+router.get(
+  '/admin/login-failures/:userIdentifier',
+  generalLimiter,
+  authenticate,
+  requireRole('admin'),
+  async (req, res) => {
+    try {
+      const { userIdentifier } = req.params;
+
+      const loginFailures = await securityEnhancement.getLoginFailures(userIdentifier);
+
+      if (!loginFailures) {
+        return res.status(404).json({
+          success: false,
+          error: {
+            message: '無登入失敗記錄',
+            code: 'NO_LOGIN_FAILURES',
+          },
+        });
+      }
+
+      logger.info('管理員查看登入失敗記錄', {
+        adminUser: req.user.uid,
+        userIdentifier,
+        attempts: loginFailures.attempts,
+      });
+
+      return res.json({
+        success: true,
+        message: '登入失敗記錄獲取成功',
+        data: loginFailures,
+      });
+    } catch (error) {
+      logger.error('獲取登入失敗記錄失敗', {
+        error: error.message,
+        adminUser: req.user?.uid,
+        userIdentifier: req.params?.userIdentifier,
+      });
+
+      return res.status(500).json({
+        success: false,
+        error: {
+          message: '獲取登入失敗記錄失敗',
+          code: 'LOGIN_FAILURES_FAILED',
+        },
+      });
+    }
+  }
+);
+
+/**
+ * @swagger
+ * /api/v1/auth/admin/clear-login-failures:
+ *   post:
+ *     summary: 清除登入失敗記錄（管理員）
+ *     description: 管理員清除特定用戶的登入失敗記錄
+ *     tags: [Account Security]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - userIdentifier
+ *             properties:
+ *               userIdentifier:
+ *                 type: string
+ *                 description: 要清除記錄的用戶標識
+ *     responses:
+ *       200:
+ *         description: 登入失敗記錄清除成功
+ *       400:
+ *         description: 參數錯誤
+ *       401:
+ *         description: 認證失敗
+ *       403:
+ *         description: 權限不足
+ *       500:
+ *         description: 伺服器錯誤
+ */
+router.post(
+  '/admin/clear-login-failures',
+  sensitiveOperationLimiter,
+  authenticate,
+  requireRole('admin'),
+  async (req, res) => {
+    try {
+      const { userIdentifier } = req.body;
+
+      if (!userIdentifier) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            message: '缺少 userIdentifier 參數',
+            code: 'MISSING_USER_IDENTIFIER',
+          },
+        });
+      }
+
+      await securityEnhancement.clearLoginFailures(userIdentifier);
+
+      logger.info('管理員清除登入失敗記錄', {
+        adminUser: req.user.uid,
+        userIdentifier,
+      });
+
+      return res.json({
+        success: true,
+        message: '登入失敗記錄清除成功',
+        data: {
+          userIdentifier,
+          cleared: true,
+          adminUser: req.user.uid,
+        },
+      });
+    } catch (error) {
+      logger.error('清除登入失敗記錄失敗', {
+        error: error.message,
+        adminUser: req.user?.uid,
+        userIdentifier: req.body?.userIdentifier,
+      });
+
+      return res.status(500).json({
+        success: false,
+        error: {
+          message: '清除登入失敗記錄失敗',
+          code: 'CLEAR_LOGIN_FAILURES_FAILED',
         },
       });
     }

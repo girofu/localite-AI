@@ -14,6 +14,11 @@
             "date": 1751536486594,
             "name": "/Users/fuchangwei/Projects/localite-v4/backend/logs/error-2025-07-03.log",
             "hash": "50dd7aba1bd032190c01a8ca6ac2e4f3418fb51eccba8a1cd9040cd8f25420ad"
+        },
+        {
+            "date": 1751561480859,
+            "name": "/Users/fuchangwei/Projects/localite-v4/backend/logs/error-2025-07-04.log",
+            "hash": "a7c420d9cd7602acbe0e8a9d098b69336e873ab62826d0f2119b0768e2bc65ac"
         }
     ],
     "hashType": "sha256"
