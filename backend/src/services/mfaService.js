@@ -513,35 +513,956 @@ class MFAService {
   }
 
   /**
-   * 驗證 SMS 代碼 (待實作)
+   * 驗證 SMS 驗證碼
    * @param {string} uid - 用戶 ID
    * @param {string} code - SMS 驗證碼
    * @returns {Promise<Object>} 驗證結果
    */
   async verifySMSCode(uid, code) {
-    // 待在任務 2.2.5.3.3 中實作
-    logger.info('SMS 驗證功能待實作', { uid, code: '***' });
-    return {
-      success: false,
-      result: this.VERIFICATION_RESULT.INVALID_CODE,
-      message: 'SMS 驗證功能尚未實作',
-    };
+    try {
+      // 驗證輸入
+      if (!uid || !code) {
+        return {
+          success: false,
+          result: this.VERIFICATION_RESULT.INVALID_CODE,
+          message: '用戶 ID 和驗證碼不能為空',
+        };
+      }
+
+      // 檢查嘗試次數限制
+      const isExceeded = await this.isAttemptLimitExceeded(uid, this.MFA_TYPE.SMS);
+      if (isExceeded) {
+        return {
+          success: false,
+          result: this.VERIFICATION_RESULT.TOO_MANY_ATTEMPTS,
+          message: '嘗試次數過多，請稍後再試',
+        };
+      }
+
+      // 獲取存儲的 SMS 驗證碼
+      const smsCodeKey = `${this.smsCodePrefix}${uid}`;
+      const storedCodeData = await redisConnection.get(smsCodeKey);
+
+      if (!storedCodeData) {
+        await this.incrementAttemptCounter(uid, this.MFA_TYPE.SMS);
+        return {
+          success: false,
+          result: this.VERIFICATION_RESULT.EXPIRED,
+          message: '驗證碼已過期或不存在',
+        };
+      }
+
+      const codeData = JSON.parse(storedCodeData);
+      const currentTime = Date.now();
+
+      // 檢查是否已過期
+      if (currentTime > codeData.expiresAt) {
+        await redisConnection.del(smsCodeKey);
+        await this.incrementAttemptCounter(uid, this.MFA_TYPE.SMS);
+        return {
+          success: false,
+          result: this.VERIFICATION_RESULT.EXPIRED,
+          message: '驗證碼已過期',
+        };
+      }
+
+      // 檢查嘗試次數
+      if (codeData.attempts >= this.smsConfig.maxAttempts) {
+        await redisConnection.del(smsCodeKey);
+        return {
+          success: false,
+          result: this.VERIFICATION_RESULT.TOO_MANY_ATTEMPTS,
+          message: '此驗證碼嘗試次數已達上限',
+        };
+      }
+
+      // 驗證碼比對
+      if (codeData.code !== code) {
+        // 增加此驗證碼的嘗試次數
+        codeData.attempts += 1;
+        await redisConnection.set(smsCodeKey, JSON.stringify(codeData));
+        await this.incrementAttemptCounter(uid, this.MFA_TYPE.SMS);
+
+        return {
+          success: false,
+          result: this.VERIFICATION_RESULT.INVALID_CODE,
+          message: '驗證碼不正確',
+        };
+      }
+
+      // 驗證成功，清除驗證碼
+      await redisConnection.del(smsCodeKey);
+      await this.resetAttemptCounter(uid, this.MFA_TYPE.SMS);
+
+      logger.info('SMS 驗證碼驗證成功', { uid, phone: codeData.phone });
+
+      return {
+        success: true,
+        result: this.VERIFICATION_RESULT.SUCCESS,
+        message: '驗證成功',
+      };
+    } catch (error) {
+      logger.error('SMS 驗證碼驗證失敗', {
+        uid,
+        error: error.message,
+        stack: error.stack,
+      });
+
+      return {
+        success: false,
+        result: this.VERIFICATION_RESULT.INVALID_CODE,
+        message: '驗證失敗',
+      };
+    }
   }
 
   /**
-   * 驗證備用碼 (待實作)
+   * 驗證備用碼
    * @param {string} uid - 用戶 ID
    * @param {string} code - 備用碼
    * @returns {Promise<Object>} 驗證結果
    */
   async verifyBackupCode(uid, code) {
-    // 待在任務 2.2.5.3.4 中實作
-    logger.info('備用碼驗證功能待實作', { uid, code: '***' });
-    return {
-      success: false,
-      result: this.VERIFICATION_RESULT.INVALID_CODE,
-      message: '備用碼驗證功能尚未實作',
-    };
+    try {
+      // 驗證輸入
+      if (!uid || !code) {
+        return {
+          success: false,
+          result: this.VERIFICATION_RESULT.INVALID_CODE,
+          message: '用戶 ID 和備用碼不能為空',
+        };
+      }
+
+      // 標準化備用碼格式（移除空格和轉為大寫）
+      const normalizedCode = code.toString().replace(/\s+/g, '').toUpperCase();
+
+      // 獲取用戶的備用碼
+      const backupCodesKey = `${this.backupCodesPrefix}${uid}`;
+      const backupCodesData = await redisConnection.get(backupCodesKey);
+
+      if (!backupCodesData) {
+        return {
+          success: false,
+          result: this.VERIFICATION_RESULT.INVALID_CODE,
+          message: '備用碼不存在或已過期',
+        };
+      }
+
+      const backupCodes = JSON.parse(backupCodesData);
+
+      // 查找匹配的備用碼
+      const matchingCodeIndex = backupCodes.codes.findIndex(
+        codeObj => codeObj.code === normalizedCode && !codeObj.used
+      );
+
+      if (matchingCodeIndex === -1) {
+        logger.warn('備用碼驗證失敗：未找到匹配的有效備用碼', {
+          uid,
+          code: '***',
+          timestamp: new Date().toISOString(),
+        });
+
+        return {
+          success: false,
+          result: this.VERIFICATION_RESULT.INVALID_CODE,
+          message: '備用碼無效或已使用',
+        };
+      }
+
+      // 標記備用碼為已使用
+      backupCodes.codes[matchingCodeIndex].used = true;
+      backupCodes.codes[matchingCodeIndex].usedAt = new Date().toISOString();
+      backupCodes.lastUsedAt = new Date().toISOString();
+
+      // 更新 Redis 中的備用碼數據
+      await redisConnection.set(backupCodesKey, JSON.stringify(backupCodes));
+
+      logger.info('備用碼驗證成功', {
+        uid,
+        code: '***',
+        remainingCodes: backupCodes.codes.filter(c => !c.used).length,
+        timestamp: new Date().toISOString(),
+      });
+
+      return {
+        success: true,
+        result: this.VERIFICATION_RESULT.SUCCESS,
+        message: '備用碼驗證成功',
+        remainingCodes: backupCodes.codes.filter(c => !c.used).length,
+      };
+    } catch (error) {
+      logger.error('備用碼驗證過程發生錯誤', {
+        uid,
+        error: error.message,
+        stack: error.stack,
+      });
+
+      return {
+        success: false,
+        result: this.VERIFICATION_RESULT.INVALID_CODE,
+        message: '備用碼驗證失敗',
+      };
+    }
+  }
+
+  // ======================
+  // SMS 相關方法
+  // ======================
+
+  /**
+   * 生成 SMS 驗證碼
+   * @returns {string} 數字驗證碼
+   */
+  generateSMSCode() {
+    return this.generateSecureCode(this.smsConfig.codeLength);
+  }
+
+  /**
+   * 模擬 SMS 發送服務
+   * @param {string} phone - 手機號碼
+   * @param {string} code - 驗證碼
+   * @returns {Promise<Object>} 發送結果
+   */
+  async simulateSMSService(phone, code) {
+    try {
+      // 在生產環境中，這裡會整合真正的 SMS 服務
+      // 如 AWS SNS、Twilio、阿里雲短信等
+
+      // 模擬發送延遲
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // 模擬 10% 的發送失敗率（用於測試）
+      const shouldFail = Math.random() < 0.1;
+
+      if (shouldFail) {
+        throw new Error('SMS 服務暫時不可用');
+      }
+
+      logger.info('SMS 驗證碼模擬發送', {
+        phone,
+        code: '***',
+        timestamp: new Date().toISOString(),
+      });
+
+      return {
+        success: true,
+        messageId: `sim_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
+        message: '驗證碼發送成功',
+      };
+    } catch (error) {
+      logger.error('SMS 發送失敗', {
+        phone,
+        error: error.message,
+      });
+
+      return {
+        success: false,
+        error: error.message,
+        message: 'SMS 發送失敗',
+      };
+    }
+  }
+
+  /**
+   * 檢查 SMS 重送間隔
+   * @param {string} uid - 用戶 ID
+   * @returns {Promise<Object>} 重送檢查結果
+   */
+  async checkSMSResendInterval(uid) {
+    try {
+      const resendKey = `${this.resendCounterPrefix}${uid}`;
+      const lastSentTime = await redisConnection.get(resendKey);
+
+      if (!lastSentTime) {
+        return {
+          canResend: true,
+          remainingTime: 0,
+        };
+      }
+
+      const currentTime = Date.now();
+      const lastSent = parseInt(lastSentTime);
+      const remainingTime = Math.max(
+        0,
+        this.smsConfig.resendInterval * 1000 - (currentTime - lastSent)
+      );
+
+      return {
+        canResend: remainingTime === 0,
+        remainingTime: Math.ceil(remainingTime / 1000),
+      };
+    } catch (error) {
+      logger.error('檢查 SMS 重送間隔失敗', {
+        uid,
+        error: error.message,
+      });
+
+      return {
+        canResend: false,
+        remainingTime: this.smsConfig.resendInterval,
+      };
+    }
+  }
+
+  /**
+   * 發送 SMS 驗證碼
+   * @param {string} uid - 用戶 ID
+   * @param {string} phone - 手機號碼
+   * @param {boolean} isResend - 是否為重送
+   * @returns {Promise<Object>} 發送結果
+   */
+  async sendSMSCode(uid, phone, isResend = false) {
+    try {
+      // 驗證輸入
+      if (!uid || !phone) {
+        return {
+          success: false,
+          message: '用戶 ID 和手機號碼不能為空',
+        };
+      }
+
+      // 檢查手機號碼格式
+      const phoneRegex = /^[+]?[0-9]{10,15}$/;
+      if (!phoneRegex.test(phone)) {
+        return {
+          success: false,
+          message: '手機號碼格式不正確',
+        };
+      }
+
+      // 檢查每日發送限制
+      const dailyCounterKey = `${this.dailyAttemptCounterPrefix}${uid}:${this.MFA_TYPE.SMS}:${this.getDateString()}`;
+      const dailyAttempts = await redisConnection.get(dailyCounterKey);
+
+      if (dailyAttempts && parseInt(dailyAttempts) >= this.smsConfig.maxDailyAttempts) {
+        return {
+          success: false,
+          message: '今日發送次數已達上限',
+        };
+      }
+
+      // 檢查重送間隔
+      if (isResend) {
+        const resendCheck = await this.checkSMSResendInterval(uid);
+        if (!resendCheck.canResend) {
+          return {
+            success: false,
+            message: `請等待 ${resendCheck.remainingTime} 秒後再重送`,
+          };
+        }
+      }
+
+      // 生成驗證碼
+      const code = this.generateSMSCode();
+      const currentTime = Date.now();
+      const expiresAt = currentTime + this.smsConfig.expiry * 1000;
+
+      // 存儲驗證碼
+      const smsCodeKey = `${this.smsCodePrefix}${uid}`;
+      const codeData = {
+        code: code,
+        phone: phone,
+        createdAt: currentTime,
+        expiresAt: expiresAt,
+        attempts: 0,
+        isResend: isResend,
+      };
+
+      await redisConnection.set(smsCodeKey, JSON.stringify(codeData));
+
+      // 發送 SMS
+      const sendResult = await this.simulateSMSService(phone, code);
+
+      if (!sendResult.success) {
+        // 發送失敗，清除驗證碼
+        await redisConnection.del(smsCodeKey);
+        return {
+          success: false,
+          message: sendResult.message,
+        };
+      }
+
+      // 更新重送計數器
+      const resendKey = `${this.resendCounterPrefix}${uid}`;
+      await redisConnection.set(resendKey, currentTime.toString());
+      await redisConnection.expire(resendKey, this.smsConfig.resendInterval);
+
+      // 更新每日發送計數器
+      await redisConnection.incr(dailyCounterKey);
+      await redisConnection.expire(dailyCounterKey, 86400);
+
+      logger.info('SMS 驗證碼發送成功', {
+        uid,
+        phone,
+        messageId: sendResult.messageId,
+        expiresAt: new Date(expiresAt).toISOString(),
+        isResend,
+      });
+
+      return {
+        success: true,
+        message: '驗證碼已發送',
+        messageId: sendResult.messageId,
+        expiresIn: this.smsConfig.expiry,
+      };
+    } catch (error) {
+      logger.error('SMS 驗證碼發送失敗', {
+        uid,
+        phone,
+        error: error.message,
+        stack: error.stack,
+      });
+
+      return {
+        success: false,
+        message: '發送失敗',
+      };
+    }
+  }
+
+  /**
+   * 設置 SMS 驗證
+   * @param {string} uid - 用戶 ID
+   * @param {string} phone - 手機號碼
+   * @returns {Promise<Object>} 設置結果
+   */
+  async setupSMS(uid, phone) {
+    try {
+      // 檢查是否已經設置並啟用了 SMS
+      const currentStatus = await this.getUserMFAStatus(uid);
+      if (currentStatus.enabledMethods.includes(this.MFA_TYPE.SMS)) {
+        return {
+          success: false,
+          message: 'SMS 驗證已經設置並啟用',
+        };
+      }
+
+      // 發送驗證碼
+      const sendResult = await this.sendSMSCode(uid, phone);
+
+      if (!sendResult.success) {
+        return sendResult;
+      }
+
+      // 更新 MFA 狀態為 pending
+      const pendingMethods = currentStatus.pendingMethods || [];
+      if (!pendingMethods.includes(this.MFA_TYPE.SMS)) {
+        pendingMethods.push(this.MFA_TYPE.SMS);
+      }
+
+      await this.setUserMFAStatus(uid, {
+        ...currentStatus,
+        status: this.MFA_STATUS.PENDING,
+        pendingMethods: pendingMethods,
+      });
+
+      logger.info('SMS 驗證設置開始', { uid, phone });
+
+      return {
+        success: true,
+        message: '驗證碼已發送，請輸入驗證碼以完成設置',
+        expiresIn: this.smsConfig.expiry,
+      };
+    } catch (error) {
+      logger.error('SMS 驗證設置失敗', {
+        uid,
+        phone,
+        error: error.message,
+      });
+
+      return {
+        success: false,
+        message: 'SMS 驗證設置失敗',
+      };
+    }
+  }
+
+  /**
+   * 啟用 SMS 驗證
+   * @param {string} uid - 用戶 ID
+   * @param {string} code - 驗證碼
+   * @returns {Promise<Object>} 啟用結果
+   */
+  async enableSMS(uid, code) {
+    try {
+      // 驗證 SMS 驗證碼
+      const verifyResult = await this.verifySMSCode(uid, code);
+
+      if (!verifyResult.success) {
+        return verifyResult;
+      }
+
+      // 更新 MFA 狀態
+      const currentStatus = await this.getUserMFAStatus(uid);
+      const enabledMethods = currentStatus.enabledMethods || [];
+      const pendingMethods = currentStatus.pendingMethods || [];
+
+      // 添加到啟用列表
+      if (!enabledMethods.includes(this.MFA_TYPE.SMS)) {
+        enabledMethods.push(this.MFA_TYPE.SMS);
+      }
+
+      // 從待處理列表移除
+      const updatedPendingMethods = pendingMethods.filter(method => method !== this.MFA_TYPE.SMS);
+
+      // 決定整體狀態
+      const newStatus =
+        enabledMethods.length > 0 ? this.MFA_STATUS.ENABLED : this.MFA_STATUS.DISABLED;
+
+      await this.setUserMFAStatus(uid, {
+        ...currentStatus,
+        status: newStatus,
+        enabledMethods: enabledMethods,
+        pendingMethods: updatedPendingMethods,
+      });
+
+      logger.info('SMS 驗證啟用成功', { uid, enabledMethods });
+
+      return {
+        success: true,
+        message: 'SMS 驗證已成功啟用',
+        enabledMethods: enabledMethods,
+      };
+    } catch (error) {
+      logger.error('SMS 驗證啟用失敗', {
+        uid,
+        error: error.message,
+      });
+
+      return {
+        success: false,
+        message: '啟用失敗',
+      };
+    }
+  }
+
+  /**
+   * 禁用 SMS 驗證
+   * @param {string} uid - 用戶 ID
+   * @returns {Promise<Object>} 禁用結果
+   */
+  async disableSMS(uid) {
+    try {
+      // 獲取當前狀態
+      const currentStatus = await this.getUserMFAStatus(uid);
+      const enabledMethods = currentStatus.enabledMethods || [];
+      const pendingMethods = currentStatus.pendingMethods || [];
+
+      // 從啟用列表移除
+      const updatedEnabledMethods = enabledMethods.filter(method => method !== this.MFA_TYPE.SMS);
+
+      // 從待處理列表移除
+      const updatedPendingMethods = pendingMethods.filter(method => method !== this.MFA_TYPE.SMS);
+
+      // 決定整體狀態
+      const newStatus =
+        updatedEnabledMethods.length > 0 ? this.MFA_STATUS.ENABLED : this.MFA_STATUS.DISABLED;
+
+      await this.setUserMFAStatus(uid, {
+        ...currentStatus,
+        status: newStatus,
+        enabledMethods: updatedEnabledMethods,
+        pendingMethods: updatedPendingMethods,
+      });
+
+      // 清除相關的 SMS 驗證碼
+      const smsCodeKey = `${this.smsCodePrefix}${uid}`;
+      await redisConnection.del(smsCodeKey);
+
+      logger.info('SMS 驗證禁用成功', { uid, enabledMethods: updatedEnabledMethods });
+
+      return {
+        success: true,
+        message: 'SMS 驗證已禁用',
+        enabledMethods: updatedEnabledMethods,
+      };
+    } catch (error) {
+      logger.error('SMS 驗證禁用失敗', {
+        uid,
+        error: error.message,
+      });
+
+      return {
+        success: false,
+        message: '禁用失敗',
+      };
+    }
+  }
+
+  /**
+   * 檢查是否已啟用 SMS 驗證
+   * @param {string} uid - 用戶 ID
+   * @returns {Promise<boolean>} 是否已啟用
+   */
+  async isSMSEnabled(uid) {
+    try {
+      const status = await this.getUserMFAStatus(uid);
+      return status.enabledMethods.includes(this.MFA_TYPE.SMS);
+    } catch (error) {
+      logger.error('檢查 SMS 狀態失敗', { uid, error: error.message });
+      return false;
+    }
+  }
+
+  // ======================
+  // 備用碼相關方法
+  // ======================
+
+  /**
+   * 生成備用碼數組
+   * @returns {Array<string>} 備用碼數組
+   */
+  generateBackupCodes() {
+    try {
+      const codes = [];
+      for (let i = 0; i < this.backupCodeConfig.totalCodes; i++) {
+        const code = this.generateSecureAlphanumericCode(this.backupCodeConfig.codeLength);
+        codes.push(code);
+      }
+
+      logger.info('備用碼生成成功', {
+        totalCodes: this.backupCodeConfig.totalCodes,
+        codeLength: this.backupCodeConfig.codeLength,
+      });
+
+      return codes;
+    } catch (error) {
+      logger.error('生成備用碼失敗', { error: error.message });
+      throw new Error('生成備用碼失敗');
+    }
+  }
+
+  /**
+   * 存儲備用碼到 Redis
+   * @param {string} uid - 用戶 ID
+   * @param {Array<string>} codes - 備用碼數組
+   * @returns {Promise<boolean>} 是否成功
+   */
+  async storeBackupCodes(uid, codes) {
+    try {
+      const backupCodesKey = `${this.backupCodesPrefix}${uid}`;
+      const backupCodesData = {
+        codes: codes.map(code => ({
+          code: code,
+          used: false,
+          usedAt: null,
+        })),
+        createdAt: new Date().toISOString(),
+        lastUsedAt: null,
+        enabled: false, // 預設為未啟用，需要用戶確認後才啟用
+      };
+
+      await redisConnection.set(backupCodesKey, JSON.stringify(backupCodesData));
+
+      logger.info('備用碼存儲成功', {
+        uid,
+        totalCodes: codes.length,
+      });
+
+      return true;
+    } catch (error) {
+      logger.error('存儲備用碼失敗', {
+        uid,
+        error: error.message,
+      });
+      return false;
+    }
+  }
+
+  /**
+   * 設置備用碼（用戶首次生成）
+   * @param {string} uid - 用戶 ID
+   * @returns {Promise<Object>} 設置結果包含備用碼
+   */
+  async setupBackupCodes(uid) {
+    try {
+      // 檢查是否已經設置備用碼
+      const existingCodes = await this.getBackupCodes(uid);
+      if (existingCodes.success && existingCodes.enabled) {
+        return {
+          success: false,
+          message: '備用碼已經設置並啟用',
+        };
+      }
+
+      // 生成備用碼
+      const codes = this.generateBackupCodes();
+
+      // 存儲備用碼
+      const stored = await this.storeBackupCodes(uid, codes);
+      if (!stored) {
+        throw new Error('存儲備用碼失敗');
+      }
+
+      // 更新 MFA 狀態為 pending
+      const currentStatus = await this.getUserMFAStatus(uid);
+      const pendingMethods = currentStatus.pendingMethods || [];
+
+      if (!pendingMethods.includes(this.MFA_TYPE.BACKUP_CODE)) {
+        pendingMethods.push(this.MFA_TYPE.BACKUP_CODE);
+      }
+
+      await this.setUserMFAStatus(uid, {
+        ...currentStatus,
+        pendingMethods: pendingMethods,
+      });
+
+      logger.info('備用碼設置成功', { uid });
+
+      return {
+        success: true,
+        message: '備用碼設置成功',
+        codes: codes,
+        warning: '請安全保存這些備用碼，它們只會顯示一次',
+      };
+    } catch (error) {
+      logger.error('設置備用碼失敗', {
+        uid,
+        error: error.message,
+      });
+
+      return {
+        success: false,
+        message: '設置備用碼失敗',
+      };
+    }
+  }
+
+  /**
+   * 重新生成備用碼
+   * @param {string} uid - 用戶 ID
+   * @returns {Promise<Object>} 重新生成結果包含新備用碼
+   */
+  async regenerateBackupCodes(uid) {
+    try {
+      // 生成新的備用碼
+      const codes = this.generateBackupCodes();
+
+      // 存儲新的備用碼
+      const stored = await this.storeBackupCodes(uid, codes);
+      if (!stored) {
+        throw new Error('存儲新備用碼失敗');
+      }
+
+      // 如果之前已啟用，自動啟用新的備用碼
+      const currentStatus = await this.getUserMFAStatus(uid);
+      const wasEnabled = currentStatus.enabledMethods.includes(this.MFA_TYPE.BACKUP_CODE);
+
+      if (wasEnabled) {
+        await this.enableBackupCodes(uid);
+      }
+
+      logger.info('備用碼重新生成成功', { uid, wasEnabled });
+
+      return {
+        success: true,
+        message: '備用碼重新生成成功',
+        codes: codes,
+        warning: '舊的備用碼已失效，請安全保存這些新的備用碼',
+      };
+    } catch (error) {
+      logger.error('重新生成備用碼失敗', {
+        uid,
+        error: error.message,
+      });
+
+      return {
+        success: false,
+        message: '重新生成備用碼失敗',
+      };
+    }
+  }
+
+  /**
+   * 獲取備用碼（用於顯示給用戶）
+   * @param {string} uid - 用戶 ID
+   * @param {boolean} includeUsed - 是否包含已使用的備用碼
+   * @returns {Promise<Object>} 備用碼信息
+   */
+  async getBackupCodes(uid, includeUsed = false) {
+    try {
+      const backupCodesKey = `${this.backupCodesPrefix}${uid}`;
+      const backupCodesData = await redisConnection.get(backupCodesKey);
+
+      if (!backupCodesData) {
+        return {
+          success: false,
+          message: '備用碼不存在',
+          codes: [],
+          enabled: false,
+        };
+      }
+
+      const backupCodes = JSON.parse(backupCodesData);
+
+      // 過濾備用碼
+      const filteredCodes = backupCodes.codes.filter(codeObj => {
+        if (includeUsed) {
+          return true;
+        }
+        return !codeObj.used;
+      });
+
+      return {
+        success: true,
+        codes: filteredCodes,
+        enabled: backupCodes.enabled,
+        totalCodes: backupCodes.codes.length,
+        usedCodes: backupCodes.codes.filter(c => c.used).length,
+        remainingCodes: backupCodes.codes.filter(c => !c.used).length,
+        createdAt: backupCodes.createdAt,
+        lastUsedAt: backupCodes.lastUsedAt,
+      };
+    } catch (error) {
+      logger.error('獲取備用碼失敗', {
+        uid,
+        error: error.message,
+      });
+
+      return {
+        success: false,
+        message: '獲取備用碼失敗',
+        codes: [],
+        enabled: false,
+      };
+    }
+  }
+
+  /**
+   * 啟用備用碼
+   * @param {string} uid - 用戶 ID
+   * @returns {Promise<Object>} 啟用結果
+   */
+  async enableBackupCodes(uid) {
+    try {
+      // 檢查備用碼是否存在
+      const backupCodesKey = `${this.backupCodesPrefix}${uid}`;
+      const backupCodesData = await redisConnection.get(backupCodesKey);
+
+      if (!backupCodesData) {
+        return {
+          success: false,
+          message: '備用碼不存在，請先設置備用碼',
+        };
+      }
+
+      // 更新備用碼狀態為啟用
+      const backupCodes = JSON.parse(backupCodesData);
+      backupCodes.enabled = true;
+      backupCodes.enabledAt = new Date().toISOString();
+
+      await redisConnection.set(backupCodesKey, JSON.stringify(backupCodes));
+
+      // 更新 MFA 狀態
+      const currentStatus = await this.getUserMFAStatus(uid);
+      const enabledMethods = currentStatus.enabledMethods || [];
+      const pendingMethods = currentStatus.pendingMethods || [];
+
+      // 從待處理列表移除並添加到啟用列表
+      const updatedPendingMethods = pendingMethods.filter(
+        method => method !== this.MFA_TYPE.BACKUP_CODE
+      );
+
+      if (!enabledMethods.includes(this.MFA_TYPE.BACKUP_CODE)) {
+        enabledMethods.push(this.MFA_TYPE.BACKUP_CODE);
+      }
+
+      await this.setUserMFAStatus(uid, {
+        ...currentStatus,
+        status: this.MFA_STATUS.ENABLED,
+        enabledMethods: enabledMethods,
+        pendingMethods: updatedPendingMethods,
+      });
+
+      logger.info('備用碼啟用成功', { uid, enabledMethods });
+
+      return {
+        success: true,
+        message: '備用碼已啟用',
+        enabledMethods: enabledMethods,
+      };
+    } catch (error) {
+      logger.error('啟用備用碼失敗', {
+        uid,
+        error: error.message,
+      });
+
+      return {
+        success: false,
+        message: '啟用備用碼失敗',
+      };
+    }
+  }
+
+  /**
+   * 禁用備用碼
+   * @param {string} uid - 用戶 ID
+   * @returns {Promise<Object>} 禁用結果
+   */
+  async disableBackupCodes(uid) {
+    try {
+      const currentStatus = await this.getUserMFAStatus(uid);
+      const enabledMethods = currentStatus.enabledMethods || [];
+      const pendingMethods = currentStatus.pendingMethods || [];
+
+      // 從啟用列表移除
+      const updatedEnabledMethods = enabledMethods.filter(
+        method => method !== this.MFA_TYPE.BACKUP_CODE
+      );
+
+      // 從待處理列表移除
+      const updatedPendingMethods = pendingMethods.filter(
+        method => method !== this.MFA_TYPE.BACKUP_CODE
+      );
+
+      // 決定整體狀態
+      const newStatus =
+        updatedEnabledMethods.length > 0 ? this.MFA_STATUS.ENABLED : this.MFA_STATUS.DISABLED;
+
+      await this.setUserMFAStatus(uid, {
+        ...currentStatus,
+        status: newStatus,
+        enabledMethods: updatedEnabledMethods,
+        pendingMethods: updatedPendingMethods,
+      });
+
+      // 清除備用碼數據
+      const backupCodesKey = `${this.backupCodesPrefix}${uid}`;
+      await redisConnection.del(backupCodesKey);
+
+      logger.info('備用碼禁用成功', { uid, enabledMethods: updatedEnabledMethods });
+
+      return {
+        success: true,
+        message: '備用碼已禁用',
+        enabledMethods: updatedEnabledMethods,
+      };
+    } catch (error) {
+      logger.error('禁用備用碼失敗', {
+        uid,
+        error: error.message,
+      });
+
+      return {
+        success: false,
+        message: '禁用備用碼失敗',
+      };
+    }
+  }
+
+  /**
+   * 檢查是否已啟用備用碼
+   * @param {string} uid - 用戶 ID
+   * @returns {Promise<boolean>} 是否已啟用
+   */
+  async isBackupCodeEnabled(uid) {
+    try {
+      const status = await this.getUserMFAStatus(uid);
+      return status.enabledMethods.includes(this.MFA_TYPE.BACKUP_CODE);
+    } catch (error) {
+      logger.error('檢查備用碼狀態失敗', { uid, error: error.message });
+      return false;
+    }
   }
 
   // ======================

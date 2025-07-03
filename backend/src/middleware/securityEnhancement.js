@@ -329,59 +329,46 @@ class SecurityEnhancement {
   /**
    * 手動鎖定帳號（管理員功能）
    * @param {string} userIdentifier - 用戶標識
-   * @param {number} duration - 鎖定時間（秒）
    * @param {string} reason - 鎖定原因
-   * @param {string} adminUser - 執行鎖定的管理員
-   * @returns {Promise<boolean>}
+   * @param {number} duration - 鎖定時長（秒）
    */
-  async manualLockAccount(userIdentifier, duration, reason, adminUser = 'system') {
+  async manualLockAccount(userIdentifier, reason = '管理員手動鎖定', duration = null) {
     try {
       const lockKey = this.REDIS_PREFIX.ACCOUNT_LOCK + userIdentifier;
+      const lockDuration = duration || this.LOCKOUT_DURATION;
 
-      // 檢查是否已經鎖定
-      const existingLock = await this.getRedisData(lockKey);
-      if (existingLock) {
-        logger.warn('帳號已經鎖定', { userIdentifier, existingLock });
-        return false;
-      }
-
-      const lockInfo = {
-        lockedAt: Date.now(),
-        lockedUntil: Date.now() + duration * 1000,
-        reason,
-        adminUser,
-        duration,
-        manual: true,
+      const lockData = {
+        isLocked: true,
+        lockedAt: new Date().toISOString(),
+        lockReason: reason,
+        lockType: 'manual',
+        unlockTime: new Date(Date.now() + lockDuration * 1000).toISOString(),
+        lockedBy: 'admin',
       };
 
-      await this.setRedisData(lockKey, lockInfo, duration);
+      await this.setRedisData(lockKey, lockData, lockDuration);
 
-      // 記錄鎖定事件
-      await this.recordSecurityEvent(userIdentifier, 'account_manually_locked', {
-        adminUser,
+      // 記錄安全事件
+      await this.recordSecurityEvent(userIdentifier, 'manual_lock', {
         reason,
-        duration,
-        lockedUntil: lockInfo.lockedUntil,
+        duration: lockDuration,
+        lockedBy: 'admin',
       });
 
       logger.info('帳號已手動鎖定', {
         userIdentifier,
-        adminUser,
         reason,
-        duration,
-        lockedUntil: new Date(lockInfo.lockedUntil),
+        duration: lockDuration,
       });
 
-      return true;
+      return { success: true, lockData };
     } catch (error) {
       logger.error('手動鎖定帳號失敗', {
         error: error.message,
         userIdentifier,
-        adminUser,
         reason,
-        duration,
       });
-      return false;
+      throw error;
     }
   }
 
