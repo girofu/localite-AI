@@ -68,6 +68,8 @@
 - `backend/src/config/swagger.js` - Swagger/OpenAPI 配置檔案（完整的 API 文檔定義和 Schema）
 - `backend/src/test/swagger.test.js` - Swagger 配置單元測試
 - `docs/api-documentation-guide.md` - API 文檔使用指南（開發者指南和最佳實踐）
+- `backend/src/middleware/rateLimitMiddleware.js` - 專業級 Rate Limiting 中間件（支援 Redis、多層級限制、統計監控）
+- `backend/src/middleware/rateLimitMiddleware.test.js` - Rate Limiting 中間件完整測試
 
 ### Notes
 
@@ -139,9 +141,33 @@
         - **已完成**: JWT 服務的 Session 管理功能完整測試覆蓋
         - **已完成**: Session 創建、獲取、更新、撤銷的單元測試
         - **已完成**: 錯誤處理和邊界條件測試
-        - [x] **待完成**: Session 管理 API 端點的整合測試
+        - **已完成**: Session 管理 API 端點的整合測試
     - [x] 2.2.4 實作 token 刷新和撤銷機制
     - [ ] 2.2.5 增強安全認證功能（rate limiting、多重驗證準備）
+      - [ ] 2.2.5.1 實作完整的 Rate Limiting 中間件
+        - [x] 2.2.5.1.1 替換 rateLimitMiddleware.js 的 stub 實作為真正的 rate limiting 功能
+        - [ ] 2.2.5.1.2 實作分層級的 rate limiting 策略（一般、認證、敏感操作）
+        - [ ] 2.2.5.1.3 建立 Redis 支援的分散式 rate limiting
+        - [ ] 2.2.5.1.4 實作 rate limiting 的監控和統計功能
+      - [ ] 2.2.5.2 實作安全增強中間件
+        - [ ] 2.2.5.2.1 替換 securityEnhancement.js 的 stub 實作為真正的安全功能
+        - [ ] 2.2.5.2.2 實作帳號鎖定機制（多次失敗登入保護）
+        - [ ] 2.2.5.2.3 建立可疑活動檢測和風險評估系統
+        - [ ] 2.2.5.2.4 實作登入失敗記錄和安全事件追蹤
+      - [ ] 2.2.5.3 建立 MFA (多重驗證) 服務基礎架構
+        - [ ] 2.2.5.3.1 建立 MFA 服務核心類別和配置
+        - [ ] 2.2.5.3.2 實作 TOTP (Time-based One-Time Password) 功能
+        - [ ] 2.2.5.3.3 實作 SMS 驗證碼功能準備
+        - [ ] 2.2.5.3.4 建立 MFA 備用碼系統
+      - [ ] 2.2.5.4 整合安全功能到認證流程
+        - [ ] 2.2.5.4.1 為認證 API 端點整合新的安全中間件
+        - [ ] 2.2.5.4.2 建立 MFA 狀態檢查和驗證 API 端點
+        - [ ] 2.2.5.4.3 實作安全設定和管理 API
+      - [ ] 2.2.5.5 建立完整的測試覆蓋
+        - [ ] 2.2.5.5.1 為 Rate Limiting 中間件建立單元測試
+        - [ ] 2.2.5.5.2 為安全增強中間件建立單元測試
+        - [ ] 2.2.5.5.3 為 MFA 服務建立單元測試
+        - [ ] 2.2.5.5.4 建立整合測試驗證完整的安全認證流程
   - [ ] 2.3 實作權限管理系統（一般用戶 vs 商戶用戶角色區分）
   - [ ] 2.4 開發密碼重設與帳號管理功能
   - [ ] 2.5 實作隱私資料保護機制（GDPR 合規、資料加密）
