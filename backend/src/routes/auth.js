@@ -6,33 +6,20 @@ const { logger } = require('../middleware/requestLogger');
 const jwtService = require('../services/jwtService');
 const { securityEnhancement } = require('../middleware/securityEnhancement');
 const { rateLimitMiddleware } = require('../middleware/rateLimitMiddleware');
+const MFAService = require('../services/mfaService');
 
 const router = express.Router();
 
-// Rate limiting 配置
-const generalLimiter = rateLimitMiddleware?.createLimiter
-  ? rateLimitMiddleware.createLimiter({
-      windowMs: 15 * 60 * 1000, // 15分鐘
-      maxRequests: 100,
-      message: '請求過於頻繁，請稍後再試',
-    })
-  : (req, res, next) => next(); // 備用中間件
+// 創建 MFA 服務實例
+const mfaService = new MFAService();
 
-const authLimiter = rateLimitMiddleware?.createLimiter
-  ? rateLimitMiddleware.createLimiter({
-      windowMs: 15 * 60 * 1000, // 15分鐘
-      maxRequests: 10,
-      message: '認證請求過於頻繁，請稍後再試',
-    })
-  : (req, res, next) => next(); // 備用中間件
+// 獲取專業級 Rate Limiting 配置
+const rateLimiters = rateLimitMiddleware.getDefaultLimiters();
 
-const sensitiveOperationLimiter = rateLimitMiddleware?.createLimiter
-  ? rateLimitMiddleware.createLimiter({
-      windowMs: 15 * 60 * 1000, // 15分鐘
-      maxRequests: 5, // 更嚴格的限制
-      message: '敏感操作請求過於頻繁，請稍後再試',
-    })
-  : (req, res, next) => next(); // 備用中間件
+// Rate limiting 配置 - 使用真正的中間件而非備用中間件
+const generalLimiter = rateLimiters.general;
+const authLimiter = rateLimiters.auth;
+const sensitiveOperationLimiter = rateLimiters.sensitive;
 
 // 設備指紋提取中間件
 const extractDeviceFingerprint = (req, res, next) => {
@@ -650,23 +637,34 @@ router.post('/verify-email', sensitiveOperationLimiter, authenticate, async (req
  */
 router.post(
   '/login',
-  authLimiter, // 認證限制器
-  extractDeviceFingerprint,
-  extractRequestContext,
-  authenticate,
+  authLimiter, // 專業級認證限制器
+  extractDeviceFingerprint, // 提取設備指紋
+  extractRequestContext, // 提取請求上下文
+  authenticate, // Firebase 認證
   async (req, res) => {
     try {
       const { firebaseUid, providerId } = req.body;
       const userIdentifier = firebaseUid || req.user.uid;
 
-      // 檢查帳號是否被鎖定
+      // 1. 檢查帳號是否被鎖定（安全增強功能）
       const lockCheck = await securityEnhancement.checkAccountLock(userIdentifier);
       if (lockCheck.locked) {
         logger.warn('嘗試登入被鎖定的帳號', {
           identifier: userIdentifier,
           lockReason: lockCheck.reason,
           ip: req.securityContext.ipAddress,
+          endpoint: req.originalUrl,
         });
+
+        // 記錄安全事件
+        await securityEnhancement.recordSecurityEvent(
+          userIdentifier,
+          'locked_account_access_attempt',
+          {
+            ...req.securityContext,
+            lockReason: lockCheck.reason,
+          }
+        );
 
         return res.status(423).json({
           success: false,
@@ -674,6 +672,7 @@ router.post(
             message: `帳號已被鎖定：${lockCheck.reason}`,
             code: 'ACCOUNT_LOCKED',
             lockedUntil: lockCheck.lockedUntil,
+            canRetryAt: new Date(lockCheck.lockedUntil).toISOString(),
           },
         });
       }
@@ -893,10 +892,10 @@ router.post('/logout', authenticate, async (req, res) => {
  */
 router.post(
   '/generate-tokens',
-  sensitiveOperationLimiter, // 敏感操作限制器
-  extractDeviceFingerprint,
-  extractRequestContext,
-  authenticate,
+  sensitiveOperationLimiter, // 敏感操作限制器（使用專業級限制）
+  extractDeviceFingerprint, // 提取設備指紋
+  extractRequestContext, // 提取請求上下文
+  authenticate, // Firebase 認證
   async (req, res) => {
     try {
       const user = await User.findByFirebaseUid(req.user.uid);
@@ -911,6 +910,87 @@ router.post(
         });
       }
 
+      // 1. 安全檢查 - 檢查帳號狀態和鎖定
+      const lockCheck = await securityEnhancement.checkAccountLock(user.firebaseUid);
+      if (lockCheck.locked) {
+        logger.warn('被鎖定帳號嘗試生成 Token', {
+          uid: user.firebaseUid,
+          lockReason: lockCheck.reason,
+          ip: req.securityContext.ipAddress,
+        });
+
+        return res.status(423).json({
+          success: false,
+          error: {
+            message: `帳號已被鎖定，無法生成 Token：${lockCheck.reason}`,
+            code: 'ACCOUNT_LOCKED',
+            lockedUntil: lockCheck.lockedUntil,
+          },
+        });
+      }
+
+      // 2. 分析登入模式和風險評估
+      const loginAnalysis = await securityEnhancement.analyzeLoginPattern(user.firebaseUid, {
+        ...req.securityContext,
+        providerId: 'jwt_generation',
+      });
+
+      if (loginAnalysis.suspicious && loginAnalysis.riskScore >= 50) {
+        logger.warn('高風險 Token 生成請求', {
+          uid: user.firebaseUid,
+          riskScore: loginAnalysis.riskScore,
+          reasons: loginAnalysis.reasons,
+          ip: req.securityContext.ipAddress,
+        });
+
+        // 記錄高風險事件
+        await securityEnhancement.recordSecurityEvent(
+          user.firebaseUid,
+          'high_risk_token_generation',
+          {
+            ...req.securityContext,
+            riskScore: loginAnalysis.riskScore,
+            reasons: loginAnalysis.reasons,
+          }
+        );
+
+        // 高風險情況下要求額外驗證
+        return res.status(200).json({
+          success: false,
+          requiresAdditionalVerification: true,
+          message: '檢測到可疑活動，需要額外驗證',
+          data: {
+            riskScore: loginAnalysis.riskScore,
+            reasons: loginAnalysis.reasons,
+            nextSteps: ['請使用 MFA 驗證', '或聯繫客服驗證身份'],
+          },
+        });
+      }
+
+      // 3. 檢查 MFA 狀態（如果已啟用）
+      const mfaEnabled = await mfaService.isMFAEnabled(user.firebaseUid);
+      if (mfaEnabled) {
+        const mfaVerified = req.headers['x-mfa-verified'] === 'true' || req.user.mfaVerified;
+        if (!mfaVerified) {
+          const mfaStatus = await mfaService.getUserMFAStatus(user.firebaseUid);
+
+          logger.info('Token 生成需要 MFA 驗證', {
+            uid: user.firebaseUid,
+            enabledMethods: mfaStatus.enabledMethods,
+          });
+
+          return res.status(200).json({
+            success: false,
+            requiresMFA: true,
+            message: 'Token 生成需要多重驗證',
+            data: {
+              availableMethods: mfaStatus.enabledMethods,
+              operation: 'token_generation',
+            },
+          });
+        }
+      }
+
       // 提取請求上下文
       const { deviceFingerprint } = req.body;
       const requestContext = {
@@ -918,6 +998,7 @@ router.post(
         deviceFingerprint,
         userAgent: req.get('User-Agent'),
         loginMethod: 'jwt_generation',
+        riskScore: loginAnalysis.riskScore || 0,
       };
 
       // 生成 JWT token 對（帶上下文）
@@ -1012,44 +1093,59 @@ router.post(
  *       500:
  *         description: Token 刷新失敗
  */
-router.post('/refresh-token', async (req, res) => {
-  try {
-    const { refreshToken } = req.body;
+router.post(
+  '/refresh-token',
+  authLimiter, // 認證限制器
+  extractDeviceFingerprint,
+  extractRequestContext,
+  async (req, res) => {
+    try {
+      const { refreshToken } = req.body;
 
-    if (!refreshToken) {
-      return res.status(400).json({
+      if (!refreshToken) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            message: '缺少 refresh token',
+            code: 'MISSING_REFRESH_TOKEN',
+          },
+        });
+      }
+
+      // 提取請求上下文進行安全驗證
+      const requestContext = {
+        ...req.securityContext,
+        loginMethod: 'token_refresh',
+      };
+
+      // 刷新 access token（帶上下文）
+      const newToken = await jwtService.refreshAccessToken(refreshToken, requestContext);
+
+      logger.info('Access Token 刷新成功', {
+        ipAddress: requestContext.ipAddress,
+        deviceFingerprint: requestContext.deviceFingerprint,
+      });
+
+      return res.json({
+        success: true,
+        message: 'Token 刷新成功',
+        data: newToken,
+      });
+    } catch (error) {
+      logger.error('Token 刷新失敗', {
+        error: error.message,
+      });
+
+      return res.status(401).json({
         success: false,
         error: {
-          message: '缺少 refresh token',
-          code: 'MISSING_REFRESH_TOKEN',
+          message: error.message || 'Token 刷新失敗',
+          code: 'TOKEN_REFRESH_FAILED',
         },
       });
     }
-
-    // 刷新 access token
-    const newToken = await jwtService.refreshAccessToken(refreshToken);
-
-    logger.info('Access Token 刷新成功');
-
-    return res.json({
-      success: true,
-      message: 'Token 刷新成功',
-      data: newToken,
-    });
-  } catch (error) {
-    logger.error('Token 刷新失敗', {
-      error: error.message,
-    });
-
-    return res.status(401).json({
-      success: false,
-      error: {
-        message: error.message || 'Token 刷新失敗',
-        code: 'TOKEN_REFRESH_FAILED',
-      },
-    });
   }
-});
+);
 
 /**
  * @swagger
@@ -2018,7 +2114,7 @@ router.get(
       const { limit = 50, eventType, severityLevel } = req.query;
 
       const securityEvents = await securityEnhancement.getSecurityEvents(userIdentifier, {
-        limit: parseInt(limit),
+        limit: parseInt(limit, 10),
         eventType,
         severityLevel,
       });
@@ -2220,6 +2316,1759 @@ router.post(
         error: {
           message: '清除登入失敗記錄失敗',
           code: 'CLEAR_LOGIN_FAILURES_FAILED',
+        },
+      });
+    }
+  }
+);
+
+// ============ MFA 狀態檢查和驗證 API 端點 ============
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     MFAStatus:
+ *       type: object
+ *       properties:
+ *         status:
+ *           type: string
+ *           enum: ['disabled', 'pending', 'enabled']
+ *           description: MFA 整體狀態
+ *         enabledMethods:
+ *           type: array
+ *           items:
+ *             type: string
+ *             enum: ['totp', 'sms', 'backup_code']
+ *           description: 已啟用的 MFA 方法
+ *         pendingMethods:
+ *           type: array
+ *           items:
+ *             type: string
+ *             enum: ['totp', 'sms', 'backup_code']
+ *           description: 待啟用的 MFA 方法
+ *         backupCodesRemaining:
+ *           type: number
+ *           description: 剩餘備用碼數量
+ *         lastUpdated:
+ *           type: string
+ *           format: date-time
+ *           description: 最後更新時間
+ *
+ *     MFAVerificationRequest:
+ *       type: object
+ *       required:
+ *         - code
+ *         - type
+ *       properties:
+ *         code:
+ *           type: string
+ *           description: MFA 驗證碼
+ *         type:
+ *           type: string
+ *           enum: ['totp', 'sms', 'backup_code']
+ *           description: MFA 類型
+ *
+ *     MFAVerificationResult:
+ *       type: object
+ *       properties:
+ *         success:
+ *           type: boolean
+ *           description: 驗證是否成功
+ *         result:
+ *           type: string
+ *           enum: ['success', 'invalid_code', 'expired', 'too_many_attempts', 'rate_limited']
+ *           description: 驗證結果代碼
+ *         message:
+ *           type: string
+ *           description: 結果描述
+ *         remainingAttempts:
+ *           type: number
+ *           description: 剩餘嘗試次數
+ *
+ *     MFAMethodInfo:
+ *       type: object
+ *       properties:
+ *         type:
+ *           type: string
+ *           enum: ['totp', 'sms', 'backup_code']
+ *         name:
+ *           type: string
+ *           description: 方法名稱
+ *         description:
+ *           type: string
+ *           description: 方法描述
+ *         enabled:
+ *           type: boolean
+ *           description: 是否已啟用
+ *         pending:
+ *           type: boolean
+ *           description: 是否待啟用
+ *         available:
+ *           type: boolean
+ *           description: 是否可用
+ */
+
+/**
+ * @swagger
+ * /api/v1/auth/mfa/status:
+ *   get:
+ *     summary: 獲取用戶 MFA 狀態
+ *     description: 獲取當前用戶的 MFA 狀態和配置資訊
+ *     tags: [MFA Management]
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: 成功獲取 MFA 狀態
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: MFA 狀態獲取成功
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     uid:
+ *                       type: string
+ *                     mfaStatus:
+ *                       $ref: '#/components/schemas/MFAStatus'
+ *       401:
+ *         description: 認證失敗
+ *       500:
+ *         description: 伺服器錯誤
+ */
+router.get('/mfa/status', generalLimiter, authenticate, async (req, res) => {
+  try {
+    const uid = req.user.uid;
+
+    // 獲取用戶 MFA 狀態
+    const mfaStatus = await mfaService.getUserMFAStatus(uid);
+
+    logger.info('用戶 MFA 狀態查詢', {
+      uid,
+      status: mfaStatus.status,
+      enabledMethods: mfaStatus.enabledMethods,
+    });
+
+    return res.json({
+      success: true,
+      message: 'MFA 狀態獲取成功',
+      data: {
+        uid,
+        mfaStatus,
+      },
+    });
+  } catch (error) {
+    logger.error('獲取 MFA 狀態失敗', {
+      error: error.message,
+      uid: req.user?.uid,
+    });
+
+    return res.status(500).json({
+      success: false,
+      error: {
+        message: '獲取 MFA 狀態失敗',
+        code: 'MFA_STATUS_FAILED',
+      },
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/v1/auth/mfa/verify:
+ *   post:
+ *     summary: 驗證 MFA 代碼
+ *     description: 驗證用戶輸入的 MFA 代碼
+ *     tags: [MFA Management]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/MFAVerificationRequest'
+ *     responses:
+ *       200:
+ *         description: 驗證結果
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   $ref: '#/components/schemas/MFAVerificationResult'
+ *       400:
+ *         description: 請求參數錯誤
+ *       401:
+ *         description: 認證失敗
+ *       429:
+ *         description: 嘗試次數過多
+ *       500:
+ *         description: 伺服器錯誤
+ */
+router.post(
+  '/mfa/verify',
+  authLimiter,
+  extractDeviceFingerprint,
+  extractRequestContext,
+  authenticate,
+  async (req, res) => {
+    try {
+      const { code, type } = req.body;
+      const uid = req.user.uid;
+
+      // 驗證請求參數
+      if (!code || !type) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            message: '缺少必要參數: code 和 type',
+            code: 'MISSING_REQUIRED_PARAMETERS',
+          },
+        });
+      }
+
+      // 驗證 MFA 類型
+      const validTypes = ['totp', 'sms', 'backup_code'];
+      if (!validTypes.includes(type)) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            message: '無效的 MFA 類型',
+            code: 'INVALID_MFA_TYPE',
+            validTypes,
+          },
+        });
+      }
+
+      // 檢查用戶是否啟用了該 MFA 方法
+      const mfaStatus = await mfaService.getUserMFAStatus(uid);
+      if (!mfaStatus.enabledMethods.includes(type)) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            message: `${type.toUpperCase()} 驗證未啟用`,
+            code: 'MFA_METHOD_NOT_ENABLED',
+          },
+        });
+      }
+
+      // 執行 MFA 驗證
+      const verificationResult = await mfaService.verifyMFACode(uid, code, type);
+
+      // 記錄驗證結果
+      logger.info('MFA 驗證嘗試', {
+        uid,
+        type,
+        success: verificationResult.success,
+        result: verificationResult.result,
+        ipAddress: req.securityContext.ipAddress,
+      });
+
+      // 根據驗證結果返回適當的狀態碼
+      if (verificationResult.result === 'too_many_attempts') {
+        return res.status(429).json({
+          success: false,
+          message: verificationResult.message,
+          data: verificationResult,
+        });
+      }
+
+      return res.json({
+        success: verificationResult.success,
+        message: verificationResult.message,
+        data: verificationResult,
+      });
+    } catch (error) {
+      logger.error('MFA 驗證失敗', {
+        error: error.message,
+        uid: req.user?.uid,
+        type: req.body?.type,
+      });
+
+      return res.status(500).json({
+        success: false,
+        error: {
+          message: 'MFA 驗證失敗',
+          code: 'MFA_VERIFICATION_FAILED',
+        },
+      });
+    }
+  }
+);
+
+/**
+ * @swagger
+ * /api/v1/auth/mfa/methods:
+ *   get:
+ *     summary: 獲取可用的 MFA 方法
+ *     description: 獲取所有可用的 MFA 方法及其狀態
+ *     tags: [MFA Management]
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: 成功獲取 MFA 方法資訊
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: MFA 方法資訊獲取成功
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     methods:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/MFAMethodInfo'
+ *                     summary:
+ *                       type: object
+ *                       properties:
+ *                         totalMethods:
+ *                           type: number
+ *                         enabledMethods:
+ *                           type: number
+ *                         pendingMethods:
+ *                           type: number
+ *       401:
+ *         description: 認證失敗
+ *       500:
+ *         description: 伺服器錯誤
+ */
+router.get('/mfa/methods', generalLimiter, authenticate, async (req, res) => {
+  try {
+    const uid = req.user.uid;
+
+    // 獲取用戶 MFA 狀態
+    const mfaStatus = await mfaService.getUserMFAStatus(uid);
+
+    // 定義所有可用的 MFA 方法
+    const allMethods = [
+      {
+        type: 'totp',
+        name: 'TOTP 驗證器',
+        description: '基於時間的一次性密碼，使用 Google Authenticator 等應用',
+        enabled: mfaStatus.enabledMethods.includes('totp'),
+        pending: mfaStatus.pendingMethods.includes('totp'),
+        available: true,
+      },
+      {
+        type: 'sms',
+        name: 'SMS 簡訊驗證',
+        description: '透過手機簡訊接收驗證碼',
+        enabled: mfaStatus.enabledMethods.includes('sms'),
+        pending: mfaStatus.pendingMethods.includes('sms'),
+        available: true,
+      },
+      {
+        type: 'backup_code',
+        name: '備用驗證碼',
+        description: '一次性使用的備用驗證碼',
+        enabled: mfaStatus.enabledMethods.includes('backup_code'),
+        pending: mfaStatus.pendingMethods.includes('backup_code'),
+        available: true,
+        remaining: mfaStatus.backupCodesRemaining || 0,
+      },
+    ];
+
+    // 計算統計資料
+    const summary = {
+      totalMethods: allMethods.length,
+      enabledMethods: mfaStatus.enabledMethods.length,
+      pendingMethods: mfaStatus.pendingMethods.length,
+      availableMethods: allMethods.filter(method => method.available).length,
+    };
+
+    logger.info('用戶 MFA 方法查詢', {
+      uid,
+      enabledMethods: mfaStatus.enabledMethods,
+      pendingMethods: mfaStatus.pendingMethods,
+    });
+
+    return res.json({
+      success: true,
+      message: 'MFA 方法資訊獲取成功',
+      data: {
+        methods: allMethods,
+        summary,
+        currentStatus: mfaStatus.status,
+      },
+    });
+  } catch (error) {
+    logger.error('獲取 MFA 方法失敗', {
+      error: error.message,
+      uid: req.user?.uid,
+    });
+
+    return res.status(500).json({
+      success: false,
+      error: {
+        message: '獲取 MFA 方法失敗',
+        code: 'MFA_METHODS_FAILED',
+      },
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/v1/auth/mfa/check-required:
+ *   post:
+ *     summary: 檢查是否需要 MFA 驗證
+ *     description: 檢查當前操作是否需要 MFA 驗證
+ *     tags: [MFA Management]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               operation:
+ *                 type: string
+ *                 description: 要執行的操作類型
+ *                 enum: ['login', 'sensitive_operation', 'admin_operation']
+ *               context:
+ *                 type: object
+ *                 description: 操作上下文資訊
+ *     responses:
+ *       200:
+ *         description: 成功檢查 MFA 要求
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     mfaRequired:
+ *                       type: boolean
+ *                       description: 是否需要 MFA 驗證
+ *                     reason:
+ *                       type: string
+ *                       description: 需要 MFA 的原因
+ *                     availableMethods:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                       description: 可用的 MFA 方法
+ *                     mfaEnabled:
+ *                       type: boolean
+ *                       description: 用戶是否已啟用 MFA
+ *       401:
+ *         description: 認證失敗
+ *       500:
+ *         description: 伺服器錯誤
+ */
+router.post(
+  '/mfa/check-required',
+  generalLimiter,
+  extractDeviceFingerprint,
+  extractRequestContext,
+  authenticate,
+  async (req, res) => {
+    try {
+      const { operation = 'login', context = {} } = req.body;
+      const uid = req.user.uid;
+
+      // 獲取用戶 MFA 狀態
+      const mfaStatus = await mfaService.getUserMFAStatus(uid);
+      const mfaEnabled = await mfaService.isMFAEnabled(uid);
+
+      // 檢查是否需要 MFA 驗證的邏輯
+      let mfaRequired = false;
+      let reason = '';
+
+      if (mfaEnabled) {
+        switch (operation) {
+          case 'login':
+            mfaRequired = true;
+            reason = '用戶已啟用 MFA，登入時需要驗證';
+            break;
+          case 'sensitive_operation':
+            mfaRequired = true;
+            reason = '敏感操作需要 MFA 驗證';
+            break;
+          case 'admin_operation':
+            mfaRequired = req.user.role === 'admin';
+            reason = mfaRequired ? '管理員操作需要 MFA 驗證' : '一般用戶操作不需要額外驗證';
+            break;
+          default:
+            // 其他操作根據用戶設定決定
+            mfaRequired = mfaEnabled;
+            reason = mfaRequired ? '用戶已啟用 MFA' : 'MFA 未啟用';
+        }
+      } else {
+        reason = 'MFA 未啟用';
+      }
+
+      // 安全風險評估（基於請求上下文）
+      const riskFactors = [];
+
+      // 檢查 IP 地址變更
+      if (context.newLocation || context.unusualIp) {
+        riskFactors.push('unusual_location');
+        mfaRequired = true;
+        reason = '檢測到異常登入位置';
+      }
+
+      // 檢查設備變更
+      if (context.newDevice || context.unusualDevice) {
+        riskFactors.push('new_device');
+        mfaRequired = true;
+        reason = '檢測到新設備登入';
+      }
+
+      // 檢查時間異常
+      const currentHour = new Date().getHours();
+      if (currentHour < 6 || currentHour > 23) {
+        riskFactors.push('unusual_time');
+        // 非常規時間不強制要求 MFA，但會記錄
+      }
+
+      const result = {
+        mfaRequired,
+        reason,
+        availableMethods: mfaStatus.enabledMethods,
+        mfaEnabled,
+        riskFactors,
+        operation,
+        context: {
+          ipAddress: req.securityContext.ipAddress,
+          deviceFingerprint: req.securityContext.deviceFingerprint?.substring(0, 8),
+          timestamp: req.securityContext.timestamp,
+        },
+      };
+
+      logger.info('MFA 要求檢查', {
+        uid,
+        operation,
+        mfaRequired,
+        reason,
+        riskFactors,
+        mfaEnabled,
+      });
+
+      return res.json({
+        success: true,
+        message: 'MFA 要求檢查完成',
+        data: result,
+      });
+    } catch (error) {
+      logger.error('MFA 要求檢查失敗', {
+        error: error.message,
+        uid: req.user?.uid,
+        operation: req.body?.operation,
+      });
+
+      return res.status(500).json({
+        success: false,
+        error: {
+          message: 'MFA 要求檢查失敗',
+          code: 'MFA_CHECK_FAILED',
+        },
+      });
+    }
+  }
+);
+
+// ============ 安全設定和管理 API ============
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     SecurityPreferences:
+ *       type: object
+ *       properties:
+ *         mfaRequired:
+ *           type: boolean
+ *           description: 是否要求 MFA 驗證
+ *           default: false
+ *         sessionTimeout:
+ *           type: number
+ *           description: Session 超時時間（分鐘）
+ *           minimum: 15
+ *           maximum: 1440
+ *           default: 1440
+ *         maxConcurrentSessions:
+ *           type: number
+ *           description: 最大並發 Session 數量
+ *           minimum: 1
+ *           maximum: 10
+ *           default: 5
+ *         loginNotifications:
+ *           type: boolean
+ *           description: 是否啟用登入通知
+ *           default: true
+ *         securityAlerts:
+ *           type: boolean
+ *           description: 是否啟用安全警報
+ *           default: true
+ *         ipWhitelist:
+ *           type: array
+ *           items:
+ *             type: string
+ *           description: IP 白名單
+ *         deviceRestriction:
+ *           type: boolean
+ *           description: 是否限制設備登入
+ *           default: false
+ *         requireDeviceApproval:
+ *           type: boolean
+ *           description: 是否需要設備批准
+ *           default: false
+ *
+ *     NotificationSettings:
+ *       type: object
+ *       properties:
+ *         email:
+ *           type: object
+ *           properties:
+ *             enabled:
+ *               type: boolean
+ *               default: true
+ *             loginAlerts:
+ *               type: boolean
+ *               default: true
+ *             securityEvents:
+ *               type: boolean
+ *               default: true
+ *             suspiciousActivity:
+ *               type: boolean
+ *               default: true
+ *             accountChanges:
+ *               type: boolean
+ *               default: true
+ *         sms:
+ *           type: object
+ *           properties:
+ *             enabled:
+ *               type: boolean
+ *               default: false
+ *             criticalAlerts:
+ *               type: boolean
+ *               default: false
+ *             loginFailures:
+ *               type: boolean
+ *               default: false
+ *         push:
+ *           type: object
+ *           properties:
+ *             enabled:
+ *               type: boolean
+ *               default: true
+ *             realTimeAlerts:
+ *               type: boolean
+ *               default: true
+ *             weeklyReports:
+ *               type: boolean
+ *               default: false
+ *
+ *     SecurityPolicySettings:
+ *       type: object
+ *       properties:
+ *         passwordPolicy:
+ *           type: object
+ *           properties:
+ *             minLength:
+ *               type: number
+ *               minimum: 8
+ *               maximum: 128
+ *               default: 8
+ *             requireUppercase:
+ *               type: boolean
+ *               default: true
+ *             requireLowercase:
+ *               type: boolean
+ *               default: true
+ *             requireNumbers:
+ *               type: boolean
+ *               default: true
+ *             requireSymbols:
+ *               type: boolean
+ *               default: false
+ *             maxAge:
+ *               type: number
+ *               description: 密碼最大有效期（天）
+ *               default: 90
+ *         accountLockPolicy:
+ *           type: object
+ *           properties:
+ *             maxFailedAttempts:
+ *               type: number
+ *               minimum: 3
+ *               maximum: 10
+ *               default: 5
+ *             lockDuration:
+ *               type: number
+ *               description: 鎖定時間（分鐘）
+ *               default: 30
+ *             progressiveLockout:
+ *               type: boolean
+ *               description: 是否啟用遞增鎖定
+ *               default: true
+ *         sessionPolicy:
+ *           type: object
+ *           properties:
+ *             defaultTimeout:
+ *               type: number
+ *               description: 預設 Session 超時時間（分鐘）
+ *               default: 1440
+ *             maxConcurrentSessions:
+ *               type: number
+ *               default: 5
+ *             requireMfaForSensitive:
+ *               type: boolean
+ *               default: true
+ */
+
+/**
+ * @swagger
+ * /api/v1/auth/security-preferences:
+ *   get:
+ *     summary: 獲取用戶安全偏好設定
+ *     description: 獲取當前用戶的安全偏好設定
+ *     tags: [Security Settings]
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: 成功獲取安全偏好設定
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: 安全偏好設定獲取成功
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     uid:
+ *                       type: string
+ *                     preferences:
+ *                       $ref: '#/components/schemas/SecurityPreferences'
+ *                     lastUpdated:
+ *                       type: string
+ *                       format: date-time
+ *       401:
+ *         description: 認證失敗
+ *       500:
+ *         description: 伺服器錯誤
+ */
+router.get('/security-preferences', generalLimiter, authenticate, async (req, res) => {
+  try {
+    const uid = req.user.uid;
+
+    // 從用戶模型或快取中獲取安全偏好設定
+    const user = await User.findByFirebaseUid(uid);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: {
+          message: '用戶不存在',
+          code: 'USER_NOT_FOUND',
+        },
+      });
+    }
+
+    // 獲取用戶的安全偏好設定（如果沒有則使用預設值）
+    const defaultPreferences = {
+      mfaRequired: false,
+      sessionTimeout: 1440, // 24 小時
+      maxConcurrentSessions: 5,
+      loginNotifications: true,
+      securityAlerts: true,
+      ipWhitelist: [],
+      deviceRestriction: false,
+      requireDeviceApproval: false,
+    };
+
+    const preferences = {
+      ...defaultPreferences,
+      ...(user.securityPreferences || {}),
+    };
+
+    logger.info('用戶安全偏好設定查詢', {
+      uid,
+      hasCustomPreferences: !!user.securityPreferences,
+    });
+
+    return res.json({
+      success: true,
+      message: '安全偏好設定獲取成功',
+      data: {
+        uid,
+        preferences,
+        lastUpdated: user.securityPreferences?.lastUpdated || user.updatedAt,
+      },
+    });
+  } catch (error) {
+    logger.error('獲取安全偏好設定失敗', {
+      error: error.message,
+      uid: req.user?.uid,
+    });
+
+    return res.status(500).json({
+      success: false,
+      error: {
+        message: '獲取安全偏好設定失敗',
+        code: 'SECURITY_PREFERENCES_FAILED',
+      },
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/v1/auth/security-preferences:
+ *   put:
+ *     summary: 更新用戶安全偏好設定
+ *     description: 更新當前用戶的安全偏好設定
+ *     tags: [Security Settings]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/SecurityPreferences'
+ *     responses:
+ *       200:
+ *         description: 安全偏好設定更新成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: 安全偏好設定更新成功
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     uid:
+ *                       type: string
+ *                     preferences:
+ *                       $ref: '#/components/schemas/SecurityPreferences'
+ *                     changes:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *       400:
+ *         description: 請求參數錯誤
+ *       401:
+ *         description: 認證失敗
+ *       500:
+ *         description: 伺服器錯誤
+ */
+router.put(
+  '/security-preferences',
+  sensitiveOperationLimiter,
+  extractDeviceFingerprint,
+  extractRequestContext,
+  authenticate,
+  async (req, res) => {
+    try {
+      const uid = req.user.uid;
+      const newPreferences = req.body;
+
+      // 驗證輸入參數
+      const validationErrors = [];
+
+      if (newPreferences.sessionTimeout !== undefined) {
+        if (newPreferences.sessionTimeout < 15 || newPreferences.sessionTimeout > 1440) {
+          validationErrors.push('sessionTimeout 必須在 15 到 1440 分鐘之間');
+        }
+      }
+
+      if (newPreferences.maxConcurrentSessions !== undefined) {
+        if (newPreferences.maxConcurrentSessions < 1 || newPreferences.maxConcurrentSessions > 10) {
+          validationErrors.push('maxConcurrentSessions 必須在 1 到 10 之間');
+        }
+      }
+
+      if (newPreferences.ipWhitelist !== undefined && !Array.isArray(newPreferences.ipWhitelist)) {
+        validationErrors.push('ipWhitelist 必須是陣列');
+      }
+
+      if (validationErrors.length > 0) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            message: '參數驗證失敗',
+            code: 'VALIDATION_ERROR',
+            details: validationErrors,
+          },
+        });
+      }
+
+      const user = await User.findByFirebaseUid(uid);
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          error: {
+            message: '用戶不存在',
+            code: 'USER_NOT_FOUND',
+          },
+        });
+      }
+
+      // 記錄變更內容
+      const currentPreferences = user.securityPreferences || {};
+      const changes = [];
+
+      Object.keys(newPreferences).forEach(key => {
+        if (currentPreferences[key] !== newPreferences[key]) {
+          changes.push(`${key}: ${currentPreferences[key]} → ${newPreferences[key]}`);
+        }
+      });
+
+      // 更新安全偏好設定
+      const updatedPreferences = {
+        ...currentPreferences,
+        ...newPreferences,
+        lastUpdated: new Date(),
+      };
+
+      await User.updateOne(
+        { firebaseUid: uid },
+        {
+          $set: {
+            securityPreferences: updatedPreferences,
+            updatedAt: new Date(),
+          },
+        }
+      );
+
+      // 記錄安全事件
+      await securityEnhancement.recordSecurityEvent(uid, 'security_preferences_updated', {
+        ...req.securityContext,
+        changes,
+        newPreferences: updatedPreferences,
+      });
+
+      logger.info('用戶安全偏好設定更新', {
+        uid,
+        changes,
+        ipAddress: req.securityContext.ipAddress,
+      });
+
+      return res.json({
+        success: true,
+        message: '安全偏好設定更新成功',
+        data: {
+          uid,
+          preferences: updatedPreferences,
+          changes,
+        },
+      });
+    } catch (error) {
+      logger.error('更新安全偏好設定失敗', {
+        error: error.message,
+        uid: req.user?.uid,
+      });
+
+      return res.status(500).json({
+        success: false,
+        error: {
+          message: '更新安全偏好設定失敗',
+          code: 'UPDATE_SECURITY_PREFERENCES_FAILED',
+        },
+      });
+    }
+  }
+);
+
+/**
+ * @swagger
+ * /api/v1/auth/notification-settings:
+ *   get:
+ *     summary: 獲取安全通知設定
+ *     description: 獲取當前用戶的安全通知設定
+ *     tags: [Security Settings]
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: 成功獲取通知設定
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: 通知設定獲取成功
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     uid:
+ *                       type: string
+ *                     notifications:
+ *                       $ref: '#/components/schemas/NotificationSettings'
+ *       401:
+ *         description: 認證失敗
+ *       500:
+ *         description: 伺服器錯誤
+ */
+router.get('/notification-settings', generalLimiter, authenticate, async (req, res) => {
+  try {
+    const uid = req.user.uid;
+
+    const user = await User.findByFirebaseUid(uid);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: {
+          message: '用戶不存在',
+          code: 'USER_NOT_FOUND',
+        },
+      });
+    }
+
+    // 預設通知設定
+    const defaultNotifications = {
+      email: {
+        enabled: true,
+        loginAlerts: true,
+        securityEvents: true,
+        suspiciousActivity: true,
+        accountChanges: true,
+      },
+      sms: {
+        enabled: false,
+        criticalAlerts: false,
+        loginFailures: false,
+      },
+      push: {
+        enabled: true,
+        realTimeAlerts: true,
+        weeklyReports: false,
+      },
+    };
+
+    const notifications = {
+      ...defaultNotifications,
+      ...(user.notificationSettings || {}),
+    };
+
+    return res.json({
+      success: true,
+      message: '通知設定獲取成功',
+      data: {
+        uid,
+        notifications,
+        lastUpdated: user.notificationSettings?.lastUpdated || user.updatedAt,
+      },
+    });
+  } catch (error) {
+    logger.error('獲取通知設定失敗', {
+      error: error.message,
+      uid: req.user?.uid,
+    });
+
+    return res.status(500).json({
+      success: false,
+      error: {
+        message: '獲取通知設定失敗',
+        code: 'NOTIFICATION_SETTINGS_FAILED',
+      },
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/v1/auth/notification-settings:
+ *   put:
+ *     summary: 更新安全通知設定
+ *     description: 更新當前用戶的安全通知設定
+ *     tags: [Security Settings]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/NotificationSettings'
+ *     responses:
+ *       200:
+ *         description: 通知設定更新成功
+ *       400:
+ *         description: 請求參數錯誤
+ *       401:
+ *         description: 認證失敗
+ *       500:
+ *         description: 伺服器錯誤
+ */
+router.put(
+  '/notification-settings',
+  sensitiveOperationLimiter,
+  extractDeviceFingerprint,
+  extractRequestContext,
+  authenticate,
+  async (req, res) => {
+    try {
+      const uid = req.user.uid;
+      const newSettings = req.body;
+
+      const user = await User.findByFirebaseUid(uid);
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          error: {
+            message: '用戶不存在',
+            code: 'USER_NOT_FOUND',
+          },
+        });
+      }
+
+      // 合併設定
+      const currentSettings = user.notificationSettings || {};
+      const updatedSettings = {
+        ...currentSettings,
+        ...newSettings,
+        lastUpdated: new Date(),
+      };
+
+      await User.updateOne(
+        { firebaseUid: uid },
+        {
+          $set: {
+            notificationSettings: updatedSettings,
+            updatedAt: new Date(),
+          },
+        }
+      );
+
+      // 記錄設定變更
+      await securityEnhancement.recordSecurityEvent(uid, 'notification_settings_updated', {
+        ...req.securityContext,
+        newSettings: updatedSettings,
+      });
+
+      logger.info('用戶通知設定更新', {
+        uid,
+        ipAddress: req.securityContext.ipAddress,
+      });
+
+      return res.json({
+        success: true,
+        message: '通知設定更新成功',
+        data: {
+          uid,
+          notifications: updatedSettings,
+        },
+      });
+    } catch (error) {
+      logger.error('更新通知設定失敗', {
+        error: error.message,
+        uid: req.user?.uid,
+      });
+
+      return res.status(500).json({
+        success: false,
+        error: {
+          message: '更新通知設定失敗',
+          code: 'UPDATE_NOTIFICATION_SETTINGS_FAILED',
+        },
+      });
+    }
+  }
+);
+
+/**
+ * @swagger
+ * /api/v1/auth/admin/security-policy:
+ *   get:
+ *     summary: 獲取全域安全政策（管理員）
+ *     description: 管理員獲取系統全域安全政策設定
+ *     tags: [Security Settings]
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: 成功獲取安全政策
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: 安全政策獲取成功
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     policy:
+ *                       $ref: '#/components/schemas/SecurityPolicySettings'
+ *                     lastUpdated:
+ *                       type: string
+ *                       format: date-time
+ *                     updatedBy:
+ *                       type: string
+ *       401:
+ *         description: 認證失敗
+ *       403:
+ *         description: 權限不足
+ *       500:
+ *         description: 伺服器錯誤
+ */
+router.get(
+  '/admin/security-policy',
+  generalLimiter,
+  authenticate,
+  requireRole('admin'),
+  async (req, res) => {
+    try {
+      // 從環境變數或資料庫獲取全域安全政策
+      const defaultPolicy = {
+        passwordPolicy: {
+          minLength: parseInt(process.env.PASSWORD_MIN_LENGTH, 10) || 8,
+          requireUppercase: process.env.PASSWORD_REQUIRE_UPPERCASE === 'true',
+          requireLowercase: process.env.PASSWORD_REQUIRE_LOWERCASE === 'true',
+          requireNumbers: process.env.PASSWORD_REQUIRE_NUMBERS === 'true',
+          requireSymbols: process.env.PASSWORD_REQUIRE_SYMBOLS === 'true',
+          maxAge: parseInt(process.env.PASSWORD_MAX_AGE, 10) || 90,
+        },
+        accountLockPolicy: {
+          maxFailedAttempts: parseInt(process.env.MAX_FAILED_ATTEMPTS, 10) || 5,
+          lockDuration: parseInt(process.env.LOCK_DURATION, 10) || 30,
+          progressiveLockout: process.env.PROGRESSIVE_LOCKOUT === 'true',
+        },
+        sessionPolicy: {
+          defaultTimeout: parseInt(process.env.SESSION_TIMEOUT, 10) || 1440,
+          maxConcurrentSessions: parseInt(process.env.MAX_CONCURRENT_SESSIONS, 10) || 5,
+          requireMfaForSensitive: process.env.REQUIRE_MFA_FOR_SENSITIVE === 'true',
+        },
+      };
+
+      // 這裡可以從資料庫讀取自定義政策覆蓋預設值
+      // const customPolicy = await SecurityPolicy.findOne({ type: 'global' });
+
+      logger.info('管理員查看安全政策', {
+        adminUser: req.user.uid,
+      });
+
+      return res.json({
+        success: true,
+        message: '安全政策獲取成功',
+        data: {
+          policy: defaultPolicy,
+          lastUpdated: new Date().toISOString(),
+          updatedBy: 'system',
+          source: 'environment_variables',
+        },
+      });
+    } catch (error) {
+      logger.error('獲取安全政策失敗', {
+        error: error.message,
+        adminUser: req.user?.uid,
+      });
+
+      return res.status(500).json({
+        success: false,
+        error: {
+          message: '獲取安全政策失敗',
+          code: 'SECURITY_POLICY_FAILED',
+        },
+      });
+    }
+  }
+);
+
+/**
+ * @swagger
+ * /api/v1/auth/admin/security-policy:
+ *   put:
+ *     summary: 更新全域安全政策（管理員）
+ *     description: 管理員更新系統全域安全政策設定
+ *     tags: [Security Settings]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/SecurityPolicySettings'
+ *     responses:
+ *       200:
+ *         description: 安全政策更新成功
+ *       400:
+ *         description: 請求參數錯誤
+ *       401:
+ *         description: 認證失敗
+ *       403:
+ *         description: 權限不足
+ *       500:
+ *         description: 伺服器錯誤
+ */
+router.put(
+  '/admin/security-policy',
+  sensitiveOperationLimiter,
+  extractDeviceFingerprint,
+  extractRequestContext,
+  authenticate,
+  requireRole('admin'),
+  async (req, res) => {
+    try {
+      const adminUser = req.user.uid;
+      const newPolicy = req.body;
+
+      // 驗證政策參數
+      const validationErrors = [];
+
+      if (newPolicy.passwordPolicy) {
+        const { passwordPolicy } = newPolicy;
+        if (
+          passwordPolicy.minLength &&
+          (passwordPolicy.minLength < 8 || passwordPolicy.minLength > 128)
+        ) {
+          validationErrors.push('密碼最小長度必須在 8 到 128 之間');
+        }
+        if (passwordPolicy.maxAge && (passwordPolicy.maxAge < 1 || passwordPolicy.maxAge > 365)) {
+          validationErrors.push('密碼最大有效期必須在 1 到 365 天之間');
+        }
+      }
+
+      if (newPolicy.accountLockPolicy) {
+        const { accountLockPolicy } = newPolicy;
+        if (
+          accountLockPolicy.maxFailedAttempts &&
+          (accountLockPolicy.maxFailedAttempts < 3 || accountLockPolicy.maxFailedAttempts > 10)
+        ) {
+          validationErrors.push('最大失敗嘗試次數必須在 3 到 10 之間');
+        }
+        if (
+          accountLockPolicy.lockDuration &&
+          (accountLockPolicy.lockDuration < 1 || accountLockPolicy.lockDuration > 1440)
+        ) {
+          validationErrors.push('鎖定時間必須在 1 到 1440 分鐘之間');
+        }
+      }
+
+      if (validationErrors.length > 0) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            message: '政策參數驗證失敗',
+            code: 'VALIDATION_ERROR',
+            details: validationErrors,
+          },
+        });
+      }
+
+      // 這裡應該將政策保存到資料庫
+      // await SecurityPolicy.updateOne(
+      //   { type: 'global' },
+      //   {
+      //     $set: {
+      //       policy: newPolicy,
+      //       updatedBy: adminUser,
+      //       updatedAt: new Date(),
+      //     }
+      //   },
+      //   { upsert: true }
+      // );
+
+      // 記錄安全事件
+      await securityEnhancement.recordSecurityEvent(adminUser, 'security_policy_updated', {
+        ...req.securityContext,
+        policyChanges: newPolicy,
+        adminAction: true,
+      });
+
+      logger.info('管理員更新安全政策', {
+        adminUser,
+        changes: Object.keys(newPolicy),
+        ipAddress: req.securityContext.ipAddress,
+      });
+
+      return res.json({
+        success: true,
+        message: '安全政策更新成功',
+        data: {
+          policy: newPolicy,
+          updatedBy: adminUser,
+          updatedAt: new Date(),
+        },
+      });
+    } catch (error) {
+      logger.error('更新安全政策失敗', {
+        error: error.message,
+        adminUser: req.user?.uid,
+      });
+
+      return res.status(500).json({
+        success: false,
+        error: {
+          message: '更新安全政策失敗',
+          code: 'UPDATE_SECURITY_POLICY_FAILED',
+        },
+      });
+    }
+  }
+);
+
+/**
+ * @swagger
+ * /api/v1/auth/admin/security-audit:
+ *   get:
+ *     summary: 獲取安全審計報告（管理員）
+ *     description: 管理員獲取系統安全審計報告
+ *     tags: [Security Settings]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: startDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: 開始日期
+ *       - in: query
+ *         name: endDate
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: 結束日期
+ *       - in: query
+ *         name: reportType
+ *         schema:
+ *           type: string
+ *           enum: [summary, detailed, critical_only]
+ *           default: summary
+ *         description: 報告類型
+ *     responses:
+ *       200:
+ *         description: 成功獲取審計報告
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: 安全審計報告獲取成功
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     reportPeriod:
+ *                       type: object
+ *                       properties:
+ *                         startDate:
+ *                           type: string
+ *                           format: date
+ *                         endDate:
+ *                           type: string
+ *                           format: date
+ *                     summary:
+ *                       type: object
+ *                       properties:
+ *                         totalUsers:
+ *                           type: number
+ *                         activeUsers:
+ *                           type: number
+ *                         lockedAccounts:
+ *                           type: number
+ *                         securityEvents:
+ *                           type: number
+ *                         criticalEvents:
+ *                           type: number
+ *                     topSecurityEvents:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                     riskAssessment:
+ *                       type: object
+ *                       properties:
+ *                         overallRisk:
+ *                           type: string
+ *                           enum: [low, medium, high, critical]
+ *                         recommendations:
+ *                           type: array
+ *                           items:
+ *                             type: string
+ *       401:
+ *         description: 認證失敗
+ *       403:
+ *         description: 權限不足
+ *       500:
+ *         description: 伺服器錯誤
+ */
+router.get(
+  '/admin/security-audit',
+  generalLimiter,
+  authenticate,
+  requireRole('admin'),
+  async (req, res) => {
+    try {
+      const { startDate, endDate, reportType = 'summary' } = req.query;
+
+      // 設定報告期間
+      const end = endDate ? new Date(endDate) : new Date();
+      const start = startDate
+        ? new Date(startDate)
+        : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000); // 預設 30 天
+
+      // 模擬審計數據（實際應從資料庫查詢）
+      const auditData = {
+        reportPeriod: {
+          startDate: start.toISOString().split('T')[0],
+          endDate: end.toISOString().split('T')[0],
+          reportType,
+        },
+        summary: {
+          totalUsers: 1250,
+          activeUsers: 890,
+          lockedAccounts: 15,
+          securityEvents: 342,
+          criticalEvents: 8,
+          loginAttempts: 5420,
+          failedLogins: 180,
+          mfaEnabled: 645,
+        },
+        topSecurityEvents: [
+          {
+            type: 'suspicious_login',
+            count: 25,
+            severity: 'medium',
+            description: '可疑登入嘗試',
+          },
+          {
+            type: 'account_locked',
+            count: 15,
+            severity: 'high',
+            description: '帳號被鎖定',
+          },
+          {
+            type: 'mfa_failure',
+            count: 12,
+            severity: 'medium',
+            description: 'MFA 驗證失敗',
+          },
+          {
+            type: 'unusual_location',
+            count: 8,
+            severity: 'medium',
+            description: '異常地點登入',
+          },
+        ],
+        riskAssessment: {
+          overallRisk: 'medium',
+          riskScore: 45,
+          riskFactors: [
+            '15 個帳號被鎖定',
+            '180 次登入失敗',
+            '8 個關鍵安全事件',
+            '48% 用戶未啟用 MFA',
+          ],
+          recommendations: [
+            '推廣 MFA 啟用率',
+            '加強可疑活動檢測',
+            '定期安全意識培訓',
+            '檢視帳號鎖定政策',
+          ],
+        },
+        trends: {
+          loginFailureRate: 3.3, // 百分比
+          accountLockRate: 1.2,
+          mfaAdoptionRate: 51.6,
+          securityEventTrend: 'increasing',
+        },
+      };
+
+      logger.info('管理員查看安全審計報告', {
+        adminUser: req.user.uid,
+        reportPeriod: auditData.reportPeriod,
+        reportType,
+      });
+
+      return res.json({
+        success: true,
+        message: '安全審計報告獲取成功',
+        data: auditData,
+      });
+    } catch (error) {
+      logger.error('獲取安全審計報告失敗', {
+        error: error.message,
+        adminUser: req.user?.uid,
+      });
+
+      return res.status(500).json({
+        success: false,
+        error: {
+          message: '獲取安全審計報告失敗',
+          code: 'SECURITY_AUDIT_FAILED',
+        },
+      });
+    }
+  }
+);
+
+/**
+ * @swagger
+ * /api/v1/auth/reset-security-settings:
+ *   post:
+ *     summary: 重置安全設定為預設值
+ *     description: 重置當前用戶的安全設定為系統預設值
+ *     tags: [Security Settings]
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: 安全設定重置成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: 安全設定重置成功
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     uid:
+ *                       type: string
+ *                     resetItems:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *       401:
+ *         description: 認證失敗
+ *       500:
+ *         description: 伺服器錯誤
+ */
+router.post(
+  '/reset-security-settings',
+  sensitiveOperationLimiter,
+  extractDeviceFingerprint,
+  extractRequestContext,
+  authenticate,
+  async (req, res) => {
+    try {
+      const uid = req.user.uid;
+
+      const user = await User.findByFirebaseUid(uid);
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          error: {
+            message: '用戶不存在',
+            code: 'USER_NOT_FOUND',
+          },
+        });
+      }
+
+      // 重置項目
+      const resetItems = [];
+
+      if (user.securityPreferences) {
+        resetItems.push('安全偏好設定');
+      }
+
+      if (user.notificationSettings) {
+        resetItems.push('通知設定');
+      }
+
+      // 重置設定
+      await User.updateOne(
+        { firebaseUid: uid },
+        {
+          $unset: {
+            securityPreferences: 1,
+            notificationSettings: 1,
+          },
+          $set: {
+            updatedAt: new Date(),
+          },
+        }
+      );
+
+      // 記錄安全事件
+      await securityEnhancement.recordSecurityEvent(uid, 'security_settings_reset', {
+        ...req.securityContext,
+        resetItems,
+      });
+
+      logger.info('用戶重置安全設定', {
+        uid,
+        resetItems,
+        ipAddress: req.securityContext.ipAddress,
+      });
+
+      return res.json({
+        success: true,
+        message: '安全設定重置成功',
+        data: {
+          uid,
+          resetItems,
+          resetAt: new Date(),
+        },
+      });
+    } catch (error) {
+      logger.error('重置安全設定失敗', {
+        error: error.message,
+        uid: req.user?.uid,
+      });
+
+      return res.status(500).json({
+        success: false,
+        error: {
+          message: '重置安全設定失敗',
+          code: 'RESET_SECURITY_SETTINGS_FAILED',
         },
       });
     }

@@ -1,7 +1,7 @@
 const crypto = require('crypto');
 const { redisConnection } = require('../config/redis');
 const { logger } = require('../middleware/requestLogger');
-const { authenticator, totp } = require('otplib');
+const { authenticator } = require('otplib');
 const QRCode = require('qrcode');
 
 /**
@@ -217,7 +217,8 @@ class MFAService {
       const maxDailyAttempts = type === this.MFA_TYPE.SMS ? this.smsConfig.maxDailyAttempts : 20; // 其他類型的每日限制
 
       return (
-        parseInt(currentAttempts) >= maxAttempts || parseInt(dailyAttempts) >= maxDailyAttempts
+        parseInt(currentAttempts, 10) >= maxAttempts ||
+        parseInt(dailyAttempts, 10) >= maxDailyAttempts
       );
     } catch (error) {
       logger.error('檢查嘗試限制失敗', {
@@ -781,7 +782,7 @@ class MFAService {
       }
 
       const currentTime = Date.now();
-      const lastSent = parseInt(lastSentTime);
+      const lastSent = parseInt(lastSentTime, 10);
       const remainingTime = Math.max(
         0,
         this.smsConfig.resendInterval * 1000 - (currentTime - lastSent)
@@ -831,10 +832,12 @@ class MFAService {
       }
 
       // 檢查每日發送限制
-      const dailyCounterKey = `${this.dailyAttemptCounterPrefix}${uid}:${this.MFA_TYPE.SMS}:${this.getDateString()}`;
+      const dailyCounterKey = `${this.dailyAttemptCounterPrefix}${uid}:${
+        this.MFA_TYPE.SMS
+      }:${this.getDateString()}`;
       const dailyAttempts = await redisConnection.get(dailyCounterKey);
 
-      if (dailyAttempts && parseInt(dailyAttempts) >= this.smsConfig.maxDailyAttempts) {
+      if (dailyAttempts && parseInt(dailyAttempts, 10) >= this.smsConfig.maxDailyAttempts) {
         return {
           success: false,
           message: '今日發送次數已達上限',

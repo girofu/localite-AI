@@ -178,7 +178,15 @@ describe('JWT Token Management Routes', () => {
         },
       });
 
-      expect(jwtService.refreshAccessToken).toHaveBeenCalledWith(validRefreshToken);
+      expect(jwtService.refreshAccessToken).toHaveBeenCalledWith(
+        validRefreshToken,
+        expect.objectContaining({
+          ipAddress: expect.any(String),
+          deviceFingerprint: expect.any(String),
+          loginMethod: 'token_refresh',
+          timestamp: expect.any(String),
+        })
+      );
     });
 
     it('應該在缺少 refresh token 時返回 400', async () => {
