@@ -724,7 +724,7 @@ class MFAService {
    * @param {string} code - 驗證碼
    * @returns {Promise<Object>} 發送結果
    */
-  async simulateSMSService(phone, code) {
+  async simulateSMSService(phone, _code) {
     try {
       // 在生產環境中，這裡會整合真正的 SMS 服務
       // 如 AWS SNS、Twilio、阿里雲短信等
