@@ -89,6 +89,7 @@
     "express"
   ],
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "axios": "^1.10.0"
   }
 }

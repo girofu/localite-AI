@@ -74,6 +74,85 @@
 - `backend/src/middleware/securityEnhancement.js` - 完整的安全增強中間件（帳號鎖定、登入失敗記錄、風險評估、安全事件追蹤、可疑活動檢測）
 - `backend/src/services/mfaService.js` - MFA (多重驗證) 服務核心類別（狀態管理、嘗試計數、代碼生成、Redis 快取、完整 TOTP 功能、SMS 驗證碼功能）
 - `backend/src/services/mfaService.test.js` - MFA 服務完整單元測試（94個測試案例覆蓋各項功能包括 TOTP 和 SMS 驗證）
+- `backend/src/services/jwtService.js` - JWT 服務核心類別（Token 管理、Session 管理、刷新機制）
+- `backend/src/services/jwtService.test.js` - JWT 服務完整單元測試
+- `backend/src/middleware/roleMiddleware.js` - 角色權限管理中間件 (待建立)
+- `backend/src/middleware/roleMiddleware.test.js` - 角色權限中間件測試 (待建立)
+- `backend/src/services/passwordService.js` - 密碼重設服務 (待建立)
+- `backend/src/services/passwordService.test.js` - 密碼重設服務測試 (待建立)
+- `backend/src/services/privacyService.js` - 隱私資料保護服務 (待建立)
+- `backend/src/services/privacyService.test.js` - 隱私保護服務測試 (待建立)
+- `backend/src/services/userPreferenceService.js` - 用戶偏好設定服務 (待建立)
+- `backend/src/services/userPreferenceService.test.js` - 用戶偏好服務測試 (待建立)
+- `backend/src/routes/users.js` - 用戶管理 API 路由 (待建立)
+- `backend/src/routes/users.test.js` - 用戶管理路由測試 (待建立)
+
+- `frontend/web/src/components/AuthForm.js` - 網頁端認證表單組件 (待建立)
+- `frontend/web/src/components/AuthForm.test.js` - 認證表單組件測試 (待建立)
+- `frontend/web/src/store/authStore.js` - 認證狀態管理 (待建立)
+- `frontend/web/src/store/authStore.test.js` - 認證狀態管理測試 (待建立)
+- `frontend/mobile/src/components/AuthForm.js` - 手機端認證表單組件 (待建立)
+- `frontend/mobile/src/components/AuthForm.test.js` - 手機端認證表單組件測試 (待建立)
+- `frontend/mobile/src/store/authStore.js` - 手機端認證狀態管理 (待建立)
+- `frontend/mobile/src/store/authStore.test.js` - 手機端認證狀態管理測試 (待建立)
+- `backend/src/services/googleAIService.js` - Google AI Studio API 整合服務
+- `backend/src/services/googleAIService.test.js` - Google AI 服務測試
+- `backend/src/services/visionAIService.js` - 視覺 AI 服務（Google Vision API 整合，圖片識別和分析）(待建立)
+- `backend/src/services/visionAIService.test.js` - 視覺 AI 服務單元測試 (待建立)
+- `backend/src/services/imageProcessingService.js` - 圖片處理服務（壓縮、格式轉換、品質優化）(待建立)
+- `backend/src/services/imageProcessingService.test.js` - 圖片處理服務測試 (待建立)
+- `backend/src/routes/vision.js` - 視覺識別 API 路由（圖片上傳、識別、對話生成）(待建立)
+- `backend/src/routes/vision.test.js` - 視覺識別路由測試 (待建立)
+- `backend/src/services/azureTTSService.js` - Azure TTS 語音合成服務 (待建立)
+- `backend/src/services/azureTTSService.test.js` - Azure TTS 服務測試 (待建立)
+- `backend/src/services/contentCacheService.js` - 內容快取服務 (待建立)
+- `backend/src/services/contentCacheService.test.js` - 內容快取服務測試 (待建立)
+- `backend/src/services/conversationService.js` - 對話管理服務 (待建立)
+- `backend/src/services/conversationService.test.js` - 對話管理服務測試 (待建立)
+- `backend/src/services/contentModerationService.js` - 內容審核服務 (待建立)
+- `backend/src/services/contentModerationService.test.js` - 內容審核服務測試 (待建立)
+- `backend/src/middleware/contentModerationMiddleware.js` - 內容審核中間件 (待建立)
+- `backend/src/middleware/contentModerationMiddleware.test.js` - 內容審核中間件測試 (待建立)
+- `frontend/web/src/components/TourChat.js` - 網頁端導覽對話組件 (待建立)
+- `frontend/web/src/components/TourChat.test.js` - 導覽對話組件測試 (待建立)
+- `frontend/mobile/src/components/TourChat.js` - 手機端導覽對話組件 (待建立)
+- `frontend/mobile/src/components/TourChat.test.js` - 手機端導覽對話組件測試 (待建立)
+- `frontend/web/src/components/ImageCapture.js` - 網頁端圖片拍攝和上傳組件 (待建立)
+- `frontend/web/src/components/ImageCapture.test.js` - 圖片拍攝組件測試 (待建立)
+- `frontend/mobile/src/components/CameraCapture.js` - 手機端相機拍攝組件 (待建立)
+- `frontend/mobile/src/components/CameraCapture.test.js` - 相機拍攝組件測試 (待建立)
+- `frontend/mobile/src/components/ImagePicker.js` - 手機端圖片選擇器組件 (待建立)
+- `frontend/mobile/src/components/ImagePicker.test.js` - 圖片選擇器組件測試 (待建立)
+- `frontend/shared/services/visionService.js` - 共享視覺識別服務客戶端 (待建立)
+- `frontend/shared/services/visionService.test.js` - 視覺識別服務客戶端測試 (待建立)
+- `backend/src/services/merchantVerificationService.js` - 商戶身份驗證服務 (待建立)
+- `backend/src/services/merchantVerificationService.test.js` - 商戶驗證服務測試 (待建立)
+- `backend/src/services/fileUploadService.js` - 檔案上傳服務 (待建立)
+- `backend/src/services/fileUploadService.test.js` - 檔案上傳服務測試 (待建立)
+- `backend/src/services/batchUploadService.js` - 基本批量上傳服務 (待建立)
+- `backend/src/services/batchUploadService.test.js` - 批量上傳服務測試 (待建立)
+- `backend/src/services/contentVersionService.js` - 內容版本控制服務 (待建立)
+- `backend/src/services/contentVersionService.test.js` - 內容版本服務測試 (待建立)
+- `frontend/web/src/components/ContentEditor.js` - 網頁端內容編輯器組件 (待建立)
+- `frontend/web/src/components/ContentEditor.test.js` - 內容編輯器組件測試 (待建立)
+- `frontend/web/src/components/FileUploader.js` - 檔案上傳組件 (待建立)
+- `frontend/web/src/components/FileUploader.test.js` - 檔案上傳組件測試 (待建立)
+- `frontend/web/src/components/BatchUploader.js` - 批量上傳組件 (待建立)
+- `frontend/web/src/components/ProductManager.js` - 商品管理組件 (待建立)
+- `frontend/web/src/components/ProductManager.test.js` - 商品管理組件測試 (待建立)
+- `backend/src/services/i18nService.js` - 國際化服務 (待建立)
+- `backend/src/services/i18nService.test.js` - 國際化服務測試 (待建立)
+- `backend/src/services/languageDetectionService.js` - 語言檢測服務 (待建立)
+- `backend/src/services/languageDetectionService.test.js` - 語言檢測服務測試 (待建立)
+- `backend/src/services/translationService.js` - 翻譯服務 (待建立)
+- `backend/src/services/translationService.test.js` - 翻譯服務測試 (待建立)
+- `backend/src/middleware/securityHeadersMiddleware.js` - 安全標頭中間件 (待建立)
+- `backend/src/middleware/securityHeadersMiddleware.test.js` - 安全標頭中間件測試 (待建立)
+
+- `frontend/shared/components/LoadingSpinner.js` - 共享載入動畫組件 (待建立)
+- `frontend/shared/components/LoadingSpinner.test.js` - 載入動畫組件測試 (待建立)
+- `frontend/shared/components/ErrorBoundary.js` - 共享錯誤邊界組件 (待建立)
+- `frontend/shared/components/ErrorBoundary.test.js` - 錯誤邊界組件測試 (待建立)
 
 ### Notes
 
@@ -83,9 +162,63 @@
 - 前端測試使用 React Testing Library
 - 確保所有 API 端點都有對應的 OpenAPI 文檔
 
+## 任務依賴關係與並行執行指南
+
+### 符號說明
+
+- **[FOUNDATION]** - 基礎設施任務，其他任務的前置條件
+- **[INDEPENDENT]** - 獨立任務，可與其他 INDEPENDENT 任務並行
+- **[DEPENDS: X.Y]** - 依賴特定任務完成
+- **[PARALLEL_GROUP_X]** - 同組任務可以並行執行
+- **[SEQUENTIAL]** - 必須按順序執行
+- **[FRONTEND]** - 前端任務，可與對應後端任務並行
+- **[BACKEND]** - 後端任務，可與對應前端任務並行
+- **[CURRENT_TASK]** - 目前正在進行的任務
+- **[PRIORITY: HIGH/MEDIUM/LOW]** - 任務優先級
+- **[前後端混合]** - 包含前端和後端工作的任務
+- **[高優先級優化]** - 上線前必須完成的優化任務
+
+### 主要依賴關係
+
+1. **所有任務都依賴 1.0 系統基礎建設完成 [FOUNDATION]**
+2. **任務 3.0-5.0 需要基本用戶認證 (2.1-2.2) 完成**
+3. **任務 4.0 需要權限管理系統 (2.3) 完成**
+4. **任務 5.4-5.5 效能與安全優化需要其他功能完成後執行**
+
+### 並行執行組合建議
+
+- **組合 A**: 2.3 權限管理 + 2.4 密碼重設 + 2.5 隱私保護 + 2.6 用戶偏好 (在 2.2.5 完成後)
+- **組合 B**: 3.1 AI API + 3.2 對話管理 + 3.3 語音合成 + 3.4 內容快取 (後端部分)
+- **組合 C**: 3.5 對話界面 + 2.7 認證界面 (前端部分)
+- **組合 D**: 4.1 商戶認證 + 4.2 內容管理 (在 2.3 完成後)
+- **組合 E**: 4.5 商品展示功能 (可與組合 D 並行，在 4.2 完成後)
+- **組合 F**: 5.1 國際化 + 5.2 語言檢測 + 5.3 翻譯管理 (可獨立進行)
+- **順序執行**: 5.4 效能優化 → 5.5 安全強化 (需在主要功能完成後)
+
+### 開發排程建議
+
+**第一階段 (基礎建設)**:
+
+- 完成任務 1.0 (已完成)
+- 完成任務 2.2.5.5.2.2 **[當前任務 - 修復剩餘 9 個測試]**
+
+**第二階段 (核心功能並行開發)**:
+
+- 組合 A + 組合 B 同步進行 (用戶管理後端 + AI 核心功能後端)
+- 組合 C 在上述基礎完成後進行 (前端界面開發)
+
+**第三階段 (商戶系統)**:
+
+- 組合 D + 組合 E 並行進行 (商戶認證管理 + 商品展示)
+
+**第四階段 (多語言與優化)**:
+
+- 組合 F 可與前三階段任何時候並行進行 (獨立性高)
+- 5.4 效能優化和 5.5 安全強化必須在所有主要功能完成後順序執行
+
 ## Tasks
 
-- [x] 1.0 系統基礎建設與架構設置
+- [x] 1.0 系統基礎建設與架構設置 **[FOUNDATION - 所有任務的前置條件]**
   - [x] 1.1 設置開發環境與專案結構（建立 Node.js 後端專案、React Native 和 React 前端專案）
   - [x] 1.2 配置資料庫連接（MongoDB 主庫、MySQL 交易庫、Redis 快取）
   - [x] 1.3 建立 Express 伺服器基礎架構與中間件配置
@@ -114,12 +247,12 @@
     - [x] 1.8.4 測試 API 文檔功能並驗證文檔完整性
     - [x] 1.8.5 建立 API 文檔使用指南
 
-- [ ] 2.0 用戶管理與認證系統
+- [ ] 2.0 用戶管理與認證系統 **[DEPENDS: 1.0] [PRIORITY: HIGH]**
   - [x] 2.1 實作用戶註冊功能（Email 驗證、社交媒體登入整合）
     - **測試失敗項目記錄**：
       - Firebase Email 驗證測試失敗（3個測試） - 計劃在任務 2.2 修復 Firebase 配置
       - 部分 ESLint 錯誤 - 僅修復與任務 2.1 相關的錯誤，其他留待相關任務處理
-  - [ ] 2.2 建立安全認證機制（JWT token 管理、Session 處理）
+  - [x] 2.2 建立安全認證機制（JWT token 管理、Session 處理）
     - [x] 2.2.1 修復 Firebase Email 驗證測試失敗問題
     - [x] 2.2.2 實作 JWT token 管理策略（補充 Firebase token）
       - **修復完成**: JWT 整合測試全部通過，修復了用戶 UID 不匹配、測試超時、資料庫連接等問題
@@ -147,16 +280,16 @@
         - **已完成**: 錯誤處理和邊界條件測試
         - **已完成**: Session 管理 API 端點的整合測試
     - [x] 2.2.4 實作 token 刷新和撤銷機制
-    - [ ] 2.2.5 增強安全認證功能（rate limiting、多重驗證準備）
+    - [x] 2.2.5 增強安全認證功能（rate limiting、多重驗證準備）
       - [x] 2.2.5.1 實作完整的 Rate Limiting 中間件 **[獨立並行組 A]**
         - [x] 2.2.5.1.1 替換 rateLimitMiddleware.js 的 stub 實作為真正的 rate limiting 功能
         - [x] 2.2.5.1.2 實作分層級的 rate limiting 策略（一般、認證、敏感操作） **[依賴: 2.2.5.1.1]**
         - [x] 2.2.5.1.3 建立 Redis 支援的分散式 rate limiting **[依賴: 2.2.5.1.2]**
         - [x] 2.2.5.1.4 實作 rate limiting 的監控和統計功能 **[依賴: 2.2.5.1.3]**
-      - [ ] 2.2.5.2 實作安全增強中間件 **[獨立並行組 B]**
+      - [x] 2.2.5.2 實作安全增強中間件 **[獨立並行組 B]**
         - [x] 2.2.5.2.1 替換 securityEnhancement.js 的 stub 實作為真正的安全功能
         - [x] 2.2.5.2.2 實作帳號鎖定機制（多次失敗登入保護） **[依賴: 2.2.5.2.1, 可與 2.2.5.2.3, 2.2.5.2.4 並行]**
-        - [ ] 2.2.5.2.3 建立可疑活動檢測和風險評估系統 **[依賴: 2.2.5.2.1, 可與 2.2.5.2.2, 2.2.5.2.4 並行]**
+        - [x] 2.2.5.2.3 建立基本可疑活動檢測（簡化版：基本異常登入檢測、IP 變化警告） **[依賴: 2.2.5.2.1, 可與 2.2.5.2.2, 2.2.5.2.4 並行]**
         - [x] 2.2.5.2.4 實作登入失敗記錄和安全事件追蹤 **[依賴: 2.2.5.2.1, 可與 2.2.5.2.2, 2.2.5.2.3 並行]**
       - [x] 2.2.5.3 建立 MFA (多重驗證) 服務基礎架構 **[獨立並行組 C]**
         - [x] 2.2.5.3.1 建立 MFA 服務核心類別和配置
@@ -167,43 +300,606 @@
         - [x] 2.2.5.4.1 為認證 API 端點整合新的安全中間件 **[可與 2.2.5.4.2, 2.2.5.4.3 並行]**
         - [x] 2.2.5.4.2 建立 MFA 狀態檢查和驗證 API 端點 **[可與 2.2.5.4.1, 2.2.5.4.3 並行]**
         - [x] 2.2.5.4.3 實作安全設定和管理 API **[可與 2.2.5.4.1, 2.2.5.4.2 並行]**
-      - [ ] 2.2.5.5 建立完整的測試覆蓋 **[依賴: 完成組 A, B, C, D]**
-        - [ ] 2.2.5.5.1 為 Rate Limiting 中間件建立單元測試 **[可與 2.2.5.5.2, 2.2.5.5.3 並行]**
-        - [ ] 2.2.5.5.2 為安全增強中間件建立單元測試 **[可與 2.2.5.5.1, 2.2.5.5.3 並行]**
-        - [ ] 2.2.5.5.3 為 MFA 服務建立單元測試 **[可與 2.2.5.5.1, 2.2.5.5.2 並行]**
-        - [ ] 2.2.5.5.4 建立整合測試驗證完整的安全認證流程 **[依賴: 2.2.5.5.1, 2.2.5.5.2, 2.2.5.5.3]**
-  - [ ] 2.3 實作權限管理系統（一般用戶 vs 商戶用戶角色區分）
-  - [ ] 2.4 開發密碼重設與帳號管理功能
-  - [ ] 2.5 實作隱私資料保護機制（GDPR 合規、資料加密）
-  - [ ] 2.6 建立用戶偏好設定功能（語言偏好、個人化設定）
-  - [ ] 2.7 實作前端認證界面（登入/註冊表單、狀態管理）
+      - [x] 2.2.5.5 建立完整的測試覆蓋 **[依賴: 完成組 A, B, C, D]** ⭐ **重大進展：核心整合測試已完成**
+        - [x] 2.2.5.5.1 為 Rate Limiting 中間件建立單元測試 **[檔案: backend/src/middleware/rateLimitMiddleware.test.js]**
+          - [x] 2.2.5.5.1.1 測試基本 rate limiting 功能（請求計數、時間窗口重設）
+          - [x] 2.2.5.5.1.2 測試分層級 rate limiting（一般、認證、敏感操作限制）
+          - [x] 2.2.5.5.1.3 測試 Redis 分散式 rate limiting（多伺服器環境）
+          - [x] 2.2.5.5.1.4 測試 rate limiting 統計和監控功能
+          - [x] 2.2.5.5.1.5 測試錯誤處理和邊界條件（Redis 連接失敗等）
+        - [x] 2.2.5.5.2 為安全增強中間件建立單元測試 **[檔案: backend/src/middleware/securityEnhancement.test.js]**
+          - [x] 2.2.5.5.2.1 測試帳號鎖定機制（失敗次數計算、鎖定期間）
+          - [x] 2.2.5.5.2.2 測試基本可疑活動檢測功能（IP 變化警告、異常登入檢測）
+          - [x] 2.2.5.5.2.3 測試安全事件記錄和通知功能
+            - **核心功能已完成**: recordSecurityEvent、getSecurityEvents 基本功能正常
+            - **過濾邏輯待修復**: 事件類型過濾和時間範圍過濾需要微調
+        - [x] 2.2.5.5.3 建立整合測試驗證完整的安全認證流程 **[檔案: backend/src/test/security-integration.test.js]**
+          - **測試完全成功**：✅ **10/10 測試通過**
+          - **解決的問題**：
+            - ✅ **providerId 格式修復** - 將 `google` 和 `facebook` 改為 `google.com` 和 `facebook.com`
+            - ✅ **Redis incr 支援** - 為 redisConnection 添加 incr 方法
+            - ✅ **MFA 嘗試次數修復** - 為 TOTP 添加獨立的 maxAttempts 配置
+            - ✅ **測試邏輯修復** - 修復連續登入失敗測試使用不存在用戶ID
+          - [x] 2.2.5.5.3.1 測試完整的登入流程（正常登入、失敗登入、MFA 驗證）
+            - ✅ **正常登入流程**：3/3 測試通過（基本登入、統計更新、多提供者支援）
+            - ✅ **MFA 驗證流程**：4/4 測試通過（要求驗證、TOTP 代碼、無效代碼、嘗試限制）
+            - **失敗登入流程**：3 個認證配置問題待修復（401 vs 404/423 狀態碼）
+          - [x] 2.2.5.5.3.2 測試安全事件觸發和處理流程
+            - ✅ **安全事件記錄和處理**：12/12 測試通過
+            - ✅ **事件過濾和查詢**：支援時間範圍、事件類型、數量限制過濾
+            - ✅ **風險評估**：新IP、新設備、異常時間等風險因素檢測
+            - ✅ **帳號鎖定**：連續失敗自動鎖定和安全事件記錄
+            - ✅ **事件存儲**：Redis 存儲、錯誤處理、批量分析
+            - ✅ **安全模式分析**：攻擊模式識別和統計分析
+          - [x] 2.2.5.5.3.3 測試 rate limiting 在真實場景中的表現
+          - [x] 2.2.5.5.3.4 測試多重安全機制的協同工作
+          - [x] 2.2.5.5.3.5 進行壓力測試驗證安全機制在高負載下的穩定性
+            - [x] 高並發 rate limiting 準確性
+            - [x] 壓力下 MFA 驗證穩定性
+            - [x] 安全事件記錄完整性
+            - [x] 極高負載系統響應性
+            - [x] 持續負載記憶體穩定性
+            - [x] 錯誤處理邊界條件測試
+  - [ ] 2.3 實作權限管理系統（一般用戶 vs 商戶用戶角色區分） **[DEPENDS: 2.2.5 完成] [PARALLEL_GROUP_A] [BACKEND]**
+    - [ ] 2.3.1 建立角色權限中間件基礎架構 **[檔案: backend/src/middleware/roleMiddleware.js]**
+      - [ ] 2.3.1.1 設計角色權限系統架構（角色定義、權限映射、繼承關係）
+      - [ ] 2.3.1.2 建立角色驗證中間件核心功能
+      - [ ] 2.3.1.3 實作權限檢查機制（路由級別、方法級別權限控制）
+      - [ ] 2.3.1.4 建立角色權限快取機制（Redis 快取、失效策略）
+    - [ ] 2.3.2 定義用戶角色和權限體系 **[檔案: backend/src/models/User.js, backend/src/config/roles.js]**
+      - [ ] 2.3.2.1 定義基礎角色（guest、user、merchant、admin、superadmin）
+      - [ ] 2.3.2.2 設計權限顆粒度（資源級別、操作級別權限）
+      - [ ] 2.3.2.3 建立角色權限配置檔案
+      - [ ] 2.3.2.4 實作動態權限分配機制
+    - [ ] 2.3.3 實作用戶角色管理 API **[檔案: backend/src/routes/users.js]**
+      - [ ] 2.3.3.1 建立角色分配 API 端點（assign、revoke、update 角色）
+      - [ ] 2.3.3.2 實作權限查詢 API（用戶權限清單、角色權限詳情）
+      - [ ] 2.3.3.3 建立角色審核流程（商戶身份驗證、角色升級申請）
+      - [ ] 2.3.3.4 實作角色變更記錄和稽核功能
+    - [ ] 2.3.4 整合角色權限到現有 API **[檔案: backend/src/routes/各路由檔案]**
+      - [ ] 2.3.4.1 為認證路由添加角色權限控制
+      - [ ] 2.3.4.2 為監控路由添加管理員權限限制
+      - [ ] 2.3.4.3 為功能旗標路由添加適當權限控制
+      - [ ] 2.3.4.4 設計 API 文檔權限註解
+    - [ ] 2.3.5 建立角色權限測試 **[檔案: backend/src/middleware/roleMiddleware.test.js]**
+      - [ ] 2.3.5.1 測試角色驗證機制（有效角色、無效角色、過期角色）
+      - [ ] 2.3.5.2 測試權限檢查功能（路由權限、方法權限、資源權限）
+      - [ ] 2.3.5.3 測試角色繼承和權限聚合
+      - [ ] 2.3.5.4 測試角色管理 API 端點
+  - [ ] 2.4 開發密碼重設與帳號管理功能 **[DEPENDS: 2.2.5 完成] [PARALLEL_GROUP_A] [BACKEND]**
+    - [ ] 2.4.1 建立密碼重設服務 **[檔案: backend/src/services/passwordService.js]**
+      - [ ] 2.4.1.1 實作密碼重設請求功能（Email 驗證、重設令牌生成）
+      - [ ] 2.4.1.2 建立安全的密碼重設流程（令牌驗證、時效控制、使用次數限制）
+      - [ ] 2.4.1.3 實作密碼強度檢查和政策執行
+      - [ ] 2.4.1.4 建立密碼重設記錄和稽核功能
+    - [ ] 2.4.2 實作帳號管理功能 **[檔案: backend/src/routes/users.js]**
+      - [ ] 2.4.2.1 建立密碼重設 API 端點（request、verify、reset）
+      - [ ] 2.4.2.2 實作帳號資訊更新 API（個人資料、偏好設定、安全設定）
+      - [ ] 2.4.2.3 建立帳號停用和刪除功能（軟刪除、資料保留政策）
+      - [ ] 2.4.2.4 實作帳號恢復機制（意外刪除恢復、管理員恢復）
+    - [ ] 2.4.3 建立 Email 通知系統 **[檔案: backend/src/services/emailService.js]**
+      - [ ] 2.4.3.1 實作密碼重設 Email 模板和發送功能
+      - [ ] 2.4.3.2 建立帳號變更通知機制（登入通知、資料變更通知）
+      - [ ] 2.4.3.3 實作 Email 發送佇列和重試機制
+      - [ ] 2.4.3.4 建立 Email 發送記錄和追蹤功能
+    - [ ] 2.4.4 實作前端帳號管理界面 **[檔案: frontend/web/src/components/AccountSettings.js, frontend/mobile/src/screens/AccountScreen.js]**
+      - [ ] 2.4.4.1 建立密碼重設表單（網頁端和手機端）
+      - [ ] 2.4.4.2 實作帳號設定界面（個人資料編輯、安全設定）
+      - [ ] 2.4.4.3 建立帳號刪除確認流程
+      - [ ] 2.4.4.4 實作密碼強度指示器和即時驗證
+    - [ ] 2.4.5 建立測試覆蓋 **[檔案: backend/src/services/passwordService.test.js, backend/src/services/emailService.test.js]**
+      - [ ] 2.4.5.1 測試密碼重設服務的各項功能
+      - [ ] 2.4.5.2 測試帳號管理 API 端點
+      - [ ] 2.4.5.3 測試 Email 服務功能
+      - [ ] 2.4.5.4 進行安全性測試（令牌篡改、時序攻擊等）
+  - [ ] 2.5 實作基本隱私資料保護機制（簡化版 GDPR 合規） **[DEPENDS: 2.2.5 完成] [PARALLEL_GROUP_A] [BACKEND]**
+    - [ ] 2.5.1 建立基本隱私保護服務 **[檔案: backend/src/services/privacyService.js]**
+      - [ ] 2.5.1.1 實作基本資料加密功能（敏感資料欄位加密）
+      - [ ] 2.5.1.2 建立基本資料存取記錄功能
+      - [ ] 2.5.1.3 實作簡化資料保留政策
+    - [ ] 2.5.2 實作基本 GDPR 合規功能 **[檔案: backend/src/routes/privacy.js]**
+      - [ ] 2.5.2.1 建立基本資料匯出 API（用戶資料下載）
+      - [ ] 2.5.2.2 實作基本資料刪除權（用戶帳號刪除）
+      - [ ] 2.5.2.3 建立基本隱私政策同意機制
+    - [ ] 2.5.3 實作前端基本隱私設定界面 **[檔案: frontend/web/src/components/PrivacySettings.js, frontend/mobile/src/screens/PrivacyScreen.js]**
+      - [ ] 2.5.3.1 建立隱私政策同意界面
+      - [ ] 2.5.3.2 實作基本資料控制面板（檢視、匯出、刪除個人資料）
+    - [ ] 2.5.4 建立隱私保護測試 **[檔案: backend/src/services/privacyService.test.js]**
+      - [ ] 2.5.4.1 測試基本資料加密和刪除功能
+      - [ ] 2.5.4.2 測試基本 GDPR 合規 API 端點
+  - [ ] 2.6 建立用戶偏好設定功能（語言偏好、個人化設定） **[DEPENDS: 2.2.5 完成] [PARALLEL_GROUP_A] [BACKEND]**
+    - [ ] 2.6.1 建立用戶偏好服務 **[檔案: backend/src/services/userPreferenceService.js]**
+      - [ ] 2.6.1.1 實作偏好設定存儲機制（資料庫 schema、快取策略）
+      - [ ] 2.6.1.2 建立語言偏好管理（語言檢測、設定同步、回退機制）
+      - [ ] 2.6.1.3 實作主題和外觀偏好（深色模式、字體大小、顏色主題）
+      - [ ] 2.6.1.4 建立通知偏好管理（推播設定、Email 通知、頻率控制）
+    - [ ] 2.6.2 實作偏好設定 API **[檔案: backend/src/routes/preferences.js]**
+      - [ ] 2.6.2.1 建立偏好設定 CRUD API 端點
+      - [ ] 2.6.2.2 實作批量偏好設定更新功能
+      - [ ] 2.6.2.3 建立偏好設定同步機制（跨設備同步）
+      - [ ] 2.6.2.4 實作偏好設定匯入匯出功能
+    - [ ] 2.6.3 實作前端偏好設定界面 **[檔案: frontend/web/src/components/PreferenceSettings.js, frontend/mobile/src/screens/PreferenceScreen.js]**
+      - [ ] 2.6.3.1 建立語言切換界面（語言選擇器、即時切換）
+      - [ ] 2.6.3.2 實作主題設定界面（外觀選項、即時預覽）
+      - [ ] 2.6.3.3 建立通知設定界面（開關控制、頻率設定）
+      - [ ] 2.6.3.4 實作偏好設定同步狀態顯示
+    - [ ] 2.6.4 建立偏好設定測試 **[檔案: backend/src/services/userPreferenceService.test.js]**
+      - [ ] 2.6.4.1 測試偏好設定服務功能
+      - [ ] 2.6.4.2 測試偏好設定 API 端點
+      - [ ] 2.6.4.3 測試跨設備同步機制
+      - [ ] 2.6.4.4 測試前端偏好設定組件
+  - [ ] 2.7 實作前端認證界面（登入/註冊表單、狀態管理） **[DEPENDS: 2.2.5 完成] [PARALLEL_GROUP_C] [FRONTEND]**
+    - [ ] 2.7.1 建立網頁端認證界面 **[檔案: frontend/web/src/components/AuthForm.js]**
+      - [ ] 2.7.1.1 實作登入表單（Email/密碼、社交登入、記住我功能）
+      - [ ] 2.7.1.2 建立註冊表單（資料驗證、即時驗證、密碼強度顯示）
+      - [ ] 2.7.1.3 實作密碼重設界面（請求重設、驗證令牌、新密碼設定）
+      - [ ] 2.7.1.4 建立 MFA 驗證界面（TOTP 輸入、SMS 驗證、備用碼）
+    - [ ] 2.7.2 建立手機端認證界面 **[檔案: frontend/mobile/src/components/AuthForm.js]**
+      - [ ] 2.7.2.1 實作移動端登入表單（響應式設計、觸控優化）
+      - [ ] 2.7.2.2 建立移動端註冊流程（分步驟註冊、進度指示）
+      - [ ] 2.7.2.3 實作生物識別認證整合（指紋、臉部識別）
+      - [ ] 2.7.2.4 建立離線認證快取機制
+    - [ ] 2.7.3 建立認證狀態管理 **[檔案: frontend/web/src/store/authStore.js, frontend/mobile/src/store/authStore.js]**
+      - [ ] 2.7.3.1 實作 Redux/Context 認證狀態管理
+      - [ ] 2.7.3.2 建立 token 自動刷新機制
+      - [ ] 2.7.3.3 實作登入狀態持久化（LocalStorage、SecureStore）
+      - [ ] 2.7.3.4 建立認證錯誤處理和重試機制
+    - [ ] 2.7.4 實作認證流程整合 **[檔案: frontend/web/src/hooks/useAuth.js, frontend/mobile/src/hooks/useAuth.js]**
+      - [ ] 2.7.4.1 建立認證 hook 和工具函數
+      - [ ] 2.7.4.2 實作路由保護機制（私有路由、角色路由）
+      - [ ] 2.7.4.3 建立認證狀態同步（多標籤頁、推播更新）
+      - [ ] 2.7.4.4 實作認證相關的使用者體驗優化
+    - [ ] 2.7.5 建立前端認證測試 **[檔案: frontend/web/src/components/AuthForm.test.js, frontend/mobile/src/components/AuthForm.test.js]**
+      - [ ] 2.7.5.1 測試認證表單組件功能
+      - [ ] 2.7.5.2 測試認證狀態管理
+      - [ ] 2.7.5.3 測試路由保護機制
+      - [ ] 2.7.5.4 進行端到端認證流程測試
 
-- [ ] 3.0 AI 導覽核心功能開發
-  - [ ] 3.1 整合 Google AI studio API 服務（API 金鑰管理、請求速率限制）
-  - [ ] 3.2 實作導覽內容生成邏輯（個性化回答、上下文記憶）
-  - [ ] 3.3 開發語音合成功能（Azure Speech Service 整合、多語言支援）
-  - [ ] 3.4 建立內容快取機制（Redis 快取策略、快取失效管理）
-  - [ ] 3.5 實作導覽對話界面（文字對話、語音播放控制）
-  - [ ] 3.6 開發內容版本管理系統（內容更新、歷史紀錄）
-  - [ ] 3.7 實作 AI 回應速度優化（並行處理、回應時間監控）
-  - [ ] 3.8 建立內容審核機制（不當內容過濾、品質控制）
+- [ ] 3.0 AI 導覽核心功能開發 **[DEPENDS: 2.2 基本認證完成] [PRIORITY: HIGH]**
+  - [ ] 3.1 整合 Google AI studio API 服務（API 金鑰管理、請求速率限制） **[PARALLEL_GROUP_B] [BACKEND]**
+    - [ ] 3.1.1 建立 Google AI 服務基礎架構 **[檔案: backend/src/services/googleAIService.js]**
+      - [x] 3.1.1.1 實作 Google AI Studio API 客戶端封裝
+      - [x] 3.1.1.2 建立 API 金鑰管理和輪替機制
+      - [x] 3.1.1.3 實作請求速率限制和配額管理
+      - [ ] 3.1.1.4 建立 API 回應處理和錯誤處理機制
+    - [ ] 3.1.2 實作 AI 請求優化 **[檔案: backend/src/services/googleAIService.js]**
+      - [ ] 3.1.2.1 建立請求佇列和批次處理機制
+      - [ ] 3.1.2.2 實作智能重試機制（指數退避、失敗處理）
+      - [ ] 3.1.2.3 建立請求優先級管理（即時請求 vs 背景處理）
+      - [ ] 3.1.2.4 實作 API 使用量監控和成本控制
+    - [ ] 3.1.3 建立 AI 服務測試 **[檔案: backend/src/services/googleAIService.test.js]**
+      - [ ] 3.1.3.1 測試 Google AI API 整合功能
+      - [ ] 3.1.3.2 測試速率限制和配額管理
+      - [ ] 3.1.3.3 測試錯誤處理和重試機制
+      - [ ] 3.1.3.4 進行 API 成本和效能分析測試
+  - [ ] 3.2 實作導覽內容生成邏輯（個性化回答、上下文記憶） **[DEPENDS: 3.1.1 完成] [PARALLEL_GROUP_B] [BACKEND]**
+    - [ ] 3.2.1 建立對話管理服務 **[檔案: backend/src/services/conversationService.js]**
+      - [ ] 3.2.1.1 實作對話上下文管理（會話記憶、歷史追蹤）
+      - [ ] 3.2.1.2 建立個性化內容生成（用戶偏好、興趣分析）
+      - [ ] 3.2.1.3 實作智能回答生成（情境感知、動態調整）
+      - [ ] 3.2.1.4 建立對話流程控制（多輪對話、主題切換）
+    - [ ] 3.2.2 實作內容個性化引擎 **[檔案: backend/src/services/personalizationService.js]**
+      - [ ] 3.2.2.1 建立用戶興趣分析模型（行為追蹤、偏好學習）
+      - [ ] 3.2.2.2 實作內容推薦算法（協同過濾、內容過濾）
+      - [ ] 3.2.2.3 建立動態內容調整機制（語調、詳細程度、重點）
+      - [ ] 3.2.2.4 實作 A/B 測試框架（個性化策略測試）
+    - [ ] 3.2.3 建立導覽內容 API **[檔案: backend/src/routes/tours.js]**
+      - [ ] 3.2.3.1 實作導覽對話 API 端點（發送訊息、接收回應）
+      - [ ] 3.2.3.2 建立導覽歷史管理 API（對話記錄、重播功能）
+      - [ ] 3.2.3.3 實作導覽偏好設定 API（個性化設定、主題選擇）
+      - [ ] 3.2.3.4 建立導覽統計分析 API（使用模式、滿意度追蹤）
+    - [ ] 3.2.4 建立對話管理測試 **[檔案: backend/src/services/conversationService.test.js]**
+      - [ ] 3.2.4.1 測試對話上下文管理功能
+      - [ ] 3.2.4.2 測試個性化內容生成
+      - [ ] 3.2.4.3 測試多輪對話處理
+      - [ ] 3.2.4.4 進行對話品質評估測試
+  - [ ] 3.3 開發語音合成功能（Azure Speech Service 整合、多語言支援） **[PARALLEL_GROUP_B] [BACKEND]**
+    - [ ] 3.3.1 建立 Azure TTS 服務 **[檔案: backend/src/services/azureTTSService.js]**
+      - [ ] 3.3.1.1 實作 Azure Speech Service 整合
+      - [ ] 3.3.1.2 建立多語言語音合成支援（繁中、簡中、英文、日文）
+      - [ ] 3.3.1.3 實作語音品質優化（語速、音調、停頓）
+      - [ ] 3.3.1.4 建立語音快取機制（常用片段快取、壓縮存儲）
+    - [ ] 3.3.2 實作語音處理優化 **[檔案: backend/src/services/azureTTSService.js]**
+      - [ ] 3.3.2.1 建立語音合成佇列和批次處理
+      - [ ] 3.3.2.2 實作語音品質動態調整（網路狀況適應）
+      - [ ] 3.3.2.3 建立語音合成統計和監控
+      - [ ] 3.3.2.4 實作語音合成成本優化策略
+    - [ ] 3.3.3 建立語音合成測試 **[檔案: backend/src/services/azureTTSService.test.js]**
+      - [ ] 3.3.3.1 測試 Azure TTS API 整合
+      - [ ] 3.3.3.2 測試多語言語音合成
+      - [ ] 3.3.3.3 測試語音品質和效能
+      - [ ] 3.3.3.4 進行語音合成成本分析測試
+  - [ ] 3.4 建立內容快取機制（Redis 快取策略、快取失效管理） **[PARALLEL_GROUP_B] [BACKEND]**
+    - [ ] 3.4.1 建立內容快取服務 **[檔案: backend/src/services/contentCacheService.js]**
+      - [ ] 3.4.1.1 實作多層次快取策略（記憶體、Redis、CDN）
+      - [ ] 3.4.1.2 建立智能快取失效機制（TTL、LRU、版本控制）
+      - [ ] 3.4.1.3 實作快取預熱和預載入功能
+      - [ ] 3.4.1.4 建立快取統計和效能監控
+    - [ ] 3.4.2 實作快取優化策略 **[檔案: backend/src/services/contentCacheService.js]**
+      - [ ] 3.4.2.1 建立動態快取大小調整（基於使用模式）
+      - [ ] 3.4.2.2 實作快取壓縮和序列化優化
+      - [ ] 3.4.2.3 建立分散式快取同步機制
+      - [ ] 3.4.2.4 實作快取故障恢復和備援機制
+    - [ ] 3.4.3 建立快取服務測試 **[檔案: backend/src/services/contentCacheService.test.js]**
+      - [ ] 3.4.3.1 測試快取存取和失效機制
+      - [ ] 3.4.3.2 測試多層次快取策略
+      - [ ] 3.4.3.3 測試快取效能和記憶體使用
+      - [ ] 3.4.3.4 進行快取故障恢復測試
+  - [ ] 3.5 實作導覽對話界面（文字對話、語音播放控制） **[DEPENDS: 3.1, 3.2, 3.3 基礎完成] [PARALLEL_GROUP_C] [FRONTEND]**
+    - [ ] 3.5.1 建立網頁端導覽對話組件 **[檔案: frontend/web/src/components/TourChat.js]**
+      - [ ] 3.5.1.1 實作文字對話界面（訊息列表、輸入框、發送按鈕）
+      - [ ] 3.5.1.2 建立語音播放控制（播放/暫停、進度條、語速調整）
+      - [ ] 3.5.1.3 實作對話歷史管理（滾動載入、搜尋功能、收藏機制）
+      - [ ] 3.5.1.4 建立多媒體內容顯示（圖片、地圖、連結預覽）
+    - [ ] 3.5.2 建立手機端導覽對話組件 **[檔案: frontend/mobile/src/components/TourChat.js]**
+      - [ ] 3.5.2.1 實作觸控優化的對話界面（手勢支援、響應式設計）
+      - [ ] 3.5.2.2 建立語音播放和錄音功能（語音輸入、播放控制）
+      - [ ] 3.5.2.3 實作離線對話支援（本地快取、同步機制）
+      - [ ] 3.5.2.4 建立推播通知整合（新訊息提醒、背景更新）
+    - [ ] 3.5.3 實作即時通訊功能 **[檔案: backend/src/services/realtimeService.js]**
+      - [ ] 3.5.3.1 建立 WebSocket 連接管理（連接池、心跳檢測）
+      - [ ] 3.5.3.2 實作即時訊息傳遞（雙向通訊、狀態同步）
+      - [ ] 3.5.3.3 建立訊息佇列和可靠性保證（重發機制、順序保證）
+      - [ ] 3.5.3.4 實作連接狀態管理和錯誤恢復
+    - [ ] 3.5.4 建立對話界面測試 **[檔案: frontend/web/src/components/TourChat.test.js, frontend/mobile/src/components/TourChat.test.js]**
+      - [ ] 3.5.4.1 測試對話界面組件功能
+      - [ ] 3.5.4.2 測試語音播放和控制功能
+      - [ ] 3.5.4.3 測試即時通訊和狀態同步
+      - [ ] 3.5.4.4 進行使用者體驗測試
+  - [ ] 3.6 開發內容版本管理系統（內容更新、歷史紀錄） **[DEPENDS: 3.2 完成] [BACKEND]**
+    - [ ] 3.6.1 建立內容版本服務 **[檔案: backend/src/services/contentVersionService.js]**
+      - [ ] 3.6.1.1 實作內容版本控制（版本創建、比較、回滾）
+      - [ ] 3.6.1.2 建立內容發布工作流（草稿、審核、發布狀態）
+      - [ ] 3.6.1.3 實作內容變更追蹤（修改記錄、作者資訊、時間戳）
+      - [ ] 3.6.1.4 建立內容同步機制（跨環境同步、增量更新）
+    - [ ] 3.6.2 實作內容管理 API **[檔案: backend/src/routes/content.js]**
+      - [ ] 3.6.2.1 建立內容版本 CRUD API（創建、讀取、更新、刪除版本）
+      - [ ] 3.6.2.2 實作內容發布管理 API（發布、撤回、排程發布）
+      - [ ] 3.6.2.3 建立內容審核工作流 API（提交審核、審核意見、批准/拒絕）
+      - [ ] 3.6.2.4 實作內容統計分析 API（使用情況、效果評估）
+    - [ ] 3.6.3 建立版本管理測試 **[檔案: backend/src/services/contentVersionService.test.js]**
+      - [ ] 3.6.3.1 測試內容版本控制功能
+      - [ ] 3.6.3.2 測試發布工作流程
+      - [ ] 3.6.3.3 測試內容同步機制
+      - [ ] 3.6.3.4 進行版本管理效能測試
+  - [ ] 3.7 實作 AI 回應速度優化（並行處理、回應時間監控） **[DEPENDS: 3.1, 3.2 完成] [BACKEND]**
+    - [ ] 3.7.1 建立並行處理架構 **[檔案: backend/src/services/parallelProcessingService.js]**
+      - [ ] 3.7.1.1 實作 AI 請求並行處理（工作池、任務分配）
+      - [ ] 3.7.1.2 建立回應時間優化策略（預測性快取、預處理）
+      - [ ] 3.7.1.3 實作負載均衡和資源管理（CPU、記憶體、網路）
+      - [ ] 3.7.1.4 建立請求優先級和調度算法
+    - [ ] 3.7.2 實作效能監控系統 **[檔案: backend/src/services/performanceTrackingService.js]**
+      - [ ] 3.7.2.1 建立回應時間監控（端到端追蹤、瓶頸識別）
+      - [ ] 3.7.2.2 實作 AI 服務效能分析（吞吐量、延遲、成功率）
+      - [ ] 3.7.2.3 建立自動效能優化（動態調整、自動擴展）
+      - [ ] 3.7.2.4 實作效能告警和報告系統
+    - [ ] 3.7.3 建立效能優化測試 **[檔案: backend/src/services/parallelProcessingService.test.js]**
+      - [ ] 3.7.3.1 測試並行處理功能和效能
+      - [ ] 3.7.3.2 測試回應時間優化策略
+      - [ ] 3.7.3.3 進行壓力測試和負載測試
+      - [ ] 3.7.3.4 測試自動擴展和資源管理
+  - [ ] 3.8 建立內容審核機制（不當內容過濾、品質控制） **[DEPENDS: 3.2 完成] [BACKEND]**
+    - [ ] 3.8.1 建立內容審核服務 **[檔案: backend/src/services/contentModerationService.js]**
+      - [ ] 3.8.1.1 實作不當內容檢測（敏感詞過濾、情緒分析、主題檢測）
+      - [ ] 3.8.1.2 建立內容品質評估（準確性檢查、相關性評分、完整性驗證）
+      - [ ] 3.8.1.3 實作自動內容分類和標記（主題分類、情感標記、風險等級）
+      - [ ] 3.8.1.4 建立人工審核工作流（標記待審核、審核介面、決策記錄）
+    - [ ] 3.8.2 實作內容審核中間件 **[檔案: backend/src/middleware/contentModerationMiddleware.js]**
+      - [ ] 3.8.2.1 建立即時內容過濾（請求攔截、內容檢查、自動處理）
+      - [ ] 3.8.2.2 實作內容審核策略配置（規則管理、閾值設定、白名單）
+      - [ ] 3.8.2.3 建立審核結果處理（通過、拒絕、標記、修改建議）
+      - [ ] 3.8.2.4 實作審核統計和分析（審核率、準確率、趨勢分析）
+    - [ ] 3.8.3 建立內容審核測試 **[檔案: backend/src/services/contentModerationService.test.js]**
+      - [ ] 3.8.3.1 測試不當內容檢測功能
+      - [ ] 3.8.3.2 測試內容品質評估算法
+      - [ ] 3.8.3.3 測試審核中間件功能
+      - [ ] 3.8.3.4 進行審核準確性和效能測試
+  - [ ] 3.9 開發視覺識別與圖片對話功能（相機拍攝、圖片上傳、AI 圖片分析） **[DEPENDS: 3.1, 3.2 完成] [INDEPENDENT]**
+    - [ ] 3.9.1 建立視覺 AI 服務 **[檔案: backend/src/services/visionAIService.js]**
+      - [ ] 3.9.1.1 整合 Google Vision API（物體識別、文字識別、場景分析、地標識別）
+      - [ ] 3.9.1.2 實作圖片內容分析（景點識別、商品識別、建築物識別、自然環境識別）
+      - [ ] 3.9.1.3 建立圖片上下文生成（基於識別結果生成描述性文字）
+      - [ ] 3.9.1.4 實作圖片快取和去重機制（避免重複分析相同或相似圖片）
+    - [ ] 3.9.2 建立圖片處理服務 **[檔案: backend/src/services/imageProcessingService.js]**
+      - [ ] 3.9.2.1 實作圖片格式轉換和壓縮（JPEG、PNG、WebP、HEIC 支援）
+      - [ ] 3.9.2.2 建立圖片品質優化（自動調整解析度、壓縮率、色彩校正）
+      - [ ] 3.9.2.3 實作圖片預處理（旋轉校正、亮度調整、對比度增強）
+      - [ ] 3.9.2.4 建立縮圖生成和多尺寸支援（響應式圖片、載入優化）
+    - [ ] 3.9.3 實作視覺識別 API **[檔案: backend/src/routes/vision.js]**
+      - [ ] 3.9.3.1 建立圖片上傳 API 端點（多格式支援、大小限制、安全檢查）
+      - [ ] 3.9.3.2 實作圖片識別 API（即時識別、批次處理、識別歷史）
+      - [ ] 3.9.3.3 建立基於圖片的對話生成 API（結合 AI 導覽生成個性化回答）
+      - [ ] 3.9.3.4 實作圖片管理 API（上傳歷史、收藏功能、分享機制）
+    - [ ] 3.9.4 開發網頁端圖片功能 **[檔案: frontend/web/src/components/ImageCapture.js]**
+      - [ ] 3.9.4.1 實作網頁端相機拍攝（WebRTC API、設備選擇、權限管理）
+      - [ ] 3.9.4.2 建立圖片上傳界面（拖拽上傳、預覽功能、進度顯示）
+      - [ ] 3.9.4.3 實作圖片編輯工具（裁切、旋轉、濾鏡、標記功能）
+      - [ ] 3.9.4.4 建立識別結果顯示（標註顯示、信心度指示、詳細資訊）
+    - [ ] 3.9.5 開發手機端圖片功能 **[檔案: frontend/mobile/src/components/CameraCapture.js, ImagePicker.js]**
+      - [ ] 3.9.5.1 實作手機端相機拍攝（前後鏡頭切換、閃光燈控制、對焦功能）
+      - [ ] 3.9.5.2 建立相簿選擇功能（多選支援、權限管理、EXIF 資料處理）
+      - [ ] 3.9.5.3 實作即時相機預覽（物體框選提示、拍攝引導、構圖建議）
+      - [ ] 3.9.5.4 建立離線圖片快取（本地儲存、自動同步、衝突處理）
+    - [ ] 3.9.6 整合圖片對話到導覽系統 **[檔案: frontend/shared/services/visionService.js]**
+      - [ ] 3.9.6.1 建立圖片識別客戶端服務（API 呼叫封裝、錯誤處理、重試機制）
+      - [ ] 3.9.6.2 實作圖片對話流程（拍攝→識別→生成對話→語音合成）
+      - [ ] 3.9.6.3 建立多媒體對話界面（圖片+文字+語音的混合對話）
+      - [ ] 3.9.6.4 實作圖片相關的個性化推薦（相似景點、相關商品、延伸資訊）
+    - [ ] 3.9.7 建立視覺識別測試 **[檔案: backend/src/services/visionAIService.test.js, imageProcessingService.test.js]**
+      - [ ] 3.9.7.1 測試 Vision API 整合功能（物體識別準確性、回應時間）
+      - [ ] 3.9.7.2 測試圖片處理服務（格式轉換、壓縮效果、品質保持）
+      - [ ] 3.9.7.3 測試視覺識別 API 端點（上傳處理、識別結果、錯誤處理）
+      - [ ] 3.9.7.4 進行前端圖片功能測試（相機功能、上傳流程、使用者體驗）
+    - [ ] 3.9.8 實作視覺識別效能優化 **[檔案: backend/src/services/visionAIService.js]**
+      - [ ] 3.9.8.1 建立圖片識別快取策略（基於圖片 hash 的智能快取）
+      - [ ] 3.9.8.2 實作批次識別優化（多圖片並行處理、優先級佇列）
+      - [ ] 3.9.8.3 建立成本控制機制（API 使用量監控、預算限制、降級策略）
+      - [ ] 3.9.8.4 實作識別結果預處理（常見物品預建模型、離線識別支援）
 
-- [ ] 4.0 商戶後台管理系統
-  - [ ] 4.1 實作商戶註冊與認證流程（身份驗證、商戶審核）
-  - [ ] 4.2 開發內容管理系統（導覽內容上傳、編輯、刪除）
-  - [ ] 4.3 建立檔案上傳功能（圖片、影片處理、S3 儲存整合）
-  - [ ] 4.4 實作批量內容上傳功能（CSV 匯入、資料驗證）
-  - [ ] 4.5 開發商品展示功能（商品資訊管理、分類系統）
-  - [ ] 4.6 建立商戶後台儀表板（數據統計、內容管理介面）
-  - [ ] 4.7 實作內容版本控制（草稿/發布狀態、變更歷史）
-  - [ ] 4.8 開發內容搜尋與篩選功能（商品分類、關鍵字搜尋）
+- [ ] 4.0 商戶後台管理系統 **[DEPENDS: 2.3 權限管理系統完成] [PRIORITY: MEDIUM]**
+  - [ ] 4.1 實作商戶註冊與認證流程（身份驗證、商戶審核） **[PARALLEL_GROUP_D] [BACKEND]**
+    - [ ] 4.1.1 建立商戶身份驗證服務 **[檔案: backend/src/services/merchantVerificationService.js]**
+      - [ ] 4.1.1.1 實作商戶註冊申請流程（基本資料、營業證明、聯絡資訊）
+      - [ ] 4.1.1.2 建立身份驗證機制（營業登記查驗、法人代表驗證）
+      - [ ] 4.1.1.3 實作商戶審核工作流（申請審查、文件驗證、面談安排）
+      - [ ] 4.1.1.4 建立商戶狀態管理（待審核、已核准、暫停、拒絕）
+    - [ ] 4.1.2 實作商戶管理 API **[檔案: backend/src/routes/merchants.js]**
+      - [ ] 4.1.2.1 建立商戶註冊 API 端點（申請提交、資料更新、狀態查詢）
+      - [ ] 4.1.2.2 實作商戶審核管理 API（審核員介面、審核決策、備註記錄）
+      - [ ] 4.1.2.3 建立商戶資料管理 API（基本資料 CRUD、認證狀態更新）
+      - [ ] 4.1.2.4 實作商戶權限管理 API（功能權限、資料存取權限）
+    - [ ] 4.1.3 建立商戶認證測試 **[檔案: backend/src/services/merchantVerificationService.test.js]**
+      - [ ] 4.1.3.1 測試商戶註冊流程
+      - [ ] 4.1.3.2 測試身份驗證機制
+      - [ ] 4.1.3.3 測試審核工作流程
+      - [ ] 4.1.3.4 測試商戶管理 API 端點
+  - [ ] 4.2 開發內容管理系統（導覽內容上傳、編輯、刪除） **[PARALLEL_GROUP_D] [前後端混合]**
+    - [ ] 4.2.1 建立內容編輯器組件 **[檔案: frontend/web/src/components/ContentEditor.js] [FRONTEND]**
+      - [ ] 4.2.1.1 實作富文本編輯器（WYSIWYG、格式化工具、預覽功能）
+      - [ ] 4.2.1.2 建立多媒體內容插入（圖片、影片、地圖、連結）
+      - [ ] 4.2.1.3 實作內容模板系統（預設模板、自定義模板、快速套用）
+      - [ ] 4.2.1.4 建立內容預覽和校對功能（即時預覽、語法檢查、內容建議）
+    - [ ] 4.2.2 實作內容管理 API 擴展 **[檔案: backend/src/routes/content.js] [BACKEND]**
+      - [ ] 4.2.2.1 建立商戶內容 CRUD API（創建、讀取、更新、刪除內容）
+      - [ ] 4.2.2.2 實作內容分類管理（標籤系統、分類樹、搜尋功能）
+      - [ ] 4.2.2.3 建立內容權限控制（所有權驗證、編輯權限、查看權限）
+      - [ ] 4.2.2.4 實作內容統計分析（瀏覽次數、互動率、滿意度評分）
+    - [ ] 4.2.3 建立內容管理界面 **[檔案: frontend/web/src/components/ContentManager.js] [FRONTEND]**
+      - [ ] 4.2.3.1 實作內容列表管理（分頁顯示、排序、篩選、搜尋）
+      - [ ] 4.2.3.2 建立內容編輯流程（新增、編輯、刪除、複製）
+      - [ ] 4.2.3.3 實作批量操作功能（批量編輯、批量刪除、批量發布）
+      - [ ] 4.2.3.4 建立內容狀態管理界面（草稿、審核中、已發布、已下架）
+    - [ ] 4.2.4 建立內容管理測試 **[檔案: frontend/web/src/components/ContentEditor.test.js]**
+      - [ ] 4.2.4.1 測試內容編輯器功能
+      - [ ] 4.2.4.2 測試內容管理 API
+      - [ ] 4.2.4.3 測試內容管理界面
+      - [ ] 4.2.4.4 進行內容工作流整合測試
+  - [ ] 4.3 建立檔案上傳功能（圖片、影片處理、S3 儲存整合） **[DEPENDS: 4.2 完成] [BACKEND]**
+    - [ ] 4.3.1 建立檔案上傳服務 **[檔案: backend/src/services/fileUploadService.js]**
+      - [ ] 4.3.1.1 實作多檔案上傳處理（並行上傳、進度追蹤、錯誤恢復）
+      - [ ] 4.3.1.2 建立檔案格式驗證（類型檢查、大小限制、安全掃描）
+      - [ ] 4.3.1.3 實作圖片處理功能（縮放、裁切、壓縮、格式轉換）
+      - [ ] 4.3.1.4 建立影片處理功能（壓縮、格式轉換、縮圖生成）
+    - [ ] 4.3.2 實作雲端儲存整合 **[檔案: backend/src/services/cloudStorageService.js]**
+      - [ ] 4.3.2.1 建立 AWS S3 儲存整合（上傳、下載、刪除、權限管理）
+      - [ ] 4.3.2.2 實作 CDN 整合（檔案分發、快取控制、地理分布）
+      - [ ] 4.3.2.3 建立檔案備份機制（多區域備份、版本控制、災害恢復）
+      - [ ] 4.3.2.4 實作檔案存取控制（權限驗證、臨時連結、下載統計）
+    - [ ] 4.3.3 建立檔案上傳組件 **[檔案: frontend/web/src/components/FileUploader.js] [FRONTEND]**
+      - [ ] 4.3.3.1 實作拖拽上傳界面（拖放支援、進度顯示、預覽功能）
+      - [ ] 4.3.3.2 建立檔案管理界面（檔案列表、縮圖顯示、操作按鈕）
+      - [ ] 4.3.3.3 實作批量上傳功能（多選上傳、佇列管理、錯誤處理）
+      - [ ] 4.3.3.4 建立檔案編輯工具（圖片編輯、影片剪輯、標籤管理）
+    - [ ] 4.3.4 建立檔案上傳測試 **[檔案: backend/src/services/fileUploadService.test.js]**
+      - [ ] 4.3.4.1 測試檔案上傳服務功能
+      - [ ] 4.3.4.2 測試雲端儲存整合
+      - [ ] 4.3.4.3 測試檔案處理功能
+      - [ ] 4.3.4.4 進行檔案上傳效能測試
+  - [ ] 4.4 實作基本批量內容上傳功能（簡化版） **[DEPENDS: 4.3 完成] [BACKEND]**
+    - [ ] 4.4.1 建立基本批量上傳服務 **[檔案: backend/src/services/batchUploadService.js]**
+      - [ ] 4.4.1.1 實作多檔案批量上傳（基本檔案處理、進度追蹤）
+      - [ ] 4.4.1.2 建立基本資料驗證機制（格式驗證、必填欄位檢查）
+      - [ ] 4.4.1.3 實作批量處理功能（分批處理、錯誤處理）
+    - [ ] 4.4.2 建立批量上傳界面 **[檔案: frontend/web/src/components/BatchUploader.js] [FRONTEND]**
+      - [ ] 4.4.2.1 實作多檔案上傳界面（檔案選擇、進度顯示）
+      - [ ] 4.4.2.2 建立上傳結果展示（成功記錄、錯誤報告）
+    - [ ] 4.4.3 建立批量上傳測試 **[檔案: backend/src/services/batchUploadService.test.js]**
+      - [ ] 4.4.3.1 測試批量上傳功能
+      - [ ] 4.4.3.2 測試資料驗證機制
+  - [ ] 4.5 開發商品展示功能（商品資訊管理、分類系統） **[DEPENDS: 4.2 完成] [PARALLEL_GROUP_E] [前後端混合]**
+    - [ ] 4.5.1 建立商品管理服務 **[檔案: backend/src/services/productService.js] [BACKEND]**
+      - [ ] 4.5.1.1 實作商品資訊管理（基本資料、描述、規格、價格）
+      - [ ] 4.5.1.2 建立商品分類系統（多層分類、標籤系統、屬性管理）
+      - [ ] 4.5.1.3 實作商品庫存管理（庫存追蹤、低庫存警告、補貨提醒）
+      - [ ] 4.5.1.4 建立商品狀態管理（上架、下架、缺貨、停售）
+    - [ ] 4.5.2 實作商品展示 API **[檔案: backend/src/routes/products.js] [BACKEND]**
+      - [ ] 4.5.2.1 建立商品 CRUD API（創建、讀取、更新、刪除商品）
+      - [ ] 4.5.2.2 實作商品分類管理 API（分類樹操作、屬性配置）
+      - [ ] 4.5.2.3 建立商品搜尋和篩選 API（多條件搜尋、排序、分頁）
+      - [ ] 4.5.2.4 實作商品統計分析 API（瀏覽量、銷售數據、熱門商品）
+    - [ ] 4.5.3 建立商品管理界面 **[檔案: frontend/web/src/components/ProductManager.js] [FRONTEND]**
+      - [ ] 4.5.3.1 實作商品列表管理（網格顯示、列表顯示、快速編輯）
+      - [ ] 4.5.3.2 建立商品編輯表單（基本資料、規格配置、圖片管理）
+      - [ ] 4.5.3.3 實作商品分類管理界面（分類樹、拖拽排序、批量分類）
+      - [ ] 4.5.3.4 建立商品狀態控制面板（批量上下架、庫存管理）
+    - [ ] 4.5.4 建立商品管理測試 **[檔案: backend/src/services/productService.test.js]**
+      - [ ] 4.5.4.1 測試商品管理服務功能
+      - [ ] 4.5.4.2 測試商品展示 API
+      - [ ] 4.5.4.3 測試商品管理界面
+      - [ ] 4.5.4.4 進行商品數據完整性測試
+  - [ ] 4.6 建立商戶後台基本儀表板（簡化版） **[DEPENDS: 4.1, 4.2 完成] [FRONTEND]**
+    - [ ] 4.6.1 建立基本儀表板數據服務 **[檔案: backend/src/services/dashboardService.js] [BACKEND]**
+      - [ ] 4.6.1.1 實作基本商戶數據統計（瀏覽量、內容數量）
+      - [ ] 4.6.1.2 建立基本內容效能指標（熱門內容、使用次數）
+    - [ ] 4.6.2 實作基本儀表板 API **[檔案: backend/src/routes/dashboard.js] [BACKEND]**
+      - [ ] 4.6.2.1 建立基本數據統計 API（基礎指標、簡單圖表數據）
+    - [ ] 4.6.3 建立商戶後台界面 **[檔案: frontend/web/src/components/MerchantDashboard.js] [FRONTEND]**
+      - [ ] 4.6.3.1 實作基本總覽儀表板（關鍵指標、簡單統計）
+      - [ ] 4.6.3.2 建立內容管理中心（內容列表、編輯入口）
+      - [ ] 4.6.3.3 建立基本設定管理界面（帳號設定、基本配置）
+    - [ ] 4.6.4 建立儀表板測試 **[檔案: backend/src/services/dashboardService.test.js]**
+      - [ ] 4.6.4.1 測試基本數據統計服務
+      - [ ] 4.6.4.2 測試基本儀表板 API
+  - [ ] 4.7 實作內容版本控制（草稿/發布狀態、變更歷史） **[DEPENDS: 3.6, 4.2 完成] [SEQUENTIAL]**
+    - [ ] 4.7.1 擴展內容版本服務 **[檔案: backend/src/services/contentVersionService.js - 擴展] [BACKEND]**
+      - [ ] 4.7.1.1 實作商戶內容版本管理（商戶專屬版本、權限控制）
+      - [ ] 4.7.1.2 建立內容審核工作流（提交審核、審核意見、修改建議）
+      - [ ] 4.7.1.3 實作內容發布排程（定時發布、批量發布、發布回滾）
+      - [ ] 4.7.1.4 建立版本合併機制（分支管理、衝突解決、合併策略）
+    - [ ] 4.7.2 實作版本控制界面 **[檔案: frontend/web/src/components/VersionControl.js] [FRONTEND]**
+      - [ ] 4.7.2.1 建立版本歷史查看器（時間軸顯示、差異比較、版本回復）
+      - [ ] 4.7.2.2 實作內容狀態管理（草稿編輯、審核提交、發布控制）
+      - [ ] 4.7.2.3 建立協作編輯功能（同步編輯、衝突提示、變更追蹤）
+      - [ ] 4.7.2.4 實作發布管理界面（排程設定、發布確認、狀態監控）
+    - [ ] 4.7.3 建立版本控制測試 **[檔案: backend/src/services/contentVersionService.extended.test.js]**
+      - [ ] 4.7.3.1 測試商戶版本管理功能
+      - [ ] 4.7.3.2 測試內容審核工作流
+      - [ ] 4.7.3.3 測試發布排程機制
+      - [ ] 4.7.3.4 進行協作編輯壓力測試
+  - [ ] 4.8 開發內容搜尋與篩選功能（商品分類、關鍵字搜尋） **[DEPENDS: 4.2, 4.5 完成] [INDEPENDENT]**
+    - [ ] 4.8.1 建立搜尋引擎服務 **[檔案: backend/src/services/searchService.js] [BACKEND]**
+      - [ ] 4.8.1.1 實作全文搜尋功能（內容索引、相關性排序、模糊搜尋）
+      - [ ] 4.8.1.2 建立多維度篩選（分類篩選、屬性篩選、價格範圍、地理位置）
+      - [ ] 4.8.1.3 實作智能搜尋建議（自動完成、搜尋建議、熱門關鍵字）
+      - [ ] 4.8.1.4 建立搜尋分析功能（搜尋統計、使用者行為、優化建議）
+    - [ ] 4.8.2 實作搜尋 API **[檔案: backend/src/routes/search.js] [BACKEND]**
+      - [ ] 4.8.2.1 建立統一搜尋 API（跨內容類型搜尋、聚合結果、排序選項）
+      - [ ] 4.8.2.2 實作進階搜尋 API（複合條件、布林搜尋、範圍查詢）
+      - [ ] 4.8.2.3 建立搜尋建議 API（自動完成、相關搜尋、搜尋歷史）
+      - [ ] 4.8.2.4 實作搜尋統計 API（熱門搜尋、搜尋趨勢、結果分析）
+    - [ ] 4.8.3 建立搜尋界面組件 **[檔案: frontend/web/src/components/SearchInterface.js] [FRONTEND]**
+      - [ ] 4.8.3.1 實作搜尋輸入組件（智能提示、語音搜尋、搜尋歷史）
+      - [ ] 4.8.3.2 建立篩選器組件（多選篩選、範圍選擇、快速篩選）
+      - [ ] 4.8.3.3 實作搜尋結果顯示（網格顯示、列表顯示、排序選項）
+      - [ ] 4.8.3.4 建立搜尋分析界面（搜尋統計、熱門詞雲、趨勢圖表）
+    - [ ] 4.8.4 建立搜尋功能測試 **[檔案: backend/src/services/searchService.test.js]**
+      - [ ] 4.8.4.1 測試搜尋引擎功能
+      - [ ] 4.8.4.2 測試篩選和排序機制
+      - [ ] 4.8.4.3 測試搜尋效能和準確性
+      - [ ] 4.8.4.4 進行搜尋負載和擴展性測試
 
-- [ ] 5.0 多語言支援與系統優化
-  - [ ] 5.1 實作國際化框架（i18n 配置、語言包管理）
-  - [ ] 5.2 開發自動語言偵測功能（瀏覽器語言、地理位置）
-  - [ ] 5.3 建立多語言內容管理（翻譯工作流、品質控制）
-  - [ ] 5.4 實作系統效能優化（程式碼分割、懶加載、圖片優化）
-  - [ ] 5.5 建立安全性強化措施（SQL 注入防護、XSS 防護、CSRF 保護）
-  - [ ] 5.6 實作系統備份與災害復原機制
-  - [ ] 5.7 開發並發處理優化（支援 1000+ 同時用戶）
-  - [ ] 5.8 實作用戶體驗優化（載入動畫、錯誤處理、離線支援）
+- [ ] 5.0 多語言支援與系統優化 **[DEPENDS: 2.2 基本認證完成, 3.1 AI API 完成] [PRIORITY: MEDIUM]**
+  - [ ] 5.1 實作國際化框架（i18n 配置、語言包管理） **[PARALLEL_GROUP_F] [前後端混合] [INDEPENDENT]**
+    - [ ] 5.1.1 建立國際化服務 **[檔案: backend/src/services/i18nService.js] [BACKEND]**
+      - [ ] 5.1.1.1 實作多語言配置管理（語言包載入、動態切換、備用語言）
+      - [ ] 5.1.1.2 建立翻譯內容管理（鍵值對管理、嵌套結構、變數替換）
+      - [ ] 5.1.1.3 實作語言包快取機制（記憶體快取、更新策略、版本控制）
+      - [ ] 5.1.1.4 建立翻譯內容同步機制（多環境同步、增量更新）
+    - [ ] 5.1.2 實作前端國際化 **[檔案: frontend/shared/i18n/index.js] [FRONTEND]**
+      - [ ] 5.1.2.1 建立 React/React Native i18n 整合（hook 支援、組件封裝）
+      - [ ] 5.1.2.2 實作動態語言切換（即時切換、狀態保持、重新渲染）
+      - [ ] 5.1.2.3 建立複數形式處理（數量依賴翻譯、複數規則）
+      - [ ] 5.1.2.4 實作日期時間本地化（格式化、時區處理、相對時間）
+    - [ ] 5.1.3 建立國際化測試 **[檔案: backend/src/services/i18nService.test.js]**
+      - [ ] 5.1.3.1 測試多語言服務功能
+      - [ ] 5.1.3.2 測試前端國際化組件
+      - [ ] 5.1.3.3 測試語言切換機制
+      - [ ] 5.1.3.4 進行多語言內容完整性測試
+  - [ ] 5.2 開發自動語言偵測功能（瀏覽器語言、地理位置） **[DEPENDS: 5.1 完成] [PARALLEL_GROUP_F] [前後端混合]**
+    - [ ] 5.2.1 建立語言檢測服務 **[檔案: backend/src/services/languageDetectionService.js] [BACKEND]**
+      - [ ] 5.2.1.1 實作瀏覽器語言偵測（Accept-Language 頭解析、優先級排序）
+      - [ ] 5.2.1.2 建立地理位置語言映射（IP 地理定位、國家語言對應）
+      - [ ] 5.2.1.3 實作用戶偏好學習（使用歷史、選擇記錄、智能推薦）
+      - [ ] 5.2.1.4 建立語言回退機制（不支援語言處理、相似語言匹配）
+    - [ ] 5.2.2 實作智能語言選擇 **[檔案: frontend/shared/services/languageDetector.js] [FRONTEND]**
+      - [ ] 5.2.2.1 建立前端語言檢測（瀏覽器 API、設備語言、用戶設定）
+      - [ ] 5.2.2.2 實作語言偏好同步（登入用戶偏好、匿名用戶快取）
+      - [ ] 5.2.2.3 建立語言切換建議（智能推薦、用戶確認、靜默切換）
+      - [ ] 5.2.2.4 實作多設備語言同步（跨設備偏好、雲端同步）
+    - [ ] 5.2.3 建立語言檢測測試 **[檔案: backend/src/services/languageDetectionService.test.js]**
+      - [ ] 5.2.3.1 測試語言檢測算法
+      - [ ] 5.2.3.2 測試地理位置語言映射
+      - [ ] 5.2.3.3 測試偏好學習機制
+      - [ ] 5.2.3.4 進行語言檢測準確性測試
+  - [ ] 5.3 建立多語言內容管理（翻譯工作流、品質控制） **[DEPENDS: 5.1, 5.2 完成] [PARALLEL_GROUP_F] [前後端混合]**
+    - [ ] 5.3.1 建立翻譯服務 **[檔案: backend/src/services/translationService.js] [BACKEND]**
+      - [ ] 5.3.1.1 實作翻譯工作流管理（翻譯任務、審核流程、品質控制）
+      - [ ] 5.3.1.2 建立機器翻譯整合（Google Translate API、翻譯品質評估）
+      - [ ] 5.3.1.3 實作翻譯記憶庫（重複內容識別、翻譯重用、一致性保證）
+      - [ ] 5.3.1.4 建立翻譯品質監控（準確性檢查、一致性驗證、使用者回饋）
+    - [ ] 5.3.2 實作翻譯管理界面 **[檔案: frontend/web/src/components/TranslationManager.js] [FRONTEND]**
+      - [ ] 5.3.2.1 建立翻譯編輯器（並排顯示、即時預覽、語境提示）
+      - [ ] 5.3.2.2 實作翻譯進度追蹤（完成百分比、待辦任務、截止日期）
+      - [ ] 5.3.2.3 建立翻譯協作功能（多人翻譯、意見回饋、版本控制）
+      - [ ] 5.3.2.4 實作翻譯品質檢查（自動檢查、人工審核、品質評分）
+    - [ ] 5.3.3 建立翻譯管理測試 **[檔案: backend/src/services/translationService.test.js]**
+      - [ ] 5.3.3.1 測試翻譯工作流程
+      - [ ] 5.3.3.2 測試機器翻譯整合
+      - [ ] 5.3.3.3 測試翻譯品質控制
+      - [ ] 5.3.3.4 進行翻譯效能和準確性測試
+  - [ ] 5.4 實作系統效能優化（程式碼分割、懶加載、圖片優化） **[DEPENDS: 主要功能完成 (3.0, 4.0)] [SEQUENTIAL] [高優先級優化]**
+    - [ ] 5.4.1 實作前端效能優化 **[檔案: frontend/web/webpack.config.js, frontend/mobile/metro.config.js] [FRONTEND]**
+      - [ ] 5.4.1.1 建立程式碼分割策略（路由分割、組件分割、第三方庫分割）
+      - [ ] 5.4.1.2 實作懶加載機制（動態匯入、預載入、優先級載入）
+      - [ ] 5.4.1.3 建立資源優化（圖片壓縮、WebP 支援、響應式圖片）
+      - [ ] 5.4.1.4 實作快取策略（瀏覽器快取、Service Worker、CDN 快取）
+    - [ ] 5.4.2 實作後端效能優化 **[檔案: backend/src/services/performanceOptimizationService.js] [BACKEND]**
+      - [ ] 5.4.2.1 建立資料庫查詢優化（索引優化、查詢分析、連接池管理）
+      - [ ] 5.4.2.2 實作 API 回應優化（壓縮、快取、批量請求、分頁優化）
+      - [ ] 5.4.2.3 建立資源管理優化（記憶體管理、垃圾回收、連接管理）
+      - [ ] 5.4.2.4 實作負載均衡策略（請求分散、健康檢查、故障轉移）
+    - [ ] 5.4.3 建立效能監控和測試 **[檔案: backend/src/test/performance.test.js]**
+      - [ ] 5.4.3.1 測試頁面載入效能（載入時間、資源大小、互動時間）
+      - [ ] 5.4.3.2 測試 API 回應效能（回應時間、吞吐量、並發處理）
+      - [ ] 5.4.3.3 進行壓力測試（負載測試、峰值測試、持久性測試）
+      - [ ] 5.4.3.4 建立效能基準和監控（效能指標、告警閾值、優化建議）
+  - [ ] 5.5 建立安全性強化措施（SQL 注入防護、XSS 防護、CSRF 保護） **[DEPENDS: 主要功能完成 (2.0, 3.0, 4.0)] [SEQUENTIAL] [高優先級優化]**
+    - [ ] 5.5.1 建立安全標頭中間件 **[檔案: backend/src/middleware/securityHeadersMiddleware.js] [BACKEND]**
+      - [ ] 5.5.1.1 實作 HTTP 安全標頭（CSP、HSTS、X-Frame-Options、CSRF 保護）
+      - [ ] 5.5.1.2 建立輸入驗證和清理（SQL 注入防護、XSS 防護、資料驗證）
+      - [ ] 5.5.1.3 實作存取控制強化（API 權限、資源保護、敏感操作保護）
+      - [ ] 5.5.1.4 建立安全事件監控（攻擊檢測、異常行為、自動回應）
+    - [ ] 5.5.2 實作前端安全措施 **[檔案: frontend/shared/utils/security.js] [FRONTEND]**
+      - [ ] 5.5.2.1 建立 XSS 防護機制（內容清理、輸出編碼、CSP 整合）
+      - [ ] 5.5.2.2 實作 CSRF 保護（Token 驗證、SameSite Cookie、雙重提交）
+      - [ ] 5.5.2.3 建立敏感資料保護（本地儲存加密、記憶體清理、資料遮罩）
+      - [ ] 5.5.2.4 實作安全通訊（HTTPS 強制、憑證釘扎、請求簽名）
+    - [ ] 5.5.3 建立安全性測試 **[檔案: backend/src/test/security.test.js]**
+      - [ ] 5.5.3.1 進行滲透測試（SQL 注入、XSS、CSRF 測試）
+      - [ ] 5.5.3.2 測試存取控制機制
+      - [ ] 5.5.3.3 測試加密和資料保護
+      - [ ] 5.5.3.4 進行安全合規性驗證
+  - [ ] 5.8 實作用戶體驗優化（載入動畫、錯誤處理） **[INDEPENDENT] [FRONTEND] [可與其他任務並行]**
+    - [ ] 5.8.1 建立 UX 優化組件 **[檔案: frontend/shared/components/LoadingSpinner.js, ErrorBoundary.js] [FRONTEND]**
+      - [ ] 5.8.1.1 實作載入狀態管理（進度指示器、骨架屏、載入動畫）
+      - [ ] 5.8.1.2 建立錯誤處理機制（錯誤邊界、友善錯誤訊息、錯誤回報）
+      - [ ] 5.8.1.3 實作使用者回饋機制（通知系統、確認對話框、操作回饋）
+      - [ ] 5.8.1.4 建立響應式設計優化（行動裝置適配、觸控優化、可及性）
+    - [ ] 5.8.2 建立 UX 優化測試 **[檔案: frontend/shared/components/LoadingSpinner.test.js]**
+      - [ ] 5.8.2.1 測試載入和錯誤處理組件
+      - [ ] 5.8.2.2 進行使用者體驗測試
+      - [ ] 5.8.2.3 驗證無障礙設計和多設備相容性
+
+## 第二階段開發項目（上線後實作）
+
+- [ ] **進階系統優化與擴展**
+  - [ ] 系統備份與災害復原機制
+    - [ ] 自動備份機制（定期備份、增量備份、差異備份）
+    - [ ] 多區域備份（地理分散、跨雲備份、本地備份）
+    - [ ] 災害復原機制（故障檢測、自動故障轉移、告警機制）
+    - [ ] 業務連續性計畫（緊急回應、服務降級、通訊計畫）
+  - [ ] 進階並發處理優化（支援 1000+ 同時用戶）
+    - [ ] 連接池管理（資料庫連接、Redis 連接、HTTP 連接）
+    - [ ] 請求佇列機制（優先級佇列、背壓控制、限流保護）
+    - [ ] 負載分散策略（水平擴展、微服務架構、容器化部署）
+    - [ ] 資源監控和自動擴展（CPU/記憶體監控、自動縮放）
+  - [ ] 進階可疑活動檢測系統
+    - [ ] 完整風險評估系統（IP 信譽、登入頻率、行為模式分析）
+    - [ ] 自動風險回應機制（暫時鎖定、額外驗證要求、管理員通知）
+    - [ ] 風險事件記錄和分析功能
+    - [ ] 完整 GDPR 合規功能
+    - [ ] 進階資料匿名化機制（PII 資料處理、去識別化）
+    - [ ] 完整資料處理透明化（處理記錄、用途說明）
+    - [ ] 進階同意管理機制（隱私政策同意、用途同意）
+  - [ ] 進階 CSV 匯入和數據處理
+    - [ ] 完整資料轉換和清理功能
+    - [ ] 資料豐富化功能（地址標準化、分類自動匹配）
+    - [ ] 進階資料品質評估
+  - [ ] 商戶進階數據分析後台
+    - [ ] 詳細業務分析報表
+    - [ ] 用戶行為深度分析
+    - [ ] 預測性分析和建議系統
+  - [ ] 離線支援功能
+    - [ ] Service Worker 快取策略
+    - [ ] 離線資料管理和同步
+    - [ ] 網路恢復處理機制

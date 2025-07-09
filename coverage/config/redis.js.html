@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">7.2% </span>
+                <span class="strong">12.61% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>8/111</span>
+                <span class='fraction'>14/111</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">14.28% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/21</span>
+                <span class='fraction'>3/21</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">4.76% </span>
+                <span class="strong">14.28% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>1/21</span>
+                <span class='fraction'>3/21</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">7.27% </span>
+                <span class="strong">12.72% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>8/110</span>
+                <span class='fraction'>14/110</span>
             </div>
         
             
@@ -314,18 +314,18 @@
 <a name='L249'></a><a href='#L249'>249</a>
 <a name='L250'></a><a href='#L250'>250</a>
 <a name='L251'></a><a href='#L251'>251</a>
-<a name='L252'></a><a href='#L252'>252</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-yes">4x</span>
+<a name='L252'></a><a href='#L252'>252</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -405,8 +405,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">12x</span>
+<span class="cline-any cline-yes">12x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -428,9 +428,9 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">12x</span>
+<span class="cline-any cline-yes">12x</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -438,8 +438,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">12x</span>
+<span class="cline-any cline-yes">12x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -559,9 +559,9 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -655,9 +655,9 @@ class RedisConnection {
     }
   }
 &nbsp;
-<span class="fstat-no" title="function not covered" >  ge</span>tClient() {
-<span class="cstat-no" title="statement not covered" >    if (!this.client || !this.isConnected) {</span>
-<span class="cstat-no" title="statement not covered" >      throw new Error('Redis client not connected. Call connect() first.');</span>
+  getClient() {
+    <span class="missing-if-branch" title="else path not taken" >E</span>if (!this.client || <span class="branch-1 cbranch-no" title="branch not covered" >!this.isConnected)</span> {
+      throw new Error('Redis client not connected. Call connect() first.');
     }
 <span class="cstat-no" title="statement not covered" >    return this.client;</span>
   }
@@ -678,9 +678,9 @@ class RedisConnection {
   /**
    * 設置快取資料
    */
-<span class="fstat-no" title="function not covered" >  as</span>ync set(key, value, options = <span class="branch-0 cbranch-no" title="branch not covered" >{})</span> {
-<span class="cstat-no" title="statement not covered" >    try {</span>
-      const client = <span class="cstat-no" title="statement not covered" >this.getClient();</span>
+  async set(key, value, options = {}) {
+    try {
+      const client = this.getClient();
       const serializedValue = <span class="cstat-no" title="statement not covered" >JSON.stringify(value);</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >      if (options.ttl) {</span>
@@ -689,8 +689,8 @@ class RedisConnection {
 &nbsp;
 <span class="cstat-no" title="statement not covered" >      return await client.set(key, serializedValue);</span>
     } catch (error) {
-<span class="cstat-no" title="statement not covered" >      console.error('❌ Redis set error:', error);</span>
-<span class="cstat-no" title="statement not covered" >      throw error;</span>
+      console.error('❌ Redis set error:', error);
+      throw error;
     }
   }
 &nbsp;
@@ -823,7 +823,7 @@ module.exports = {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-07-04T10:52:44.940Z
+                at 2025-07-07T13:38:01.841Z
             </div>
         <script src="../prettify.js"></script>
         <script>

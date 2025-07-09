@@ -19,6 +19,26 @@
             "date": 1751561480859,
             "name": "/Users/fuchangwei/Projects/localite-v4/backend/logs/error-2025-07-04.log",
             "hash": "a7c420d9cd7602acbe0e8a9d098b69336e873ab62826d0f2119b0768e2bc65ac"
+        },
+        {
+            "date": 1751722094349,
+            "name": "/Users/fuchangwei/Projects/localite-v4/backend/logs/error-2025-07-05.log",
+            "hash": "db9b41c73c2e622a82081bb22b395018e7fce591a2ac7e85240a10209da6aa5c"
+        },
+        {
+            "date": 1751888049388,
+            "name": "/Users/fuchangwei/Projects/localite-v4/backend/logs/error-2025-07-07.log",
+            "hash": "56b36d181f9b4daf5023456f3d86656edc638bb90afaed81731f021c357475fd"
+        },
+        {
+            "date": 1751978986048,
+            "name": "/Users/fuchangwei/Projects/localite-v4/backend/logs/error-2025-07-08.log",
+            "hash": "a9cbf06330f3a7f3d8855e1aea9b32eaebac4108ce400823940cba0c69959cb3"
+        },
+        {
+            "date": 1751991860399,
+            "name": "/Users/fuchangwei/Projects/localite-v4/backend/logs/error-2025-07-09.log",
+            "hash": "b8d187a1133038e8ee59ec1d47fce8695f6199a7b61c7025fe2006c574125c0b"
         }
     ],
     "hashType": "sha256"

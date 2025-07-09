@@ -24,7 +24,7 @@ class RedisConnection {
       this.client = createClient({
         url: redisUrl,
         socket: {
-          reconnectStrategy: (retries) => {
+          reconnectStrategy: retries => {
             if (retries > this.maxReconnectAttempts) {
               console.error('❌ Redis max reconnection attempts reached');
               return false;
@@ -41,7 +41,7 @@ class RedisConnection {
       });
 
       // 設置事件監聽器
-      this.client.on('error', (err) => {
+      this.client.on('error', err => {
         console.error('❌ Redis Client Error:', err);
         this.isConnected = false;
       });
@@ -208,7 +208,7 @@ class RedisConnection {
     try {
       const client = this.getClient();
       const values = await client.mGet(keys);
-      return values.map((value) => (value ? JSON.parse(value) : null));
+      return values.map(value => (value ? JSON.parse(value) : null));
     } catch (error) {
       console.error('❌ Redis mget error:', error);
       throw error;
@@ -237,6 +237,84 @@ class RedisConnection {
       return await client.info();
     } catch (error) {
       console.error('❌ Redis info error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 增加數值
+   */
+  async incr(key) {
+    try {
+      const client = this.getClient();
+      return await client.incr(key);
+    } catch (error) {
+      console.error('❌ Redis incr error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 減少數值
+   */
+  async decr(key) {
+    try {
+      const client = this.getClient();
+      return await client.decr(key);
+    } catch (error) {
+      console.error('❌ Redis decr error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 批量操作
+   */
+  multi() {
+    try {
+      const client = this.getClient();
+      return client.multi();
+    } catch (error) {
+      console.error('❌ Redis multi error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 獲取所有匹配的鍵
+   */
+  async keys(pattern = '*') {
+    try {
+      const client = this.getClient();
+      return await client.keys(pattern);
+    } catch (error) {
+      console.error('❌ Redis keys error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 刪除多個鍵
+   */
+  async del(...keys) {
+    try {
+      const client = this.getClient();
+      return await client.del(keys);
+    } catch (error) {
+      console.error('❌ Redis del error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 清空當前資料庫
+   */
+  async flushdb() {
+    try {
+      const client = this.getClient();
+      return await client.flushDb();
+    } catch (error) {
+      console.error('❌ Redis flushdb error:', error);
       throw error;
     }
   }

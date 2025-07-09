@@ -17,6 +17,7 @@ class MFAService {
       step: 30, // 30 秒有效期
       window: 1, // 允許前後一個時間窗口
       issuer: process.env.MFA_ISSUER || 'Localite',
+      maxAttempts: 3, // 最多嘗試 3 次
     };
 
     this.smsConfig = {
@@ -211,8 +212,16 @@ class MFAService {
       const currentAttempts = (await redisConnection.get(counterKey)) || 0;
       const dailyAttempts = (await redisConnection.get(dailyCounterKey)) || 0;
 
-      const maxAttempts =
-        type === this.MFA_TYPE.SMS ? this.smsConfig.maxAttempts : this.backupCodeConfig.usageLimit;
+      const maxAttempts = (() => {
+        switch (type) {
+          case this.MFA_TYPE.SMS:
+            return this.smsConfig.maxAttempts;
+          case this.MFA_TYPE.TOTP:
+            return this.totpConfig.maxAttempts;
+          default:
+            return this.backupCodeConfig.usageLimit;
+        }
+      })();
 
       const maxDailyAttempts = type === this.MFA_TYPE.SMS ? this.smsConfig.maxDailyAttempts : 20; // 其他類型的每日限制
 

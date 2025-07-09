@@ -1,0 +1,190 @@
+{"level":"info","message":"Rate limiting Redis 連接已建立","service":"localite-backend","timestamp":"2025-07-07T15:29:44.305Z"}
+{"backupCodeConfig":{"codeLength":8,"totalCodes":10,"usageLimit":1},"level":"info","message":"MFA 服務初始化完成","service":"localite-backend","smsConfig":{"codeLength":6,"expiry":300,"maxAttempts":3,"maxDailyAttempts":10,"resendInterval":60},"timestamp":"2025-07-07T15:29:44.452Z","totpConfig":{"algorithm":"sha1","digits":6,"issuer":"Localite","maxAttempts":3,"step":30,"window":1}}
+{"level":"info","message":"Rate limiting Redis 連接已建立","service":"localite-backend","timestamp":"2025-07-07T15:29:44.551Z"}
+{"backupCodeConfig":{"codeLength":8,"totalCodes":10,"usageLimit":1},"level":"info","message":"MFA 服務初始化完成","service":"localite-backend","smsConfig":{"codeLength":6,"expiry":300,"maxAttempts":3,"maxDailyAttempts":10,"resendInterval":60},"timestamp":"2025-07-07T15:29:44.551Z","totpConfig":{"algorithm":"sha1","digits":6,"issuer":"Localite","maxAttempts":3,"step":30,"window":1}}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:29:44.597Z"}
+{"environment":"test","level":"info","message":"使用測試用戶","service":"localite-backend","testUser":"security-test","timestamp":"2025-07-07T15:29:44.612Z","uid":"security-test-user-123"}
+{"ip":"::ffff:127.0.0.1","level":"warn","message":"檢測到可疑登入模式","reasons":["新IP地址","新設備"],"riskScore":45,"service":"localite-backend","timestamp":"2025-07-07T15:29:44.619Z","uid":"security-test-user-123"}
+{"email":"security-test@localite.com","level":"info","loginCount":1,"message":"用戶登入成功","riskScore":45,"service":"localite-backend","suspicious":true,"timestamp":"2025-07-07T15:29:44.625Z","uid":"security-test-user-123"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:29:44.630Z"}
+{"environment":"test","level":"info","message":"使用測試用戶","service":"localite-backend","testUser":"security-test","timestamp":"2025-07-07T15:29:44.633Z","uid":"security-test-user-123"}
+{"ip":"::ffff:127.0.0.1","level":"warn","message":"檢測到可疑登入模式","reasons":["新IP地址","新設備"],"riskScore":45,"service":"localite-backend","timestamp":"2025-07-07T15:29:44.636Z","uid":"security-test-user-123"}
+{"email":"security-test@localite.com","level":"info","loginCount":2,"message":"用戶登入成功","riskScore":45,"service":"localite-backend","suspicious":true,"timestamp":"2025-07-07T15:29:44.642Z","uid":"security-test-user-123"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:29:44.644Z"}
+{"environment":"test","level":"info","message":"使用測試用戶","service":"localite-backend","testUser":"security-test","timestamp":"2025-07-07T15:29:44.645Z","uid":"security-test-user-123"}
+{"ip":"::ffff:127.0.0.1","level":"warn","message":"檢測到可疑登入模式","reasons":["新IP地址","新設備"],"riskScore":45,"service":"localite-backend","timestamp":"2025-07-07T15:29:44.648Z","uid":"security-test-user-123"}
+{"email":"security-test@localite.com","level":"info","loginCount":3,"message":"用戶登入成功","riskScore":45,"service":"localite-backend","suspicious":true,"timestamp":"2025-07-07T15:29:44.652Z","uid":"security-test-user-123"}
+{"environment":"test","level":"info","message":"使用測試用戶","service":"localite-backend","testUser":"security-test","timestamp":"2025-07-07T15:29:44.654Z","uid":"security-test-user-123"}
+{"ip":"::ffff:127.0.0.1","level":"warn","message":"檢測到可疑登入模式","reasons":["新設備","快速連續嘗試"],"riskScore":45,"service":"localite-backend","timestamp":"2025-07-07T15:29:44.657Z","uid":"security-test-user-123"}
+{"email":"security-test@localite.com","level":"info","loginCount":4,"message":"用戶登入成功","riskScore":45,"service":"localite-backend","suspicious":true,"timestamp":"2025-07-07T15:29:44.660Z","uid":"security-test-user-123"}
+{"environment":"test","level":"info","message":"使用測試用戶","service":"localite-backend","testUser":"security-test","timestamp":"2025-07-07T15:29:44.663Z","uid":"security-test-user-123"}
+{"ip":"::ffff:127.0.0.1","level":"warn","message":"檢測到可疑登入模式","reasons":["新設備","快速連續嘗試"],"riskScore":45,"service":"localite-backend","timestamp":"2025-07-07T15:29:44.665Z","uid":"security-test-user-123"}
+{"email":"security-test@localite.com","level":"info","loginCount":5,"message":"用戶登入成功","riskScore":45,"service":"localite-backend","suspicious":true,"timestamp":"2025-07-07T15:29:44.669Z","uid":"security-test-user-123"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:29:44.671Z"}
+{"environment":"test","level":"info","message":"使用測試用戶","service":"localite-backend","testUser":"security-test","timestamp":"2025-07-07T15:29:44.673Z","uid":"security-test-user-123"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:29:44.676Z"}
+{"environment":"test","level":"info","message":"使用測試用戶","service":"localite-backend","testUser":"security-test","timestamp":"2025-07-07T15:29:44.678Z","uid":"security-test-user-123"}
+{"environment":"test","level":"info","message":"使用測試用戶","service":"localite-backend","testUser":"security-test","timestamp":"2025-07-07T15:29:44.679Z","uid":"security-test-user-123"}
+{"environment":"test","level":"info","message":"使用測試用戶","service":"localite-backend","testUser":"security-test","timestamp":"2025-07-07T15:29:44.680Z","uid":"security-test-user-123"}
+{"environment":"test","level":"info","message":"使用測試用戶","service":"localite-backend","testUser":"security-test","timestamp":"2025-07-07T15:29:44.682Z","uid":"security-test-user-123"}
+{"ip":"192.168.1.100","level":"warn","message":"檢測到可疑登入模式","reasons":["新IP地址","新設備"],"riskScore":45,"service":"localite-backend","timestamp":"2025-07-07T15:29:44.684Z","uid":"malicious-user-456"}
+{"ip":"192.168.1.100","level":"warn","message":"檢測到可疑登入模式","reasons":["快速連續嘗試"],"riskScore":25,"service":"localite-backend","timestamp":"2025-07-07T15:29:44.685Z","uid":"malicious-user-456"}
+{"environment":"test","level":"info","message":"使用測試用戶","service":"localite-backend","testUser":"security-test","timestamp":"2025-07-07T15:29:44.687Z","uid":"security-test-user-123"}
+{"ip":"192.168.1.100","level":"warn","message":"檢測到可疑登入模式","reasons":["快速連續嘗試"],"riskScore":25,"service":"localite-backend","timestamp":"2025-07-07T15:29:44.690Z","uid":"malicious-user-456"}
+{"email":"malicious@example.com","level":"info","loginCount":1,"message":"用戶登入成功","riskScore":45,"service":"localite-backend","suspicious":true,"timestamp":"2025-07-07T15:29:44.691Z","uid":"malicious-user-456"}
+{"email":"malicious@example.com","level":"info","loginCount":1,"message":"用戶登入成功","riskScore":25,"service":"localite-backend","suspicious":true,"timestamp":"2025-07-07T15:29:44.693Z","uid":"malicious-user-456"}
+{"email":"malicious@example.com","level":"info","loginCount":2,"message":"用戶登入成功","riskScore":25,"service":"localite-backend","suspicious":true,"timestamp":"2025-07-07T15:29:44.696Z","uid":"malicious-user-456"}
+{"ip":"192.168.1.100","level":"warn","message":"檢測到可疑登入模式","reasons":["快速連續嘗試"],"riskScore":25,"service":"localite-backend","timestamp":"2025-07-07T15:29:44.697Z","uid":"malicious-user-456"}
+{"ip":"192.168.1.100","level":"warn","message":"檢測到可疑登入模式","reasons":["快速連續嘗試"],"riskScore":25,"service":"localite-backend","timestamp":"2025-07-07T15:29:44.698Z","uid":"malicious-user-456"}
+{"email":"malicious@example.com","level":"info","loginCount":3,"message":"用戶登入成功","riskScore":25,"service":"localite-backend","suspicious":true,"timestamp":"2025-07-07T15:29:44.701Z","uid":"malicious-user-456"}
+{"email":"malicious@example.com","level":"info","loginCount":3,"message":"用戶登入成功","riskScore":25,"service":"localite-backend","suspicious":true,"timestamp":"2025-07-07T15:29:44.702Z","uid":"malicious-user-456"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:29:44.704Z"}
+{"environment":"test","level":"info","message":"使用測試用戶","service":"localite-backend","testUser":"security-test","timestamp":"2025-07-07T15:29:44.706Z","uid":"security-test-user-123"}
+{"endpoint":"/api/v1/auth/login","identifier":"malicious-user-456","ip":"::ffff:127.0.0.1","level":"warn","lockReason":300000,"message":"嘗試登入被鎖定的帳號","service":"localite-backend","timestamp":"2025-07-07T15:29:44.706Z"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:29:44.708Z"}
+{"enabledMethods":["totp","sms"],"level":"info","message":"用戶 MFA 狀態更新成功","service":"localite-backend","status":"enabled","timestamp":"2025-07-07T15:29:44.708Z","uid":"security-test-user-123"}
+{"environment":"test","level":"info","message":"使用測試用戶","service":"localite-backend","testUser":"security-test","timestamp":"2025-07-07T15:29:44.710Z","uid":"security-test-user-123"}
+{"level":"info","message":"MFA 要求檢查","mfaEnabled":true,"mfaRequired":true,"operation":"login","reason":"用戶已啟用 MFA，登入時需要驗證","riskFactors":[],"service":"localite-backend","timestamp":"2025-07-07T15:29:44.710Z","uid":"security-test-user-123"}
+{"enabledMethods":[],"level":"info","message":"用戶 MFA 狀態更新成功","service":"localite-backend","status":"disabled","timestamp":"2025-07-07T15:29:44.711Z","uid":"security-test-user-123"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:29:44.712Z"}
+{"enabledMethods":["totp","sms"],"level":"info","message":"用戶 MFA 狀態更新成功","service":"localite-backend","status":"enabled","timestamp":"2025-07-07T15:29:44.712Z","uid":"security-test-user-123"}
+{"level":"info","message":"TOTP 秘鑰存儲成功","service":"localite-backend","timestamp":"2025-07-07T15:29:44.713Z","uid":"security-test-user-123"}
+{"environment":"test","level":"info","message":"使用測試用戶","service":"localite-backend","testUser":"security-test","timestamp":"2025-07-07T15:29:44.715Z","uid":"security-test-user-123"}
+{"currentAttempts":1,"dailyAttempts":1,"level":"info","message":"MFA 嘗試次數增加","service":"localite-backend","timestamp":"2025-07-07T15:29:44.716Z","type":"totp","uid":"security-test-user-123"}
+{"level":"info","message":"TOTP 驗證成功","service":"localite-backend","timestamp":"2025-07-07T15:29:44.716Z","uid":"security-test-user-123"}
+{"level":"info","message":"MFA 嘗試次數重置","service":"localite-backend","timestamp":"2025-07-07T15:29:44.716Z","type":"totp","uid":"security-test-user-123"}
+{"ipAddress":"::ffff:127.0.0.1","level":"info","message":"MFA 驗證嘗試","result":"success","service":"localite-backend","success":true,"timestamp":"2025-07-07T15:29:44.716Z","type":"totp","uid":"security-test-user-123"}
+{"enabledMethods":[],"level":"info","message":"用戶 MFA 狀態更新成功","service":"localite-backend","status":"disabled","timestamp":"2025-07-07T15:29:44.717Z","uid":"security-test-user-123"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:29:44.717Z"}
+{"enabledMethods":["totp","sms"],"level":"info","message":"用戶 MFA 狀態更新成功","service":"localite-backend","status":"enabled","timestamp":"2025-07-07T15:29:44.718Z","uid":"security-test-user-123"}
+{"environment":"test","level":"info","message":"使用測試用戶","service":"localite-backend","testUser":"security-test","timestamp":"2025-07-07T15:29:44.719Z","uid":"security-test-user-123"}
+{"currentAttempts":1,"dailyAttempts":1,"level":"info","message":"MFA 嘗試次數增加","service":"localite-backend","timestamp":"2025-07-07T15:29:44.720Z","type":"totp","uid":"security-test-user-123"}
+{"ipAddress":"::ffff:127.0.0.1","level":"info","message":"MFA 驗證嘗試","result":"invalid_code","service":"localite-backend","success":false,"timestamp":"2025-07-07T15:29:44.720Z","type":"totp","uid":"security-test-user-123"}
+{"enabledMethods":[],"level":"info","message":"用戶 MFA 狀態更新成功","service":"localite-backend","status":"disabled","timestamp":"2025-07-07T15:29:44.720Z","uid":"security-test-user-123"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:29:44.721Z"}
+{"enabledMethods":["totp","sms"],"level":"info","message":"用戶 MFA 狀態更新成功","service":"localite-backend","status":"enabled","timestamp":"2025-07-07T15:29:44.721Z","uid":"security-test-user-123"}
+{"environment":"test","level":"info","message":"使用測試用戶","service":"localite-backend","testUser":"security-test","timestamp":"2025-07-07T15:29:44.722Z","uid":"security-test-user-123"}
+{"currentAttempts":1,"dailyAttempts":1,"level":"info","message":"MFA 嘗試次數增加","service":"localite-backend","timestamp":"2025-07-07T15:29:44.722Z","type":"totp","uid":"security-test-user-123"}
+{"ipAddress":"::ffff:127.0.0.1","level":"info","message":"MFA 驗證嘗試","result":"invalid_code","service":"localite-backend","success":false,"timestamp":"2025-07-07T15:29:44.722Z","type":"totp","uid":"security-test-user-123"}
+{"environment":"test","level":"info","message":"使用測試用戶","service":"localite-backend","testUser":"security-test","timestamp":"2025-07-07T15:29:44.723Z","uid":"security-test-user-123"}
+{"currentAttempts":2,"dailyAttempts":2,"level":"info","message":"MFA 嘗試次數增加","service":"localite-backend","timestamp":"2025-07-07T15:29:44.724Z","type":"totp","uid":"security-test-user-123"}
+{"ipAddress":"::ffff:127.0.0.1","level":"info","message":"MFA 驗證嘗試","result":"invalid_code","service":"localite-backend","success":false,"timestamp":"2025-07-07T15:29:44.724Z","type":"totp","uid":"security-test-user-123"}
+{"environment":"test","level":"info","message":"使用測試用戶","service":"localite-backend","testUser":"security-test","timestamp":"2025-07-07T15:29:44.725Z","uid":"security-test-user-123"}
+{"currentAttempts":3,"dailyAttempts":3,"level":"info","message":"MFA 嘗試次數增加","service":"localite-backend","timestamp":"2025-07-07T15:29:44.725Z","type":"totp","uid":"security-test-user-123"}
+{"ipAddress":"::ffff:127.0.0.1","level":"info","message":"MFA 驗證嘗試","result":"invalid_code","service":"localite-backend","success":false,"timestamp":"2025-07-07T15:29:44.725Z","type":"totp","uid":"security-test-user-123"}
+{"environment":"test","level":"info","message":"使用測試用戶","service":"localite-backend","testUser":"security-test","timestamp":"2025-07-07T15:29:44.729Z","uid":"security-test-user-123"}
+{"ipAddress":"::ffff:127.0.0.1","level":"info","message":"MFA 驗證嘗試","result":"too_many_attempts","service":"localite-backend","success":false,"timestamp":"2025-07-07T15:29:44.729Z","type":"totp","uid":"security-test-user-123"}
+{"enabledMethods":[],"level":"info","message":"用戶 MFA 狀態更新成功","service":"localite-backend","status":"disabled","timestamp":"2025-07-07T15:29:44.730Z","uid":"security-test-user-123"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:29:44.730Z"}
+{"environment":"test","level":"info","message":"使用測試用戶","service":"localite-backend","testUser":"security-test","timestamp":"2025-07-07T15:29:44.732Z","uid":"security-test-user-123"}
+{"ip":"10.0.0.1","level":"warn","message":"檢測到可疑登入模式","reasons":["新IP地址","新設備"],"riskScore":45,"service":"localite-backend","timestamp":"2025-07-07T15:29:44.737Z","uid":"security-test-user-123"}
+{"email":"security-test@localite.com","level":"info","loginCount":6,"message":"用戶登入成功","riskScore":45,"service":"localite-backend","suspicious":true,"timestamp":"2025-07-07T15:29:44.753Z","uid":"security-test-user-123"}
+{"environment":"test","level":"info","message":"使用測試用戶","service":"localite-backend","testUser":"security-test","timestamp":"2025-07-07T15:29:44.873Z","uid":"security-test-user-123"}
+{"ip":"203.0.113.1","level":"warn","message":"檢測到可疑登入模式","reasons":["新IP地址","快速連續嘗試"],"riskScore":50,"service":"localite-backend","timestamp":"2025-07-07T15:29:44.878Z","uid":"security-test-user-123"}
+{"email":"security-test@localite.com","level":"info","loginCount":7,"message":"用戶登入成功","riskScore":50,"service":"localite-backend","suspicious":true,"timestamp":"2025-07-07T15:29:44.880Z","uid":"security-test-user-123"}
+{"environment":"test","level":"info","message":"使用測試用戶","service":"localite-backend","testUser":"security-test","timestamp":"2025-07-07T15:29:44.984Z","uid":"security-test-user-123"}
+{"ip":"192.0.2.1","level":"warn","message":"檢測到可疑登入模式","reasons":["新IP地址","快速連續嘗試"],"riskScore":50,"service":"localite-backend","timestamp":"2025-07-07T15:29:44.988Z","uid":"security-test-user-123"}
+{"email":"security-test@localite.com","level":"info","loginCount":8,"message":"用戶登入成功","riskScore":50,"service":"localite-backend","suspicious":true,"timestamp":"2025-07-07T15:29:44.993Z","uid":"security-test-user-123"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:29:45.095Z"}
+{"environment":"test","level":"info","message":"使用測試用戶","service":"localite-backend","testUser":"security-test","timestamp":"2025-07-07T15:29:45.097Z","uid":"security-test-user-123"}
+{"ip":"::ffff:127.0.0.1","level":"warn","message":"檢測到可疑登入模式","reasons":["新IP地址","新設備"],"riskScore":45,"service":"localite-backend","timestamp":"2025-07-07T15:29:45.101Z","uid":"security-test-user-123"}
+{"email":"security-test@localite.com","level":"info","loginCount":9,"message":"用戶登入成功","riskScore":45,"service":"localite-backend","suspicious":true,"timestamp":"2025-07-07T15:29:45.105Z","uid":"security-test-user-123"}
+{"environment":"test","level":"info","message":"使用測試用戶","service":"localite-backend","testUser":"security-test","timestamp":"2025-07-07T15:29:45.108Z","uid":"security-test-user-123"}
+{"ip":"::ffff:127.0.0.1","level":"warn","message":"檢測到可疑登入模式","reasons":["新設備","快速連續嘗試"],"riskScore":45,"service":"localite-backend","timestamp":"2025-07-07T15:29:45.111Z","uid":"security-test-user-123"}
+{"email":"security-test@localite.com","level":"info","loginCount":10,"message":"用戶登入成功","riskScore":45,"service":"localite-backend","suspicious":true,"timestamp":"2025-07-07T15:29:45.114Z","uid":"security-test-user-123"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:29:45.116Z"}
+{"environment":"test","level":"info","message":"使用測試用戶","service":"localite-backend","testUser":"security-test","timestamp":"2025-07-07T15:29:45.117Z","uid":"security-test-user-123"}
+{"deviceFingerprint":"suspicious-device-fingerprint","ipAddress":"203.0.113.100","level":"info","message":"增強 Session 創建成功","service":"localite-backend","sessionId":"1d034d94-50ee-40e9-9b91-8b582a172c03","timestamp":"2025-07-07T15:29:45.124Z","uid":"security-test-user-123"}
+{"email":"security-test@localite.com","ipAddress":"203.0.113.100","level":"info","loginMethod":"jwt_generation","message":"Token 對生成成功","service":"localite-backend","sessionId":"1d034d94-50ee-40e9-9b91-8b582a172c03","timestamp":"2025-07-07T15:29:45.124Z","uid":"security-test-user-123"}
+{"email":"security-test@localite.com","ipAddress":"203.0.113.100","level":"info","message":"JWT Token 對生成成功","service":"localite-backend","sessionId":"1d034d94-50ee-40e9-9b91-8b582a172c03","timestamp":"2025-07-07T15:29:45.124Z","uid":"security-test-user-123"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:29:45.125Z"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:29:45.126Z"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:29:45.127Z"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:29:45.128Z"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:29:45.129Z"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:29:45.134Z"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:29:45.135Z"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:29:45.136Z"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:29:45.137Z"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:29:45.139Z"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:29:45.183Z"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:29:45.191Z"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:29:45.195Z"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:29:45.200Z"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:29:46.212Z"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:29:46.226Z"}
+{"enabledMethods":["totp"],"level":"info","message":"用戶 MFA 狀態更新成功","service":"localite-backend","status":"enabled","timestamp":"2025-07-07T15:29:46.226Z","uid":"security-test-user-123"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:29:46.245Z"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:29:46.246Z"}
+{"enabledMethods":["totp","sms"],"level":"info","message":"用戶 MFA 狀態更新成功","service":"localite-backend","status":"enabled","timestamp":"2025-07-07T15:29:46.247Z","uid":"security-test-user-123"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:29:46.251Z"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:29:46.396Z"}
+{"enabledMethods":["totp"],"level":"info","message":"用戶 MFA 狀態更新成功","service":"localite-backend","status":"enabled","timestamp":"2025-07-07T15:29:46.396Z","uid":"security-test-user-123"}
+{"enabledMethods":[],"level":"info","message":"用戶 MFA 狀態更新成功","service":"localite-backend","status":"disabled","timestamp":"2025-07-07T15:29:46.409Z","uid":"security-test-user-123"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:29:46.409Z"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:29:46.483Z"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:29:46.549Z"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:29:51.628Z"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:29:51.631Z"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:29:51.640Z"}
+{"level":"info","message":"Rate limiting Redis 連接已建立","service":"localite-backend","timestamp":"2025-07-07T15:33:18.282Z"}
+{"backupCodeConfig":{"codeLength":8,"totalCodes":10,"usageLimit":1},"level":"info","message":"MFA 服務初始化完成","service":"localite-backend","smsConfig":{"codeLength":6,"expiry":300,"maxAttempts":3,"maxDailyAttempts":10,"resendInterval":60},"timestamp":"2025-07-07T15:33:18.311Z","totpConfig":{"algorithm":"sha1","digits":6,"issuer":"Localite","maxAttempts":3,"step":30,"window":1}}
+{"level":"info","message":"Rate limiting Redis 連接已建立","service":"localite-backend","timestamp":"2025-07-07T15:33:18.404Z"}
+{"backupCodeConfig":{"codeLength":8,"totalCodes":10,"usageLimit":1},"level":"info","message":"MFA 服務初始化完成","service":"localite-backend","smsConfig":{"codeLength":6,"expiry":300,"maxAttempts":3,"maxDailyAttempts":10,"resendInterval":60},"timestamp":"2025-07-07T15:33:18.404Z","totpConfig":{"algorithm":"sha1","digits":6,"issuer":"Localite","maxAttempts":3,"step":30,"window":1}}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:33:18.450Z"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:33:18.479Z"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:33:18.483Z"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:33:18.486Z"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:33:18.489Z"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:33:18.497Z"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:33:18.501Z"}
+{"enabledMethods":["totp","sms"],"level":"info","message":"用戶 MFA 狀態更新成功","service":"localite-backend","status":"enabled","timestamp":"2025-07-07T15:33:18.501Z","uid":"security-test-user-123"}
+{"enabledMethods":[],"level":"info","message":"用戶 MFA 狀態更新成功","service":"localite-backend","status":"disabled","timestamp":"2025-07-07T15:33:18.505Z","uid":"security-test-user-123"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:33:18.506Z"}
+{"enabledMethods":["totp","sms"],"level":"info","message":"用戶 MFA 狀態更新成功","service":"localite-backend","status":"enabled","timestamp":"2025-07-07T15:33:18.506Z","uid":"security-test-user-123"}
+{"level":"info","message":"TOTP 秘鑰存儲成功","service":"localite-backend","timestamp":"2025-07-07T15:33:18.507Z","uid":"security-test-user-123"}
+{"enabledMethods":[],"level":"info","message":"用戶 MFA 狀態更新成功","service":"localite-backend","status":"disabled","timestamp":"2025-07-07T15:33:18.510Z","uid":"security-test-user-123"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:33:18.511Z"}
+{"enabledMethods":["totp","sms"],"level":"info","message":"用戶 MFA 狀態更新成功","service":"localite-backend","status":"enabled","timestamp":"2025-07-07T15:33:18.511Z","uid":"security-test-user-123"}
+{"enabledMethods":[],"level":"info","message":"用戶 MFA 狀態更新成功","service":"localite-backend","status":"disabled","timestamp":"2025-07-07T15:33:18.513Z","uid":"security-test-user-123"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:33:18.514Z"}
+{"enabledMethods":["totp","sms"],"level":"info","message":"用戶 MFA 狀態更新成功","service":"localite-backend","status":"enabled","timestamp":"2025-07-07T15:33:18.514Z","uid":"security-test-user-123"}
+{"enabledMethods":[],"level":"info","message":"用戶 MFA 狀態更新成功","service":"localite-backend","status":"disabled","timestamp":"2025-07-07T15:33:18.516Z","uid":"security-test-user-123"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:33:18.517Z"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:33:18.834Z"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:33:18.849Z"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:33:18.855Z"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:33:18.857Z"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:33:18.860Z"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:33:18.862Z"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:33:18.865Z"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:33:18.869Z"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:33:18.871Z"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:33:18.872Z"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:33:18.873Z"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:33:18.875Z"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:33:18.875Z"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:33:18.923Z"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:33:18.923Z"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:33:18.930Z"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:33:18.930Z"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:33:18.935Z"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:33:18.935Z"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:33:18.940Z"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:33:18.940Z"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:33:18.940Z"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:33:18.946Z"}
+{"enabledMethods":["totp"],"level":"info","message":"用戶 MFA 狀態更新成功","service":"localite-backend","status":"enabled","timestamp":"2025-07-07T15:33:18.946Z","uid":"security-test-user-123"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:33:18.948Z"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:33:18.949Z"}
+{"enabledMethods":["totp","sms"],"level":"info","message":"用戶 MFA 狀態更新成功","service":"localite-backend","status":"enabled","timestamp":"2025-07-07T15:33:18.949Z","uid":"security-test-user-123"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:33:18.951Z"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:33:19.095Z"}
+{"enabledMethods":["totp"],"level":"info","message":"用戶 MFA 狀態更新成功","service":"localite-backend","status":"enabled","timestamp":"2025-07-07T15:33:19.095Z","uid":"security-test-user-123"}
+{"enabledMethods":[],"level":"info","message":"用戶 MFA 狀態更新成功","service":"localite-backend","status":"disabled","timestamp":"2025-07-07T15:33:19.110Z","uid":"security-test-user-123"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:33:19.110Z"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:33:19.183Z"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:33:19.255Z"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:33:24.350Z"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:33:24.354Z"}
+{"level":"info","message":"Rate limiting statistics reset","service":"localite-backend","timestamp":"2025-07-07T15:33:24.367Z"}

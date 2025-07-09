@@ -54,7 +54,8 @@ class AuthMiddleware {
       return null;
     }
 
-    const testHeader = req.headers['x-test-user'];
+    // 處理大小寫不敏感的標頭
+    const testHeader = req.headers['x-test-user'] || req.headers['X-Test-User'];
     if (!testHeader) {
       return null;
     }
@@ -81,6 +82,20 @@ class AuthMiddleware {
         email_verified: true,
         role: 'admin',
         name: 'Test Admin',
+      },
+      'security-test': {
+        uid: 'security-test-user-123',
+        email: 'security-test@localite.com',
+        email_verified: true,
+        role: 'user',
+        name: 'Security Test User',
+      },
+      'jwt-test': {
+        uid: 'jwt-test-user-123',
+        email: 'jwt-test@localite.com',
+        email_verified: true,
+        role: 'user',
+        name: 'JWT Test User',
       },
     };
 

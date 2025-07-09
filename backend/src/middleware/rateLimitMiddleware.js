@@ -20,8 +20,10 @@ class RateLimitMiddleware {
       errorCount: 0,
     };
 
-    // 初始化 Redis 連接
-    this.initializeRedis();
+    // 初始化 Redis 連接（異步）
+    this.initializeRedis().catch(error => {
+      logger.error('Rate limiting Redis 初始化失敗', { error: error.message });
+    });
 
     // 啟動統計定時器
     this.startStatsTimer();
@@ -32,12 +34,16 @@ class RateLimitMiddleware {
    */
   async initializeRedis() {
     try {
+      // 先嘗試連接 Redis
+      await redisConnection.connect();
+
       if (redisConnection && redisConnection.isConnected) {
-        this.redis = redisConnection.getClient();
+        this.redis = redisConnection;
         this.isRedisAvailable = true;
         logger.info('Rate limiting Redis 連接已建立');
       } else {
         logger.warn('Redis 不可用，使用記憶體快取進行 rate limiting');
+        this.isRedisAvailable = false;
       }
     } catch (error) {
       logger.error('Rate limiting Redis 初始化失敗', { error: error.message });
@@ -50,7 +56,12 @@ class RateLimitMiddleware {
    */
   static generateKey(req, prefix = 'rate_limit') {
     // 基於 IP 地址和用戶 ID（如果有）生成唯一鍵
-    const ip = req.ip || req.connection.remoteAddress;
+    // 優先使用 X-Forwarded-For 標頭中的 IP（用於測試和代理環境）
+    const ip =
+      req.get('X-Forwarded-For') ||
+      req.ip ||
+      (req.connection && req.connection.remoteAddress) ||
+      'unknown';
     const userId = req.user?.uid || req.user?.id || 'anonymous';
     const userAgent = req.get('User-Agent') || 'unknown';
 
@@ -137,27 +148,65 @@ class RateLimitMiddleware {
    * 建立 Redis 存儲類別
    */
   createRedisStore(windowMs) {
-    const { redis } = this;
+    const redis = this.redis;
 
     return {
       async increment(key) {
         try {
-          const results = await redis
-            .multi()
-            .incr(key)
-            .expire(key, Math.ceil(windowMs / 1000))
-            .exec();
+          // 檢查 Redis 是否真的可用
+          if (!redis || !redis.isConnected) {
+            throw new Error('Redis not available');
+          }
 
-          return {
-            totalHits: results[0][1],
-            resetTime: new Date(Date.now() + windowMs),
-          };
+          // 使用 Redis 的 incr 和 expire 命令
+          const multi = redis.multi();
+          multi.incr(key);
+          multi.expire(key, Math.ceil(windowMs / 1000));
+          const results = await multi.exec();
+
+          // 檢查結果格式
+          if (results && results.length >= 2 && results[0][0] === null) {
+            const totalHits = results[0][1]; // incr 的結果
+            return {
+              totalHits,
+              resetTime: new Date(Date.now() + windowMs),
+            };
+          } else {
+            // 如果 multi 失敗，嘗試單獨的命令
+            const totalHits = await redis.incr(key);
+            await redis.expire(key, Math.ceil(windowMs / 1000));
+            return {
+              totalHits,
+              resetTime: new Date(Date.now() + windowMs),
+            };
+          }
         } catch (error) {
           logger.error('Redis rate limit increment failed', {
             error: error.message,
             key,
           });
-          throw error;
+
+          // 如果 Redis 操作失敗，回退到記憶體存儲
+          if (!this.memoryStore) {
+            this.memoryStore = new Map();
+          }
+
+          const now = Date.now();
+          const record = this.memoryStore.get(key) || { count: 0, resetTime: now + windowMs };
+
+          if (now > record.resetTime) {
+            record.count = 1;
+            record.resetTime = now + windowMs;
+          } else {
+            record.count++;
+          }
+
+          this.memoryStore.set(key, record);
+
+          return {
+            totalHits: record.count,
+            resetTime: new Date(record.resetTime),
+          };
         }
       },
 
@@ -332,25 +381,36 @@ class RateLimitMiddleware {
    * 清理過期的 rate limit 記錄
    */
   async cleanup() {
-    if (!this.isRedisAvailable) return;
+    if (!this.isRedisAvailable) {
+      // 清理記憶體存儲
+      if (this.memoryStore) {
+        const now = Date.now();
+        for (const [key, record] of this.memoryStore.entries()) {
+          if (now > record.resetTime) {
+            this.memoryStore.delete(key);
+          }
+        }
+      }
+      return;
+    }
 
     try {
       // 清理過期的 rate limit 鍵
       const keys = await this.redis.keys('rate_limit:*');
       if (keys.length > 0) {
         // 檢查 TTL 並清理過期的鍵
-        const pipeline = this.redis.pipeline();
-        // 並行檢查所有鍵的 TTL
-        const ttlChecks = keys.map(key => this.redis.ttl(key));
-        const ttlResults = await Promise.all(ttlChecks);
-
-        keys.forEach((key, index) => {
-          if (ttlResults[index] <= 0) {
-            pipeline.del(key);
+        const expiredKeys = [];
+        for (const key of keys) {
+          const ttl = await this.redis.ttl(key);
+          if (ttl <= 0) {
+            expiredKeys.push(key);
           }
-        });
-        await pipeline.exec();
-        logger.info(`Rate limit cleanup completed, processed ${keys.length} keys`);
+        }
+
+        if (expiredKeys.length > 0) {
+          await this.redis.del(...expiredKeys);
+          logger.info(`Rate limit cleanup completed, removed ${expiredKeys.length} expired keys`);
+        }
       }
     } catch (error) {
       logger.error('Rate limit cleanup failed', { error: error.message });

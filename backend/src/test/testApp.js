@@ -24,12 +24,10 @@ const notFound = (req, res, _next) => {
   });
 };
 
-const {
-  securityHeaders,
-  corsOptions,
-  apiLimiter,
-  sanitizeInput,
-} = require('../middleware/security');
+const { securityHeaders, corsOptions, sanitizeInput } = require('../middleware/security');
+
+// 使用我們的 rate limiting 中間件
+const { rateLimitMiddleware } = require('../middleware/rateLimitMiddleware');
 
 // 模擬請求記錄中間件
 const mockRequestLogger = (req, res, next) => {
@@ -41,12 +39,35 @@ const mockAuthMiddleware = (req, res, next) => {
   // 檢查測試用戶標頭
   const testUser = req.headers['x-test-user'];
   if (testUser) {
-    // 使用與 JWT 測試中一致的 UID
-    req.user = {
-      uid: 'jwt-test-user-123',
-      email: 'jwt-test@localite.com',
-      emailVerified: true,
-    };
+    // 根據測試類型設置不同的用戶
+    switch (testUser) {
+      case 'security-test':
+        req.user = {
+          uid: 'security-test-user-123',
+          email: 'security-test@localite.com',
+          emailVerified: true,
+          firebaseUid: 'security-test-user-123',
+          role: 'user',
+        };
+        break;
+      case 'jwt-test':
+        req.user = {
+          uid: 'jwt-test-user-123',
+          email: 'jwt-test@localite.com',
+          emailVerified: true,
+          firebaseUid: 'jwt-test-user-123',
+          role: 'user',
+        };
+        break;
+      default:
+        req.user = {
+          uid: testUser,
+          email: `${testUser}@localite.com`,
+          emailVerified: true,
+          firebaseUid: testUser,
+          role: 'user',
+        };
+    }
   }
   next();
 };
@@ -64,8 +85,17 @@ function createTestApp() {
   // 請求記錄（模擬）
   app.use(mockRequestLogger);
 
-  // 速率限制
-  app.use('/api/', apiLimiter);
+  // 速率限制 - 使用我們的 rate limiting 中間件
+  const rateLimiters = rateLimitMiddleware.getDefaultLimiters();
+  app.use('/api/', rateLimiters.general);
+
+  // 為認證端點應用更嚴格的限制
+  app.use('/api/v1/auth', rateLimiters.auth);
+
+  // 為敏感操作端點應用最嚴格的限制
+  app.use('/api/v1/auth/verify-email', rateLimiters.sensitive);
+  app.use('/api/v1/auth/reset-password', rateLimiters.sensitive);
+  app.use('/api/v1/auth/change-password', rateLimiters.sensitive);
 
   // 輸入清理
   app.use(sanitizeInput);
