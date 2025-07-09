@@ -107,13 +107,13 @@ function createTestApp() {
       verify: (req, res, buf) => {
         req.rawBody = buf;
       },
-    })
+    }),
   );
   app.use(
     express.urlencoded({
       extended: true,
       limit: '10mb',
-    })
+    }),
   );
 
   // 模擬認證中間件 - 應用到所有 API 路由
@@ -191,10 +191,10 @@ async function clearCollections() {
   const collectionNames = Object.keys(collections);
 
   await Promise.all(
-    collectionNames.map(async name => {
+    collectionNames.map(async (name) => {
       const collection = collections[name];
       await collection.deleteMany({});
-    })
+    }),
   );
 }
 

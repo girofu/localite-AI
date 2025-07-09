@@ -270,7 +270,7 @@ class AuthMiddleware {
    * @param {string|string[]} allowedRoles 允許的角色
    */
   // eslint-disable-next-line class-methods-use-this
-  requireRole = allowedRoles => {
+  requireRole = (allowedRoles) => {
     const roles = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
 
     return (req, res, next) => {

@@ -324,7 +324,7 @@ class JWTService {
       const sessions = await this.getUserSessions(uid);
 
       // 撤銷所有 session
-      await Promise.all(sessions.map(session => this.revokeSession(session.sessionId)));
+      await Promise.all(sessions.map((session) => this.revokeSession(session.sessionId)));
 
       logger.info('撤銷用戶所有 token', { uid, sessionCount: sessions.length });
       return sessions.length;
@@ -356,7 +356,7 @@ class JWTService {
       await redisConnection.set(
         `${this.tokenBlacklistPrefix}${jti}`,
         { revokedAt: new Date().toISOString() },
-        { ttl }
+        { ttl },
       );
     } catch (error) {
       logger.error('添加 token 到黑名單失敗', { error: error.message, jti });
@@ -532,7 +532,7 @@ class JWTService {
               logger.error('延遲刪除 session 失敗', { error: error.message, sessionId });
             }
           },
-          30 * 60 * 1000
+          30 * 60 * 1000,
         );
 
         logger.info('Session 撤銷成功', {
@@ -558,7 +558,7 @@ class JWTService {
 
       if (sessionIds && sessionIds.length > 0) {
         const sessionDataList = await Promise.all(
-          sessionIds.map(async sessionId => {
+          sessionIds.map(async (sessionId) => {
             const sessionData = await this.getSession(sessionId);
             if (sessionData && sessionData.isActive) {
               return {
@@ -567,7 +567,7 @@ class JWTService {
               };
             }
             return null;
-          })
+          }),
         );
 
         sessions.push(...sessionDataList.filter(Boolean));
@@ -592,7 +592,7 @@ class JWTService {
       if (activeSessions.length >= this.maxConcurrentSessions) {
         // 找到最舊的 session 並撤銷
         const oldestSession = activeSessions.sort(
-          (a, b) => new Date(a.lastActivity) - new Date(b.lastActivity)
+          (a, b) => new Date(a.lastActivity) - new Date(b.lastActivity),
         )[0];
 
         if (oldestSession) {
@@ -636,7 +636,7 @@ class JWTService {
       const key = `${this.userSessionsPrefix}${uid}`;
       const currentSessions = (await redisConnection.get(key)) || [];
 
-      const updatedSessions = currentSessions.filter(id => id !== sessionId);
+      const updatedSessions = currentSessions.filter((id) => id !== sessionId);
 
       if (updatedSessions.length > 0) {
         const ttl = JWTService.parseExpiry(this.refreshTokenExpiry);
@@ -717,8 +717,8 @@ class JWTService {
       // 設備指紋驗證
       if (this.enableDeviceTracking && requestContext.deviceFingerprint) {
         if (
-          session.deviceFingerprint &&
-          session.deviceFingerprint !== requestContext.deviceFingerprint
+          session.deviceFingerprint
+          && session.deviceFingerprint !== requestContext.deviceFingerprint
         ) {
           validationResult.warnings.push('device_fingerprint_mismatch');
           logger.warn('Session 設備指紋不匹配', {
@@ -768,9 +768,9 @@ class JWTService {
   async revokeOtherUserSessions(uid, currentSessionId) {
     try {
       const allSessions = await this.getUserSessions(uid);
-      const otherSessions = allSessions.filter(session => session.sessionId !== currentSessionId);
+      const otherSessions = allSessions.filter((session) => session.sessionId !== currentSessionId);
 
-      const revokePromises = otherSessions.map(session => this.revokeSession(session.sessionId));
+      const revokePromises = otherSessions.map((session) => this.revokeSession(session.sessionId));
 
       await Promise.all(revokePromises);
 
@@ -819,7 +819,7 @@ class JWTService {
       const sessionKeys = await client.keys(`${this.sessionPrefix}*`);
       const inactivityLimit = JWTService.parseExpiry(this.sessionInactivityTimeout) * 1000;
       const cleanupResults = await Promise.all(
-        sessionKeys.map(async key => {
+        sessionKeys.map(async (key) => {
           try {
             const sessionData = await redisConnection.get(key);
             if (sessionData && sessionData.lastActivity) {
@@ -837,7 +837,7 @@ class JWTService {
             logger.error('清理單個 Session 失敗', { error: error.message, key });
             return 0;
           }
-        })
+        }),
       );
 
       const cleanedCount = cleanupResults.reduce((total, count) => total + count, 0);

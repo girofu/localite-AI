@@ -2,10 +2,12 @@ const GoogleAIService = require('./googleAIService');
 
 // Mock the logger
 jest.mock('../config/logger', () => ({
-  error: jest.fn(),
-  info: jest.fn(),
-  warn: jest.fn(),
-  debug: jest.fn(),
+  logger: {
+    error: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn(),
+    debug: jest.fn(),
+  },
 }));
 
 // Mock the @google/generative-ai library

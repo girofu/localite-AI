@@ -3,7 +3,7 @@ const express = require('express');
 const { rateLimitMiddleware, RateLimitMiddleware } = require('./rateLimitMiddleware');
 
 // 建立測試應用
-const createTestApp = limiter => {
+const createTestApp = (limiter) => {
   const app = express();
   app.use(express.json());
   app.use(limiter);
@@ -50,17 +50,17 @@ const createMockRedisClient = () => {
   const storage = new Map();
 
   return {
-    incr: jest.fn(key => {
+    incr: jest.fn((key) => {
       const current = storage.get(key) || 0;
       storage.set(key, current + 1);
       return Promise.resolve(current + 1);
     }),
-    decr: jest.fn(key => {
+    decr: jest.fn((key) => {
       const current = storage.get(key) || 0;
       storage.set(key, Math.max(0, current - 1));
       return Promise.resolve(Math.max(0, current - 1));
     }),
-    del: jest.fn(key => {
+    del: jest.fn((key) => {
       storage.delete(key);
       return Promise.resolve(1);
     }),
@@ -68,14 +68,12 @@ const createMockRedisClient = () => {
     multi: jest.fn(() => ({
       incr: jest.fn().mockReturnThis(),
       expire: jest.fn().mockReturnThis(),
-      exec: jest.fn(() =>
-        Promise.resolve([
-          [null, storage.get('test-key') || 1],
-          [null, 1],
-        ])
-      ),
+      exec: jest.fn(() => Promise.resolve([
+        [null, storage.get('test-key') || 1],
+        [null, 1],
+      ])),
     })),
-    get: jest.fn(key => Promise.resolve(storage.get(key)?.toString() || null)),
+    get: jest.fn((key) => Promise.resolve(storage.get(key)?.toString() || null)),
     set: jest.fn((key, value) => {
       storage.set(key, parseInt(value, 10));
       return Promise.resolve('OK');
@@ -123,7 +121,7 @@ describe('RateLimitMiddleware', () => {
       const mockReq = {
         ip: '127.0.0.1',
         user: { uid: 'test-user-123' },
-        get: jest.fn(header => {
+        get: jest.fn((header) => {
           if (header === 'User-Agent') return 'Mozilla/5.0 Test Browser';
           return null;
         }),
@@ -173,7 +171,7 @@ describe('RateLimitMiddleware', () => {
       expect(defaultLimiters).toHaveProperty('strict');
 
       // 確保每個限制器都是函數
-      Object.values(defaultLimiters).forEach(limiter => {
+      Object.values(defaultLimiters).forEach((limiter) => {
         expect(typeof limiter).toBe('function');
       });
     });
@@ -238,7 +236,7 @@ describe('RateLimitMiddleware', () => {
       const originalEnv = process.env.NODE_ENV;
       process.env.NODE_ENV = 'production';
 
-      const customSkipCondition = req => req.ip === '192.168.1.100';
+      const customSkipCondition = (req) => req.ip === '192.168.1.100';
       const skipFunction = RateLimitMiddleware.createSkipFunction([customSkipCondition]);
 
       const mockReq1 = { ip: '192.168.1.100' };
@@ -355,7 +353,7 @@ describe('RateLimitMiddleware', () => {
       for (let i = 0; i < 3; i += 1) {
         requests.push(request(app).get('/test'));
       }
-      await Promise.all(requests.map(req => req.expect(200)));
+      await Promise.all(requests.map((req) => req.expect(200)));
 
       // 第 4 次請求應該被限制
       const response = await request(app).get('/test').expect(429);
@@ -378,7 +376,7 @@ describe('RateLimitMiddleware', () => {
       await request(app).get('/test').expect(429);
 
       // 等待窗口重設
-      await new Promise(resolve => setTimeout(resolve, 150));
+      await new Promise((resolve) => setTimeout(resolve, 150));
 
       // 窗口重設後的請求應該成功
       await request(app).get('/test').expect(200);
@@ -863,8 +861,8 @@ describe('RateLimitMiddleware', () => {
 
       const results = await Promise.all(concurrentRequests);
 
-      const successCount = results.filter(r => r.status === 200).length;
-      const rateLimitedCount = results.filter(r => r.status === 429).length;
+      const successCount = results.filter((r) => r.status === 200).length;
+      const rateLimitedCount = results.filter((r) => r.status === 429).length;
 
       expect(successCount + rateLimitedCount).toBe(10);
       expect(successCount).toBeLessThanOrEqual(5);
@@ -967,7 +965,7 @@ describe('Response Handler', () => {
         rateLimitInfo: expect.objectContaining({
           windowMs: 60000,
         }),
-      })
+      }),
     );
   });
 
@@ -1016,7 +1014,7 @@ describe('Response Handler', () => {
           endpoint: '/api/test',
           timestamp: expect.any(String),
         }),
-      })
+      }),
     );
   });
 });

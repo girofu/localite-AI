@@ -24,7 +24,7 @@ class RedisConnection {
       this.client = createClient({
         url: redisUrl,
         socket: {
-          reconnectStrategy: retries => {
+          reconnectStrategy: (retries) => {
             if (retries > this.maxReconnectAttempts) {
               console.error('❌ Redis max reconnection attempts reached');
               return false;
@@ -41,7 +41,7 @@ class RedisConnection {
       });
 
       // 設置事件監聽器
-      this.client.on('error', err => {
+      this.client.on('error', (err) => {
         console.error('❌ Redis Client Error:', err);
         this.isConnected = false;
       });
@@ -208,7 +208,7 @@ class RedisConnection {
     try {
       const client = this.getClient();
       const values = await client.mGet(keys);
-      return values.map(value => (value ? JSON.parse(value) : null));
+      return values.map((value) => (value ? JSON.parse(value) : null));
     } catch (error) {
       console.error('❌ Redis mget error:', error);
       throw error;

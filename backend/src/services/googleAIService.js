@@ -1,5 +1,5 @@
 const { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } = require('@google/generative-ai');
-const logger = require('../config/logger');
+const { logger } = require('../config/logger');
 
 // 新增 Redis 連接
 let redisConnection;
@@ -9,6 +9,40 @@ try {
 } catch (error) {
   logger.warn('Redis connection not available, using in-memory rate limiting');
 }
+
+// 新增：錯誤分類和處理常量
+const ERROR_TYPES = {
+  AUTHENTICATION: 'AUTHENTICATION',
+  NETWORK: 'NETWORK',
+  API_QUOTA: 'API_QUOTA',
+  RATE_LIMIT: 'RATE_LIMIT',
+  VALIDATION: 'VALIDATION',
+  CONTENT_POLICY: 'CONTENT_POLICY',
+  TIMEOUT: 'TIMEOUT',
+  GENERIC: 'GENERIC',
+  INTERNAL: 'INTERNAL',
+  RESPONSE_PARSING: 'RESPONSE_PARSING',
+  BLOCKED_PROMPT: 'BLOCKED_PROMPT',
+  SAFETY_FILTER: 'SAFETY_FILTER',
+};
+
+const ERROR_RECOVERY_STRATEGIES = {
+  RETRY_WITH_BACKOFF: 'retry_with_backoff',
+  SWITCH_KEY: 'switch_key',
+  IMMEDIATE_RETRY: 'immediate_retry',
+  NO_RETRY: 'no_retry',
+  DELAYED_RETRY: 'delayed_retry',
+};
+
+// 新增：錯誤處理配置
+const ERROR_HANDLING_CONFIG = {
+  maxRetryAttempts: 3,
+  baseRetryDelay: 1000, // 1秒
+  maxRetryDelay: 30000, // 30秒
+  retryMultiplier: 2,
+  timeoutMs: 30000,
+  enableDetailedErrorLogging: process.env.NODE_ENV === 'development',
+};
 
 // 速率限制和配額配置
 const RATE_LIMIT_CONFIG = {
@@ -26,8 +60,40 @@ const RATE_LIMIT_CONFIG = {
   quotaResetHours: parseInt(process.env.GOOGLE_AI_QUOTA_RESET_HOURS, 10) || 24,
 };
 
+// 成本控制配置
+const COST_CONFIG = {
+  // 基礎成本計算（每1000個字符的成本，單位：美元）
+  costPerThousandChars: parseFloat(process.env.GOOGLE_AI_COST_PER_1K_CHARS) || 0.001,
+  // 每日預算限制（美元）
+  dailyBudget: parseFloat(process.env.GOOGLE_AI_DAILY_BUDGET) || 100,
+  // 每月預算限制（美元）
+  monthlyBudget: parseFloat(process.env.GOOGLE_AI_MONTHLY_BUDGET) || 1000,
+  // 預算警告閾值（百分比）
+  budgetWarningThreshold: parseFloat(process.env.GOOGLE_AI_BUDGET_WARNING_THRESHOLD) || 0.8,
+  // 成本監控間隔（毫秒）
+  costMonitoringInterval: parseInt(process.env.GOOGLE_AI_COST_MONITORING_INTERVAL, 10) || 60000,
+};
+
 // 記憶體快取用於備援
 const memoryCache = new Map();
+
+// 請求佇列和批次處理配置
+const QUEUE_CONFIG = {
+  maxQueueSize: parseInt(process.env.GOOGLE_AI_MAX_QUEUE_SIZE, 10) || 1000,
+  batchSize: parseInt(process.env.GOOGLE_AI_BATCH_SIZE, 10) || 5,
+  batchTimeout: parseInt(process.env.GOOGLE_AI_BATCH_TIMEOUT, 10) || 100, // 毫秒
+  maxConcurrency: parseInt(process.env.GOOGLE_AI_MAX_CONCURRENCY, 10) || 10,
+  backgroundProcessingInterval: parseInt(process.env.GOOGLE_AI_BACKGROUND_INTERVAL, 10) || 5000,
+  priorityLevels: ['high', 'medium', 'low', 'background'],
+};
+
+// 請求優先級定義
+const PRIORITY_LEVELS = {
+  HIGH: 'high',
+  MEDIUM: 'medium',
+  LOW: 'low',
+  BACKGROUND: 'background',
+};
 
 class GoogleAIService {
   constructor(apiKeys = null, options = {}) {
@@ -42,6 +108,8 @@ class GoogleAIService {
       enableRateLimit: options.enableRateLimit !== false,
       enableQuotaManagement: options.enableQuotaManagement !== false,
       useRedis: options.useRedis !== false && redisConnection,
+      enableRequestQueue: options.enableRequestQueue !== false,
+      enableBatchProcessing: options.enableBatchProcessing !== false,
       ...options,
     };
 
@@ -50,17 +118,415 @@ class GoogleAIService {
     this.keyStats = new Map();
     this.keyClients = new Map();
 
+    // 新增：錯誤統計
+    this.errorStats = {
+      totalErrors: 0,
+      errorsByType: {},
+      recentErrors: [],
+      errorsByKey: new Map(),
+    };
+
+    // 新增：請求佇列系統
+    this.requestQueue = {
+      high: [],
+      medium: [],
+      low: [],
+      background: [],
+    };
+
+    // 新增：批次處理狀態
+    this.batchProcessing = {
+      isProcessing: false,
+      currentBatch: [],
+      pendingBatches: [],
+      batchTimeout: null,
+      concurrentRequests: 0,
+      lastProcessTime: Date.now(),
+    };
+
+    // 新增：請求佇列統計
+    this.queueStats = {
+      totalQueued: 0,
+      totalProcessed: 0,
+      totalCompleted: 0,
+      totalFailed: 0,
+      averageWaitTime: 0,
+      averageProcessingTime: 0,
+      queueSizes: {
+        high: 0,
+        medium: 0,
+        low: 0,
+        background: 0,
+      },
+      batchStats: {
+        totalBatches: 0,
+        averageBatchSize: 0,
+        completedBatches: 0,
+        failedBatches: 0,
+      },
+    };
+
+    // 新增：成本追蹤和控制
+    this.costTracking = {
+      totalCost: 0,
+      dailyCost: 0,
+      monthlyCost: 0,
+      totalCharacters: 0,
+      dailyCharacters: 0,
+      monthlyCharacters: 0,
+      lastDailyReset: new Date().toDateString(),
+      lastMonthlyReset: new Date().getMonth(),
+      costHistory: [],
+      budgetAlerts: [],
+      isOverBudget: false,
+      isBudgetWarning: false,
+    };
+
+    // 新增：使用量統計
+    this.usageStats = {
+      totalRequests: 0,
+      dailyRequests: 0,
+      monthlyRequests: 0,
+      requestsByPriority: {
+        high: 0,
+        medium: 0,
+        low: 0,
+        background: 0,
+      },
+      requestsByHour: new Array(24).fill(0),
+      requestsByDay: new Array(7).fill(0),
+      peakUsageTime: null,
+      averageRequestSize: 0,
+      costEfficiency: 0,
+    };
+
     // 為每個金鑰初始化統計和客戶端
     this._initializeKeys();
 
     // 初始化速率限制管理器
     this._initializeRateLimiter();
 
+    // 新增：初始化錯誤統計
+    this._initializeErrorStats();
+
+    // 新增：初始化請求佇列系統
+    this._initializeRequestQueue();
+
     logger.info(`GoogleAIService initialized with ${this.apiKeys.length} API keys`, {
       rateLimit: this.options.enableRateLimit,
       quotaManagement: this.options.enableQuotaManagement,
       useRedis: this.options.useRedis,
+      requestQueue: this.options.enableRequestQueue,
+      batchProcessing: this.options.enableBatchProcessing,
+      queueConfig: QUEUE_CONFIG,
     });
+  }
+
+  /**
+   * 新增：初始化錯誤統計
+   */
+  _initializeErrorStats() {
+    // 初始化每種錯誤類型的計數器
+    Object.values(ERROR_TYPES).forEach(type => {
+      this.errorStats.errorsByType[type] = 0;
+    });
+
+    // 為每個金鑰初始化錯誤統計
+    for (let i = 0; i < this.apiKeys.length; i++) {
+      this.errorStats.errorsByKey.set(i, {
+        totalErrors: 0,
+        errorsByType: {},
+        lastError: null,
+        lastErrorTime: null,
+      });
+
+      // 初始化每個金鑰的錯誤類型計數
+      Object.values(ERROR_TYPES).forEach(type => {
+        this.errorStats.errorsByKey.get(i).errorsByType[type] = 0;
+      });
+    }
+  }
+
+  /**
+   * 新增：分析並分類錯誤
+   */
+  _analyzeError(error, keyIndex = null) {
+    const errorMessage = error.message || error.toString();
+    const errorCode = error.code || null;
+
+    let errorType = ERROR_TYPES.GENERIC;
+    let recoveryStrategy = ERROR_RECOVERY_STRATEGIES.RETRY_WITH_BACKOFF;
+    let isRetryable = true;
+    let retryDelay = ERROR_HANDLING_CONFIG.baseRetryDelay;
+
+    // 分析錯誤類型
+    if (errorCode === 'RATE_LIMIT_EXCEEDED' || errorMessage.includes('rate limit')) {
+      errorType = ERROR_TYPES.RATE_LIMIT;
+      recoveryStrategy = ERROR_RECOVERY_STRATEGIES.SWITCH_KEY;
+      isRetryable = true;
+      retryDelay = ERROR_HANDLING_CONFIG.baseRetryDelay * 2;
+    } else if (errorCode === 'QUOTA_EXCEEDED' || errorMessage.includes('quota')) {
+      errorType = ERROR_TYPES.API_QUOTA;
+      recoveryStrategy = ERROR_RECOVERY_STRATEGIES.SWITCH_KEY;
+      isRetryable = true;
+      retryDelay = ERROR_HANDLING_CONFIG.baseRetryDelay * 3;
+    } else if (
+      errorMessage.includes('401') ||
+      errorMessage.includes('authentication') ||
+      errorMessage.includes('unauthorized')
+    ) {
+      errorType = ERROR_TYPES.AUTHENTICATION;
+      recoveryStrategy = ERROR_RECOVERY_STRATEGIES.SWITCH_KEY;
+      isRetryable = true;
+    } else if (errorMessage.includes('timeout') || errorMessage.includes('TIMEOUT')) {
+      errorType = ERROR_TYPES.TIMEOUT;
+      recoveryStrategy = ERROR_RECOVERY_STRATEGIES.RETRY_WITH_BACKOFF;
+      isRetryable = true;
+      retryDelay = ERROR_HANDLING_CONFIG.baseRetryDelay * 1.5;
+    } else if (
+      errorMessage.includes('network') ||
+      errorMessage.includes('connection') ||
+      errorMessage.includes('ECONNRESET')
+    ) {
+      errorType = ERROR_TYPES.NETWORK;
+      recoveryStrategy = ERROR_RECOVERY_STRATEGIES.RETRY_WITH_BACKOFF;
+      isRetryable = true;
+    } else if (
+      errorMessage.includes('blocked') ||
+      errorMessage.includes('safety') ||
+      errorMessage.includes('policy')
+    ) {
+      errorType = ERROR_TYPES.CONTENT_POLICY;
+      recoveryStrategy = ERROR_RECOVERY_STRATEGIES.NO_RETRY;
+      isRetryable = false;
+    } else if (errorMessage.includes('validation') || errorMessage.includes('invalid input')) {
+      errorType = ERROR_TYPES.VALIDATION;
+      recoveryStrategy = ERROR_RECOVERY_STRATEGIES.NO_RETRY;
+      isRetryable = false;
+    } else if (
+      errorMessage.includes('parse') ||
+      errorMessage.includes('json') ||
+      errorMessage.includes('response')
+    ) {
+      errorType = ERROR_TYPES.RESPONSE_PARSING;
+      recoveryStrategy = ERROR_RECOVERY_STRATEGIES.IMMEDIATE_RETRY;
+      isRetryable = true;
+    }
+
+    // 建立結構化錯誤資訊
+    const errorInfo = {
+      type: errorType,
+      originalError: error,
+      message: errorMessage,
+      code: errorCode,
+      keyIndex,
+      timestamp: new Date().toISOString(),
+      recoveryStrategy,
+      isRetryable,
+      retryDelay,
+      stack: error.stack,
+    };
+
+    // 記錄錯誤統計
+    this._recordErrorStats(errorInfo);
+
+    return errorInfo;
+  }
+
+  /**
+   * 新增：記錄錯誤統計
+   */
+  _recordErrorStats(errorInfo) {
+    // 更新全局錯誤統計
+    this.errorStats.totalErrors++;
+    this.errorStats.errorsByType[errorInfo.type]++;
+
+    // 保持最近錯誤記錄（最多100個）
+    this.errorStats.recentErrors.unshift(errorInfo);
+    if (this.errorStats.recentErrors.length > 100) {
+      this.errorStats.recentErrors.pop();
+    }
+
+    // 更新特定金鑰的錯誤統計
+    if (errorInfo.keyIndex !== null && this.errorStats.errorsByKey.has(errorInfo.keyIndex)) {
+      const keyErrorStats = this.errorStats.errorsByKey.get(errorInfo.keyIndex);
+      keyErrorStats.totalErrors++;
+      keyErrorStats.errorsByType[errorInfo.type]++;
+      keyErrorStats.lastError = errorInfo;
+      keyErrorStats.lastErrorTime = errorInfo.timestamp;
+    }
+
+    // 記錄詳細錯誤信息（僅在開發環境）
+    if (ERROR_HANDLING_CONFIG.enableDetailedErrorLogging) {
+      logger.error('Detailed error analysis', {
+        errorType: errorInfo.type,
+        keyIndex: errorInfo.keyIndex,
+        message: errorInfo.message,
+        recoveryStrategy: errorInfo.recoveryStrategy,
+        isRetryable: errorInfo.isRetryable,
+        stack: errorInfo.stack,
+      });
+    }
+  }
+
+  /**
+   * 新增：驗證 API 回應
+   */
+  _validateResponse(response) {
+    const validationResult = {
+      isValid: true,
+      errors: [],
+      warnings: [],
+    };
+
+    try {
+      // 基本結構驗證
+      if (!response) {
+        validationResult.isValid = false;
+        validationResult.errors.push('Response is null or undefined');
+        return validationResult;
+      }
+
+      if (!response.response) {
+        validationResult.isValid = false;
+        validationResult.errors.push('Missing response object');
+        return validationResult;
+      }
+
+      // 檢查是否有text()方法
+      if (!response.response.text || typeof response.response.text !== 'function') {
+        validationResult.isValid = false;
+        validationResult.errors.push('Response text method not available');
+        return validationResult;
+      }
+
+      // 檢查安全性過濾
+      if (response.response.promptFeedback) {
+        const feedback = response.response.promptFeedback;
+        if (feedback.blockReason) {
+          validationResult.isValid = false;
+          validationResult.errors.push(`Content blocked: ${feedback.blockReason}`);
+        }
+      }
+
+      // 檢查候選回應
+      if (response.response.candidates) {
+        const { candidates } = response.response;
+        if (candidates.length === 0) {
+          validationResult.isValid = false;
+          validationResult.errors.push('No response candidates available');
+        } else {
+          // 檢查第一個候選回應
+          const firstCandidate = candidates[0];
+          if (firstCandidate.finishReason === 'SAFETY') {
+            validationResult.warnings.push('Response filtered for safety reasons');
+          }
+        }
+      }
+
+      return validationResult;
+    } catch (error) {
+      validationResult.isValid = false;
+      validationResult.errors.push(`Response validation error: ${error.message}`);
+      return validationResult;
+    }
+  }
+
+  /**
+   * 新增：處理 API 回應
+   */
+  async _processResponse(response, keyIndex) {
+    const startTime = Date.now();
+
+    try {
+      // 驗證回應
+      const validation = this._validateResponse(response);
+
+      if (!validation.isValid) {
+        const error = new Error(`Invalid response: ${validation.errors.join(', ')}`);
+        error.code = 'RESPONSE_VALIDATION_FAILED';
+        error.validationErrors = validation.errors;
+        throw error;
+      }
+
+      // 記錄警告
+      if (validation.warnings.length > 0) {
+        logger.warn('Response validation warnings', {
+          keyIndex,
+          warnings: validation.warnings,
+        });
+      }
+
+      // 提取文本內容
+      const text = response.response.text();
+
+      // 基本內容驗證
+      if (!text || text.trim().length === 0) {
+        const error = new Error('Empty response text');
+        error.code = 'EMPTY_RESPONSE';
+        throw error;
+      }
+
+      // 記錄成功處理
+      const processingTime = Date.now() - startTime;
+      logger.debug('Response processed successfully', {
+        keyIndex,
+        processingTime,
+        textLength: text.length,
+      });
+
+      return {
+        text,
+        processingTime,
+        keyIndex,
+        warnings: validation.warnings,
+      };
+    } catch (error) {
+      const processingTime = Date.now() - startTime;
+      logger.error('Response processing failed', {
+        keyIndex,
+        processingTime,
+        error: error.message,
+      });
+
+      // 重新拋出增強的錯誤
+      const enhancedError = new Error(`Response processing failed: ${error.message}`);
+      enhancedError.code = 'RESPONSE_PROCESSING_FAILED';
+      enhancedError.originalError = error;
+      enhancedError.keyIndex = keyIndex;
+      throw enhancedError;
+    }
+  }
+
+  /**
+   * 新增：計算重試延遲
+   */
+
+  /**
+   * 新增：執行重試延遲
+   */
+  async _delayRetry(delayMs) {
+    if (delayMs > 0) {
+      logger.debug(`Retrying after ${delayMs}ms delay`);
+      await new Promise(resolve => setTimeout(resolve, delayMs));
+    }
+  }
+
+  /**
+   * 新增：創建詳細錯誤回應
+   */
+  _createDetailedError(errorInfo, context = {}) {
+    const error = new Error(errorInfo.message);
+    error.code = errorInfo.code || errorInfo.type;
+    error.type = errorInfo.type;
+    error.keyIndex = errorInfo.keyIndex;
+    error.timestamp = errorInfo.timestamp;
+    error.recoveryStrategy = errorInfo.recoveryStrategy;
+    error.isRetryable = errorInfo.isRetryable;
+    error.context = context;
+    error.originalError = errorInfo.originalError;
+
+    return error;
   }
 
   /**
@@ -467,7 +933,7 @@ class GoogleAIService {
       return stats && stats.status === 'active';
     });
 
-    let candidateKeys = unrestricted.length > 0 ? unrestricted : availableKeys;
+    const candidateKeys = unrestricted.length > 0 ? unrestricted : availableKeys;
 
     // 選擇使用次數最少的金鑰
     let selectedKey = candidateKeys[0];
@@ -596,18 +1062,38 @@ class GoogleAIService {
   }
 
   /**
-   * 生成內容的主要方法，帶有速率限制、配額檢查和自動重試
+   * 增強版：生成內容的主要方法，帶有完整的錯誤處理和回應處理機制
    */
   async generateContent(prompt, options = {}) {
     const maxRetries = options.maxRetries || this.apiKeys.length;
-    let lastError = null;
+    const enableTimeout = options.enableTimeout !== false;
+    const requestStartTime = Date.now();
+
+    let lastErrorInfo = null;
     let attemptCount = 0;
-    let rateLimitedKeys = [];
-    let quotaExceededKeys = [];
+    const rateLimitedKeys = [];
+    const quotaExceededKeys = [];
+    const processedErrors = [];
+
+    // 輸入驗證
+    if (!prompt || typeof prompt !== 'string' || prompt.trim().length === 0) {
+      const error = new Error('Invalid prompt: must be a non-empty string');
+      error.code = 'VALIDATION_ERROR';
+      throw error;
+    }
+
+    logger.info('Starting content generation', {
+      promptLength: prompt.length,
+      maxRetries,
+      enableTimeout,
+    });
 
     for (let attempt = 0; attempt < maxRetries; attempt++) {
+      const attemptStartTime = Date.now();
+      let keyIndex = null;
+
       try {
-        const keyIndex = this._getNextAvailableKey();
+        keyIndex = this._getNextAvailableKey();
 
         // 如果已經檢查過此金鑰且被限制，跳過
         if (rateLimitedKeys.includes(keyIndex) || quotaExceededKeys.includes(keyIndex)) {
@@ -631,7 +1117,7 @@ class GoogleAIService {
           }
 
           logger.warn(`API key ${keyIndex} rate limited`, rateLimitCheck);
-          lastError = error;
+          lastErrorInfo = this._analyzeError(error, keyIndex);
           continue;
         }
 
@@ -652,7 +1138,7 @@ class GoogleAIService {
           }
 
           logger.warn(`API key ${keyIndex} quota exceeded`, quotaCheck);
-          lastError = error;
+          lastErrorInfo = this._analyzeError(error, keyIndex);
           continue;
         }
 
@@ -661,9 +1147,23 @@ class GoogleAIService {
 
         logger.debug(`Using API key ${keyIndex} for content generation (attempt ${attempt + 1})`);
 
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        const text = response.text();
+        // 設定超時處理
+        let result;
+        if (enableTimeout) {
+          result = await Promise.race([
+            model.generateContent(prompt),
+            new Promise((_, reject) => {
+              setTimeout(() => {
+                reject(new Error(`Request timeout after ${ERROR_HANDLING_CONFIG.timeoutMs}ms`));
+              }, ERROR_HANDLING_CONFIG.timeoutMs);
+            }),
+          ]);
+        } else {
+          result = await model.generateContent(prompt);
+        }
+
+        // 處理 API 回應
+        const processedResponse = await this._processResponse(result, keyIndex);
 
         // 增加速率限制和配額計數
         await this._incrementRateLimitAndQuota(keyIndex);
@@ -671,25 +1171,59 @@ class GoogleAIService {
         // 成功時更新統計
         this._updateKeyStats(keyIndex, true);
 
-        return text;
+        // 記錄成功信息
+        const totalTime = Date.now() - requestStartTime;
+        logger.info('Content generation successful', {
+          keyIndex,
+          attemptCount,
+          totalTime,
+          processingTime: processedResponse.processingTime,
+          textLength: processedResponse.text.length,
+        });
+
+        return processedResponse.text;
       } catch (error) {
-        lastError = error;
-        const errorMessage = error.message || error.toString();
+        const attemptTime = Date.now() - attemptStartTime;
+
+        // 分析錯誤
+        const errorInfo = this._analyzeError(error, keyIndex);
+        lastErrorInfo = errorInfo;
+        processedErrors.push(errorInfo);
 
         // 更新失敗統計
-        this._updateKeyStats(this.currentKeyIndex, false, errorMessage);
+        this._updateKeyStats(keyIndex, false, errorInfo.message);
 
-        logger.warn(
-          `API key ${this.currentKeyIndex} failed (attempt ${attempt + 1}): ${errorMessage}`
-        );
+        logger.warn(`API key ${keyIndex} failed (attempt ${attempt + 1})`, {
+          error: errorInfo.message,
+          errorType: errorInfo.type,
+          attemptTime,
+          recoveryStrategy: errorInfo.recoveryStrategy,
+        });
 
-        // 如果是速率限制或配額相關錯誤，不再重試
-        if (error.code === 'RATE_LIMIT_EXCEEDED' || error.code === 'QUOTA_EXCEEDED') {
-          break;
+        // 根據錯誤類型決定是否重試
+        if (!errorInfo.isRetryable) {
+          logger.error('Non-retryable error encountered', {
+            errorType: errorInfo.type,
+            message: errorInfo.message,
+          });
+          throw this._createDetailedError(errorInfo, {
+            prompt: prompt.substring(0, 100),
+            attempt: attempt + 1,
+            totalAttempts: maxRetries,
+          });
         }
 
-        // 如果還有重試次數，繼續嘗試
+        // 如果是速率限制或配額相關錯誤，不再重試同一金鑰
+        if (errorInfo.type === ERROR_TYPES.RATE_LIMIT) {
+          rateLimitedKeys.push(keyIndex);
+        } else if (errorInfo.type === ERROR_TYPES.API_QUOTA) {
+          quotaExceededKeys.push(keyIndex);
+        }
+
+        // 如果還有重試次數，計算延遲並繼續
         if (attempt < maxRetries - 1) {
+          const retryDelay = this._calculateRetryDelay(attempt, errorInfo);
+          await this._delayRetry(retryDelay);
           continue;
         }
       }
@@ -700,18 +1234,632 @@ class GoogleAIService {
     const allKeysQuotaExceeded = quotaExceededKeys.length === this.apiKeys.length;
 
     if (allKeysRateLimited) {
-      throw new Error('Rate limit exceeded: All API keys are rate limited');
+      const error = new Error('Rate limit exceeded: All API keys are rate limited');
+      error.code = 'ALL_KEYS_RATE_LIMITED';
+      error.rateLimitedKeys = rateLimitedKeys;
+      throw error;
     }
 
     if (allKeysQuotaExceeded) {
-      throw new Error('Quota exceeded: All API keys have exceeded their quota');
+      const error = new Error('Quota exceeded: All API keys have exceeded their quota');
+      error.code = 'ALL_KEYS_QUOTA_EXCEEDED';
+      error.quotaExceededKeys = quotaExceededKeys;
+      throw error;
     }
 
     // 所有重試都失敗
-    logger.error('All API keys failed to generate content:', lastError);
-    throw new Error(
-      `Failed to generate content from Google AI after ${maxRetries} attempts: ${lastError?.message || 'Unknown error'}`
+    const totalTime = Date.now() - requestStartTime;
+    logger.error('All API keys failed to generate content', {
+      totalTime,
+      attemptCount,
+      processedErrors: processedErrors.length,
+      lastError: lastErrorInfo?.message,
+    });
+
+    const finalError = this._createDetailedError(
+      {
+        type: ERROR_TYPES.GENERIC,
+        message: `Failed to generate content from Google AI after ${maxRetries} attempts`,
+        isRetryable: false,
+        originalError: lastErrorInfo?.originalError,
+      },
+      {
+        prompt: prompt.substring(0, 100),
+        totalAttempts: maxRetries,
+        attemptCount,
+        totalTime,
+        processedErrors,
+      }
     );
+
+    throw finalError;
+  }
+
+  /**
+   * 初始化請求佇列系統
+   */
+  _initializeRequestQueue() {
+    if (!this.options.enableRequestQueue) {
+      logger.info('Request queue disabled');
+      return;
+    }
+
+    // 重設佇列統計
+    this.queueStats.totalQueued = 0;
+    this.queueStats.totalProcessed = 0;
+    this.queueStats.totalCompleted = 0;
+    this.queueStats.totalFailed = 0;
+    this.queueStats.averageWaitTime = 0;
+    this.queueStats.averageProcessingTime = 0;
+
+    // 初始化佇列大小統計
+    QUEUE_CONFIG.priorityLevels.forEach(priority => {
+      this.queueStats.queueSizes[priority] = 0;
+    });
+
+    // 啟動背景處理器
+    this._startBackgroundProcessor();
+
+    logger.info('Request queue system initialized', {
+      maxQueueSize: QUEUE_CONFIG.maxQueueSize,
+      batchSize: QUEUE_CONFIG.batchSize,
+      maxConcurrency: QUEUE_CONFIG.maxConcurrency,
+      backgroundProcessingInterval: QUEUE_CONFIG.backgroundProcessingInterval,
+    });
+  }
+
+  /**
+   * 啟動背景處理器
+   */
+  _startBackgroundProcessor() {
+    if (this.backgroundProcessorInterval) {
+      clearInterval(this.backgroundProcessorInterval);
+    }
+
+    this.backgroundProcessorInterval = setInterval(() => {
+      this._processBackgroundQueue();
+    }, QUEUE_CONFIG.backgroundProcessingInterval);
+
+    logger.debug('Background processor started');
+  }
+
+  /**
+   * 處理背景佇列
+   */
+  async _processBackgroundQueue() {
+    if (this.batchProcessing.isProcessing) {
+      return;
+    }
+
+    const backgroundQueue = this.requestQueue.background;
+    if (backgroundQueue.length === 0) {
+      return;
+    }
+
+    const batchSize = Math.min(QUEUE_CONFIG.batchSize, backgroundQueue.length);
+    const batch = backgroundQueue.splice(0, batchSize);
+
+    if (batch.length > 0) {
+      logger.debug(`Processing background batch of ${batch.length} requests`);
+      await this._processBatch(batch, PRIORITY_LEVELS.BACKGROUND);
+    }
+  }
+
+  /**
+   * 新增請求到佇列
+   */
+  async _enqueueRequest(request) {
+    const priority = request.priority || PRIORITY_LEVELS.MEDIUM;
+    const queue = this.requestQueue[priority];
+
+    if (!queue) {
+      throw new Error(`Invalid priority level: ${priority}`);
+    }
+
+    // 檢查佇列大小限制
+    const totalQueueSize = Object.values(this.requestQueue).reduce((sum, q) => sum + q.length, 0);
+
+    if (totalQueueSize >= QUEUE_CONFIG.maxQueueSize) {
+      throw new Error(`Queue full: ${totalQueueSize}/${QUEUE_CONFIG.maxQueueSize}`);
+    }
+
+    // 添加到佇列
+    request.queuedAt = Date.now();
+    queue.push(request);
+
+    // 更新統計
+    this.queueStats.totalQueued++;
+    this.queueStats.queueSizes[priority]++;
+
+    logger.debug(`Request queued with priority ${priority}`, {
+      queueSize: queue.length,
+      totalQueueSize: totalQueueSize + 1,
+    });
+
+    return request;
+  }
+
+  /**
+   * 從佇列中獲取下一個請求
+   */
+  _dequeueRequest() {
+    // 按優先級順序處理
+    for (const priority of QUEUE_CONFIG.priorityLevels) {
+      const queue = this.requestQueue[priority];
+      if (queue.length > 0) {
+        const request = queue.shift();
+        this.queueStats.queueSizes[priority]--;
+        return request;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * 處理批次請求
+   */
+  async _processBatch(batch, priority) {
+    if (batch.length === 0) {
+      return;
+    }
+
+    this.batchProcessing.isProcessing = true;
+    this.batchProcessing.currentBatch = batch;
+    this.batchProcessing.lastProcessTime = Date.now();
+
+    const batchId = `batch_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const batchStartTime = Date.now();
+
+    logger.info(`Processing batch ${batchId}`, {
+      batchSize: batch.length,
+      priority,
+      concurrentRequests: this.batchProcessing.concurrentRequests,
+    });
+
+    try {
+      // 更新批次統計
+      this.queueStats.batchStats.totalBatches++;
+      this.queueStats.batchStats.averageBatchSize =
+        (this.queueStats.batchStats.averageBatchSize *
+          (this.queueStats.batchStats.totalBatches - 1) +
+          batch.length) /
+        this.queueStats.batchStats.totalBatches;
+
+      // 控制並發數量
+      const concurrencyLimit = Math.min(
+        QUEUE_CONFIG.maxConcurrency - this.batchProcessing.concurrentRequests,
+        batch.length
+      );
+
+      const processingPromises = [];
+      for (let i = 0; i < concurrencyLimit; i++) {
+        if (batch[i]) {
+          processingPromises.push(this._processQueuedRequest(batch[i]));
+        }
+      }
+
+      const results = await Promise.allSettled(processingPromises);
+      const successCount = results.filter(r => r.status === 'fulfilled').length;
+      const failureCount = results.filter(r => r.status === 'rejected').length;
+
+      // 更新統計
+      this.queueStats.totalProcessed += batch.length;
+      this.queueStats.totalCompleted += successCount;
+      this.queueStats.totalFailed += failureCount;
+
+      if (successCount > 0) {
+        this.queueStats.batchStats.completedBatches++;
+      }
+      if (failureCount > 0) {
+        this.queueStats.batchStats.failedBatches++;
+      }
+
+      const batchProcessingTime = Date.now() - batchStartTime;
+      this.queueStats.averageProcessingTime =
+        (this.queueStats.averageProcessingTime * (this.queueStats.totalProcessed - batch.length) +
+          batchProcessingTime) /
+        this.queueStats.totalProcessed;
+
+      logger.info(`Batch ${batchId} completed`, {
+        processingTime: batchProcessingTime,
+        successCount,
+        failureCount,
+        totalBatches: this.queueStats.batchStats.totalBatches,
+      });
+    } catch (error) {
+      logger.error(`Batch ${batchId} processing failed`, {
+        error: error.message,
+        batchSize: batch.length,
+      });
+      this.queueStats.batchStats.failedBatches++;
+    } finally {
+      this.batchProcessing.isProcessing = false;
+      this.batchProcessing.currentBatch = [];
+    }
+  }
+
+  /**
+   * 處理佇列中的單個請求
+   */
+  async _processQueuedRequest(request) {
+    const requestStartTime = Date.now();
+    this.batchProcessing.concurrentRequests++;
+
+    try {
+      const waitTime = requestStartTime - request.queuedAt;
+      this.queueStats.averageWaitTime =
+        (this.queueStats.averageWaitTime * (this.queueStats.totalProcessed - 1) + waitTime) /
+        this.queueStats.totalProcessed;
+
+      // 實際處理請求
+      const result = await this._executeRequest(request);
+
+      // 解析請求
+      if (request.resolve) {
+        request.resolve(result);
+      }
+
+      return result;
+    } catch (error) {
+      logger.error('Queued request processing failed', {
+        requestId: request.id,
+        error: error.message,
+      });
+
+      // 拒絕請求
+      if (request.reject) {
+        request.reject(error);
+      }
+
+      throw error;
+    } finally {
+      this.batchProcessing.concurrentRequests--;
+    }
+  }
+
+  /**
+   * 執行單個請求
+   */
+  async _executeRequest(request) {
+    const { prompt, options } = request;
+    return await this.generateContent(prompt, options);
+  }
+
+  /**
+   * 使用佇列系統生成內容（新增的公共方法）
+   */
+  async generateContentWithQueue(prompt, options = {}) {
+    const priority = options.priority || PRIORITY_LEVELS.MEDIUM;
+    const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+    // 如果未啟用佇列，直接調用原始方法
+    if (!this.options.enableRequestQueue) {
+      return await this.generateContent(prompt, options);
+    }
+
+    // 創建佇列請求
+    const queueRequest = {
+      id: requestId,
+      prompt,
+      options,
+      priority,
+      queuedAt: Date.now(),
+      resolve: null,
+      reject: null,
+    };
+
+    // 創建 Promise 用於等待結果
+    const promise = new Promise((resolve, reject) => {
+      queueRequest.resolve = resolve;
+      queueRequest.reject = reject;
+    });
+
+    // 添加到佇列
+    await this._enqueueRequest(queueRequest);
+
+    // 如果是高優先級請求，立即處理
+    if (priority === PRIORITY_LEVELS.HIGH) {
+      this._processHighPriorityRequest(queueRequest);
+    }
+
+    return promise;
+  }
+
+  /**
+   * 處理高優先級請求（即時處理）
+   */
+  async _processHighPriorityRequest(request) {
+    // 從佇列中移除（如果存在）
+    const queue = this.requestQueue[request.priority];
+    const index = queue.findIndex(req => req.id === request.id);
+    if (index !== -1) {
+      queue.splice(index, 1);
+      this.queueStats.queueSizes[request.priority]--;
+    }
+
+    // 立即處理
+    try {
+      const result = await this._processQueuedRequest(request);
+      return result;
+    } catch (error) {
+      logger.error('High priority request processing failed', {
+        requestId: request.id,
+        error: error.message,
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * 增強的智能重試機制
+   */
+  _calculateRetryDelay(attempt, errorInfo) {
+    const baseDelay = ERROR_HANDLING_CONFIG.baseRetryDelay;
+    const maxDelay = ERROR_HANDLING_CONFIG.maxRetryDelay;
+    const multiplier = ERROR_HANDLING_CONFIG.retryMultiplier;
+
+    // 基於錯誤類型調整延遲
+    let adjustedBaseDelay = baseDelay;
+    let adjustedMultiplier = multiplier;
+
+    switch (errorInfo.type) {
+      case ERROR_TYPES.RATE_LIMIT:
+        // 速率限制錯誤：更長的延遲
+        adjustedBaseDelay = baseDelay * 2;
+        adjustedMultiplier = multiplier * 1.5;
+        break;
+      case ERROR_TYPES.API_QUOTA:
+        // 配額錯誤：更長的延遲
+        adjustedBaseDelay = baseDelay * 3;
+        adjustedMultiplier = multiplier * 2;
+        break;
+      case ERROR_TYPES.NETWORK:
+        // 網路錯誤：適中的延遲
+        adjustedBaseDelay = baseDelay * 1.5;
+        break;
+      case ERROR_TYPES.TIMEOUT:
+        // 超時錯誤：短延遲
+        adjustedBaseDelay = baseDelay * 0.5;
+        break;
+      default:
+        // 使用預設值
+        break;
+    }
+
+    // 計算指數退避延遲
+    const exponentialDelay = adjustedBaseDelay * adjustedMultiplier ** attempt;
+
+    // 添加隨機抖動（jitter）以避免雷鳴群體效應
+    const jitter = Math.random() * 0.3 + 0.85; // 0.85-1.15 的隨機因子
+    const finalDelay = Math.min(exponentialDelay * jitter, maxDelay);
+
+    logger.debug('Calculated retry delay', {
+      attempt,
+      errorType: errorInfo.type,
+      baseDelay: adjustedBaseDelay,
+      exponentialDelay,
+      jitter,
+      finalDelay,
+    });
+
+    return finalDelay;
+  }
+
+  /**
+   * 新增：獲取錯誤統計資訊
+   */
+  getErrorStatistics() {
+    return {
+      totalErrors: this.errorStats.totalErrors,
+      errorsByType: { ...this.errorStats.errorsByType },
+      recentErrors: this.errorStats.recentErrors.slice(0, 10), // 只返回最近10個錯誤
+      keyErrorStats: Array.from(this.errorStats.errorsByKey.entries()).map(([keyIndex, stats]) => ({
+        keyIndex,
+        totalErrors: stats.totalErrors,
+        errorsByType: { ...stats.errorsByType },
+        lastError: stats.lastError
+          ? {
+              type: stats.lastError.type,
+              message: stats.lastError.message,
+              timestamp: stats.lastError.timestamp,
+            }
+          : null,
+        lastErrorTime: stats.lastErrorTime,
+      })),
+    };
+  }
+
+  /**
+   * 新增：獲取詳細錯誤報告
+   */
+  getDetailedErrorReport(options = {}) {
+    const { includeStackTraces = false, errorTypes = null, keyIndex = null, limit = 50 } = options;
+
+    let errors = this.errorStats.recentErrors;
+
+    // 過濾錯誤類型
+    if (errorTypes && Array.isArray(errorTypes)) {
+      errors = errors.filter(error => errorTypes.includes(error.type));
+    }
+
+    // 過濾金鑰
+    if (keyIndex !== null) {
+      errors = errors.filter(error => error.keyIndex === keyIndex);
+    }
+
+    // 限制數量
+    errors = errors.slice(0, limit);
+
+    return {
+      totalErrors: this.errorStats.totalErrors,
+      filteredErrors: errors.map(error => ({
+        type: error.type,
+        message: error.message,
+        code: error.code,
+        keyIndex: error.keyIndex,
+        timestamp: error.timestamp,
+        recoveryStrategy: error.recoveryStrategy,
+        isRetryable: error.isRetryable,
+        retryDelay: error.retryDelay,
+        stack: includeStackTraces ? error.stack : undefined,
+      })),
+      summary: {
+        errorsByType: { ...this.errorStats.errorsByType },
+        errorsByKey: Array.from(this.errorStats.errorsByKey.entries()).map(([keyIndex, stats]) => ({
+          keyIndex,
+          totalErrors: stats.totalErrors,
+          errorRate: this.keyStats.get(keyIndex)
+            ? `${((stats.totalErrors / this.keyStats.get(keyIndex).totalRequests) * 100).toFixed(
+                2
+              )}%`
+            : '0%',
+        })),
+      },
+    };
+  }
+
+  /**
+   * 新增：重設錯誤統計
+   */
+  resetErrorStatistics() {
+    this.errorStats.totalErrors = 0;
+    this.errorStats.recentErrors = [];
+
+    // 重設每種錯誤類型的計數
+    Object.keys(this.errorStats.errorsByType).forEach(type => {
+      this.errorStats.errorsByType[type] = 0;
+    });
+
+    // 重設每個金鑰的錯誤統計
+    this.errorStats.errorsByKey.forEach(stats => {
+      stats.totalErrors = 0;
+      stats.lastError = null;
+      stats.lastErrorTime = null;
+      Object.keys(stats.errorsByType).forEach(type => {
+        stats.errorsByType[type] = 0;
+      });
+    });
+
+    logger.info('Error statistics reset');
+  }
+
+  /**
+   * 新增：更新錯誤處理配置
+   */
+  updateErrorHandlingConfig(newConfig) {
+    const allowedKeys = [
+      'maxRetryAttempts',
+      'baseRetryDelay',
+      'maxRetryDelay',
+      'retryMultiplier',
+      'timeoutMs',
+      'enableDetailedErrorLogging',
+    ];
+
+    const updatedConfig = {};
+    for (const key of allowedKeys) {
+      if (newConfig[key] !== undefined) {
+        ERROR_HANDLING_CONFIG[key] = newConfig[key];
+        updatedConfig[key] = newConfig[key];
+      }
+    }
+
+    logger.info('Error handling configuration updated', updatedConfig);
+    return ERROR_HANDLING_CONFIG;
+  }
+
+  /**
+   * 新增：獲取錯誤處理配置
+   */
+  getErrorHandlingConfig() {
+    return { ...ERROR_HANDLING_CONFIG };
+  }
+
+  /**
+   * 新增：獲取錯誤類型定義
+   */
+  getErrorTypes() {
+    return { ...ERROR_TYPES };
+  }
+
+  /**
+   * 新增：獲取恢復策略定義
+   */
+  getRecoveryStrategies() {
+    return { ...ERROR_RECOVERY_STRATEGIES };
+  }
+
+  /**
+   * 新增：檢查服務健康狀態
+   */
+  async getHealthStatus() {
+    const stats = this.getKeyStatistics();
+    const errorStats = this.getErrorStatistics();
+    const rateLimitStatus = await this.getCurrentRateLimitStatus();
+
+    const healthStatus = {
+      overall: 'healthy',
+      timestamp: new Date().toISOString(),
+      keys: {
+        total: this.apiKeys.length,
+        active: stats.filter(s => s.status === 'active').length,
+        rateLimited: stats.filter(s => s.status === 'rate_limited').length,
+        quotaExceeded: stats.filter(s => s.status === 'quota_exceeded').length,
+        error: stats.filter(s => s.status === 'error').length,
+        disabled: stats.filter(s => s.status === 'disabled').length,
+      },
+      errors: {
+        totalErrors: errorStats.totalErrors,
+        recentErrorsCount: errorStats.recentErrors.length,
+        errorRate:
+          stats.reduce((sum, s) => sum + s.totalRequests, 0) > 0
+            ? `${(
+                (errorStats.totalErrors / stats.reduce((sum, s) => sum + s.totalRequests, 0)) *
+                100
+              ).toFixed(2)}%`
+            : '0%',
+      },
+      performance: {
+        averageSuccessRate:
+          stats.length > 0
+            ? `${(
+                stats.reduce((sum, s) => sum + parseFloat(s.successRate), 0) / stats.length
+              ).toFixed(2)}%`
+            : '0%',
+      },
+    };
+
+    // 判斷整體健康狀態
+    if (healthStatus.keys.active === 0) {
+      healthStatus.overall = 'critical';
+    } else if (healthStatus.keys.active < this.apiKeys.length * 0.5) {
+      healthStatus.overall = 'degraded';
+    } else if (parseFloat(healthStatus.errors.errorRate) > 10) {
+      healthStatus.overall = 'warning';
+    }
+
+    return healthStatus;
+  }
+
+  /**
+   * 新增：強制恢復所有錯誤狀態的金鑰
+   */
+  forceKeyRecovery() {
+    let recoveredKeys = 0;
+
+    for (const [keyIndex, stats] of this.keyStats.entries()) {
+      if (['error', 'rate_limited'].includes(stats.status)) {
+        stats.status = 'active';
+        stats.consecutiveErrors = 0;
+        stats.lastError = null;
+        recoveredKeys++;
+
+        logger.info(`Forced recovery of API key ${keyIndex}`);
+      }
+    }
+
+    logger.info(`Force recovery completed: ${recoveredKeys} keys recovered`);
+    return recoveredKeys;
   }
 
   /**
@@ -750,6 +1898,19 @@ class GoogleAIService {
         },
       });
 
+      // 新增：為新金鑰初始化錯誤統計
+      this.errorStats.errorsByKey.set(newIndex, {
+        totalErrors: 0,
+        errorsByType: {},
+        lastError: null,
+        lastErrorTime: null,
+      });
+
+      // 初始化錯誤類型計數
+      Object.values(ERROR_TYPES).forEach(type => {
+        this.errorStats.errorsByKey.get(newIndex).errorsByType[type] = 0;
+      });
+
       logger.info(`Successfully added new API key at index ${newIndex}`);
       return newIndex;
     } catch (error) {
@@ -774,6 +1935,9 @@ class GoogleAIService {
     this.keyClients.delete(keyIndex);
     this.keyStats.delete(keyIndex);
 
+    // 新增：清理錯誤統計
+    this.errorStats.errorsByKey.delete(keyIndex);
+
     // 重新索引剩餘的金鑰
     this._reindexKeys();
 
@@ -786,6 +1950,7 @@ class GoogleAIService {
   _reindexKeys() {
     const newKeyClients = new Map();
     const newKeyStats = new Map();
+    const newErrorStats = new Map();
 
     // 根據剩餘的金鑰數量重新建立索引
     for (let i = 0; i < this.apiKeys.length; i++) {
@@ -794,6 +1959,11 @@ class GoogleAIService {
         if (newKeyClients.size === i && !newKeyClients.has(i)) {
           newKeyClients.set(i, client);
           newKeyStats.set(i, this.keyStats.get(oldIndex));
+
+          // 新增：重新索引錯誤統計
+          if (this.errorStats.errorsByKey.has(oldIndex)) {
+            newErrorStats.set(i, this.errorStats.errorsByKey.get(oldIndex));
+          }
           break;
         }
       }
@@ -801,6 +1971,7 @@ class GoogleAIService {
 
     this.keyClients = newKeyClients;
     this.keyStats = newKeyStats;
+    this.errorStats.errorsByKey = newErrorStats;
     this.currentKeyIndex = 0;
   }
 
@@ -820,7 +1991,7 @@ class GoogleAIService {
           failedRequests: keyStats.failedRequests,
           successRate:
             keyStats.totalRequests > 0
-              ? ((keyStats.successfulRequests / keyStats.totalRequests) * 100).toFixed(2) + '%'
+              ? `${((keyStats.successfulRequests / keyStats.totalRequests) * 100).toFixed(2)}%`
               : '0%',
           lastUsed: keyStats.lastUsed,
           consecutiveErrors: keyStats.consecutiveErrors,
@@ -1109,23 +2280,406 @@ class GoogleAIService {
    * 更新速率限制配置（僅限運行時）
    */
   updateRateLimitConfig(newConfig) {
-    const allowedKeys = [
-      'requestsPerMinute',
-      'requestsPerHour',
-      'dailyQuota',
-      'monthlyQuota',
-      'rateLimitCooldown',
-      'quotaResetHours',
-    ];
+    if (newConfig && typeof newConfig === 'object') {
+      Object.assign(RATE_LIMIT_CONFIG, newConfig);
+      logger.info('Rate limit configuration updated', newConfig);
+    }
+  }
 
-    for (const key of allowedKeys) {
-      if (newConfig[key] !== undefined) {
-        RATE_LIMIT_CONFIG[key] = parseInt(newConfig[key], 10);
-      }
+  /**
+   * 計算請求成本
+   */
+  _calculateRequestCost(prompt, response) {
+    const inputChars = prompt.length;
+    const outputChars = response ? response.length : 0;
+    const totalChars = inputChars + outputChars;
+
+    const cost = (totalChars / 1000) * COST_CONFIG.costPerThousandChars;
+
+    logger.debug('Request cost calculated', {
+      inputChars,
+      outputChars,
+      totalChars,
+      cost,
+      costPerThousandChars: COST_CONFIG.costPerThousandChars,
+    });
+
+    return {
+      cost,
+      inputChars,
+      outputChars,
+      totalChars,
+    };
+  }
+
+  /**
+   * 更新成本追蹤
+   */
+  _updateCostTracking(costInfo, priority) {
+    const now = new Date();
+    const currentDateString = now.toDateString();
+    const currentMonth = now.getMonth();
+    const currentHour = now.getHours();
+    const currentDay = now.getDay();
+
+    // 檢查是否需要重設每日統計
+    if (this.costTracking.lastDailyReset !== currentDateString) {
+      this.costTracking.dailyCost = 0;
+      this.costTracking.dailyCharacters = 0;
+      this.costTracking.lastDailyReset = currentDateString;
+      this.usageStats.dailyRequests = 0;
+      logger.info('Daily cost tracking reset');
     }
 
-    logger.info('Rate limit configuration updated', newConfig);
+    // 檢查是否需要重設每月統計
+    if (this.costTracking.lastMonthlyReset !== currentMonth) {
+      this.costTracking.monthlyCost = 0;
+      this.costTracking.monthlyCharacters = 0;
+      this.costTracking.lastMonthlyReset = currentMonth;
+      this.usageStats.monthlyRequests = 0;
+      logger.info('Monthly cost tracking reset');
+    }
+
+    // 更新成本追蹤
+    this.costTracking.totalCost += costInfo.cost;
+    this.costTracking.dailyCost += costInfo.cost;
+    this.costTracking.monthlyCost += costInfo.cost;
+    this.costTracking.totalCharacters += costInfo.totalChars;
+    this.costTracking.dailyCharacters += costInfo.totalChars;
+    this.costTracking.monthlyCharacters += costInfo.totalChars;
+
+    // 更新使用量統計
+    this.usageStats.totalRequests++;
+    this.usageStats.dailyRequests++;
+    this.usageStats.monthlyRequests++;
+    this.usageStats.requestsByPriority[priority]++;
+    this.usageStats.requestsByHour[currentHour]++;
+    this.usageStats.requestsByDay[currentDay]++;
+
+    // 計算平均請求大小
+    this.usageStats.averageRequestSize =
+      this.costTracking.totalCharacters / this.usageStats.totalRequests;
+
+    // 計算成本效率（每美元處理的字符數）
+    this.usageStats.costEfficiency =
+      this.costTracking.totalCost > 0
+        ? this.costTracking.totalCharacters / this.costTracking.totalCost
+        : 0;
+
+    // 添加到成本歷史
+    this.costTracking.costHistory.push({
+      timestamp: now.toISOString(),
+      cost: costInfo.cost,
+      characters: costInfo.totalChars,
+      priority,
+      dailyTotal: this.costTracking.dailyCost,
+      monthlyTotal: this.costTracking.monthlyCost,
+    });
+
+    // 保持歷史記錄在合理範圍內（最多1000條記錄）
+    if (this.costTracking.costHistory.length > 1000) {
+      this.costTracking.costHistory = this.costTracking.costHistory.slice(-1000);
+    }
+
+    // 檢查預算狀況
+    this._checkBudgetStatus();
+
+    logger.debug('Cost tracking updated', {
+      totalCost: this.costTracking.totalCost,
+      dailyCost: this.costTracking.dailyCost,
+      monthlyCost: this.costTracking.monthlyCost,
+      totalRequests: this.usageStats.totalRequests,
+      averageRequestSize: this.usageStats.averageRequestSize,
+      costEfficiency: this.usageStats.costEfficiency,
+    });
+  }
+
+  /**
+   * 檢查預算狀況
+   */
+  _checkBudgetStatus() {
+    const dailyBudgetUsage = this.costTracking.dailyCost / COST_CONFIG.dailyBudget;
+    const monthlyBudgetUsage = this.costTracking.monthlyCost / COST_CONFIG.monthlyBudget;
+    const maxBudgetUsage = Math.max(dailyBudgetUsage, monthlyBudgetUsage);
+
+    // 檢查是否超過預算
+    const wasOverBudget = this.costTracking.isOverBudget;
+    this.costTracking.isOverBudget = maxBudgetUsage >= 1.0;
+
+    // 檢查是否接近預算警告閾值
+    const wasWarning = this.costTracking.isBudgetWarning;
+    this.costTracking.isBudgetWarning =
+      maxBudgetUsage >= COST_CONFIG.budgetWarningThreshold && !this.costTracking.isOverBudget;
+
+    // 產生警告和通知
+    if (this.costTracking.isOverBudget && !wasOverBudget) {
+      const alert = {
+        type: 'budget_exceeded',
+        timestamp: new Date().toISOString(),
+        dailyBudgetUsage,
+        monthlyBudgetUsage,
+        message: `API usage has exceeded budget limits. Daily: ${dailyBudgetUsage.toFixed(2)}%, Monthly: ${monthlyBudgetUsage.toFixed(2)}%`,
+      };
+      this.costTracking.budgetAlerts.push(alert);
+      logger.error('Budget exceeded', alert);
+    } else if (this.costTracking.isBudgetWarning && !wasWarning) {
+      const alert = {
+        type: 'budget_warning',
+        timestamp: new Date().toISOString(),
+        dailyBudgetUsage,
+        monthlyBudgetUsage,
+        message: `API usage approaching budget limits. Daily: ${dailyBudgetUsage.toFixed(2)}%, Monthly: ${monthlyBudgetUsage.toFixed(2)}%`,
+      };
+      this.costTracking.budgetAlerts.push(alert);
+      logger.warn('Budget warning', alert);
+    }
+
+    // 保持警告記錄在合理範圍內
+    if (this.costTracking.budgetAlerts.length > 100) {
+      this.costTracking.budgetAlerts = this.costTracking.budgetAlerts.slice(-100);
+    }
+  }
+
+  /**
+   * 檢查是否可以處理請求（預算檢查）
+   */
+  _canProcessRequest(estimatedCost = 0) {
+    if (this.costTracking.isOverBudget) {
+      return {
+        allowed: false,
+        reason: 'Budget exceeded',
+        details: {
+          dailyBudgetUsage: this.costTracking.dailyCost / COST_CONFIG.dailyBudget,
+          monthlyBudgetUsage: this.costTracking.monthlyCost / COST_CONFIG.monthlyBudget,
+        },
+      };
+    }
+
+    // 檢查估算的成本是否會超過預算
+    const estimatedDailyCost = this.costTracking.dailyCost + estimatedCost;
+    const estimatedMonthlyCost = this.costTracking.monthlyCost + estimatedCost;
+
+    if (estimatedDailyCost > COST_CONFIG.dailyBudget) {
+      return {
+        allowed: false,
+        reason: 'Estimated cost would exceed daily budget',
+        details: {
+          currentDailyCost: this.costTracking.dailyCost,
+          estimatedCost,
+          dailyBudget: COST_CONFIG.dailyBudget,
+        },
+      };
+    }
+
+    if (estimatedMonthlyCost > COST_CONFIG.monthlyBudget) {
+      return {
+        allowed: false,
+        reason: 'Estimated cost would exceed monthly budget',
+        details: {
+          currentMonthlyCost: this.costTracking.monthlyCost,
+          estimatedCost,
+          monthlyBudget: COST_CONFIG.monthlyBudget,
+        },
+      };
+    }
+
+    return { allowed: true };
+  }
+
+  /**
+   * 獲取成本統計
+   */
+  getCostStatistics() {
+    return {
+      totalCost: this.costTracking.totalCost,
+      dailyCost: this.costTracking.dailyCost,
+      monthlyCost: this.costTracking.monthlyCost,
+      totalCharacters: this.costTracking.totalCharacters,
+      dailyCharacters: this.costTracking.dailyCharacters,
+      monthlyCharacters: this.costTracking.monthlyCharacters,
+      budgetStatus: {
+        isOverBudget: this.costTracking.isOverBudget,
+        isBudgetWarning: this.costTracking.isBudgetWarning,
+        dailyBudgetUsage: this.costTracking.dailyCost / COST_CONFIG.dailyBudget,
+        monthlyBudgetUsage: this.costTracking.monthlyCost / COST_CONFIG.monthlyBudget,
+      },
+      configuration: {
+        dailyBudget: COST_CONFIG.dailyBudget,
+        monthlyBudget: COST_CONFIG.monthlyBudget,
+        costPerThousandChars: COST_CONFIG.costPerThousandChars,
+        budgetWarningThreshold: COST_CONFIG.budgetWarningThreshold,
+      },
+    };
+  }
+
+  /**
+   * 獲取使用量統計
+   */
+  getUsageStatistics() {
+    return {
+      totalRequests: this.usageStats.totalRequests,
+      dailyRequests: this.usageStats.dailyRequests,
+      monthlyRequests: this.usageStats.monthlyRequests,
+      requestsByPriority: { ...this.usageStats.requestsByPriority },
+      requestsByHour: [...this.usageStats.requestsByHour],
+      requestsByDay: [...this.usageStats.requestsByDay],
+      peakUsageTime: this.usageStats.peakUsageTime,
+      averageRequestSize: this.usageStats.averageRequestSize,
+      costEfficiency: this.usageStats.costEfficiency,
+    };
+  }
+
+  /**
+   * 獲取成本歷史
+   */
+  getCostHistory(options = {}) {
+    const { limit = 100, startTime, endTime } = options;
+    let history = [...this.costTracking.costHistory];
+
+    // 時間過濾
+    if (startTime) {
+      history = history.filter(record => new Date(record.timestamp) >= new Date(startTime));
+    }
+    if (endTime) {
+      history = history.filter(record => new Date(record.timestamp) <= new Date(endTime));
+    }
+
+    // 限制返回數量
+    if (limit > 0) {
+      history = history.slice(-limit);
+    }
+
+    return history;
+  }
+
+  /**
+   * 獲取預算警告
+   */
+  getBudgetAlerts(options = {}) {
+    const { limit = 50, type } = options;
+    let alerts = [...this.costTracking.budgetAlerts];
+
+    // 類型過濾
+    if (type) {
+      alerts = alerts.filter(alert => alert.type === type);
+    }
+
+    // 限制返回數量
+    if (limit > 0) {
+      alerts = alerts.slice(-limit);
+    }
+
+    return alerts;
+  }
+
+  /**
+   * 重設成本統計
+   */
+  resetCostStatistics() {
+    this.costTracking.totalCost = 0;
+    this.costTracking.dailyCost = 0;
+    this.costTracking.monthlyCost = 0;
+    this.costTracking.totalCharacters = 0;
+    this.costTracking.dailyCharacters = 0;
+    this.costTracking.monthlyCharacters = 0;
+    this.costTracking.costHistory = [];
+    this.costTracking.budgetAlerts = [];
+    this.costTracking.isOverBudget = false;
+    this.costTracking.isBudgetWarning = false;
+
+    this.usageStats.totalRequests = 0;
+    this.usageStats.dailyRequests = 0;
+    this.usageStats.monthlyRequests = 0;
+    this.usageStats.requestsByPriority = {
+      high: 0,
+      medium: 0,
+      low: 0,
+      background: 0,
+    };
+    this.usageStats.requestsByHour = new Array(24).fill(0);
+    this.usageStats.requestsByDay = new Array(7).fill(0);
+    this.usageStats.peakUsageTime = null;
+    this.usageStats.averageRequestSize = 0;
+    this.usageStats.costEfficiency = 0;
+
+    logger.info('Cost statistics reset');
+  }
+
+  /**
+   * 更新成本配置
+   */
+  updateCostConfig(newConfig) {
+    if (newConfig && typeof newConfig === 'object') {
+      Object.assign(COST_CONFIG, newConfig);
+      logger.info('Cost configuration updated', newConfig);
+    }
+  }
+
+  /**
+   * 獲取成本配置
+   */
+  getCostConfig() {
+    return { ...COST_CONFIG };
+  }
+
+  /**
+   * 獲取佇列統計
+   */
+  getQueueStatistics() {
+    return {
+      ...this.queueStats,
+      currentQueueSizes: { ...this.queueStats.queueSizes },
+      batchProcessingStatus: {
+        isProcessing: this.batchProcessing.isProcessing,
+        concurrentRequests: this.batchProcessing.concurrentRequests,
+        lastProcessTime: this.batchProcessing.lastProcessTime,
+      },
+    };
+  }
+
+  /**
+   * 清理資源
+   */
+  cleanup() {
+    if (this.backgroundProcessorInterval) {
+      clearInterval(this.backgroundProcessorInterval);
+      this.backgroundProcessorInterval = null;
+    }
+    if (this.batchProcessing.batchTimeout) {
+      clearTimeout(this.batchProcessing.batchTimeout);
+      this.batchProcessing.batchTimeout = null;
+    }
+    logger.info('GoogleAIService cleanup completed');
+  }
+
+  /**
+   * 獲取綜合健康狀態（增強版）
+   */
+  async getEnhancedHealthStatus() {
+    const baseHealth = await this.getHealthStatus();
+
+    return {
+      ...baseHealth,
+      costStatus: this.getCostStatistics(),
+      usageStatus: this.getUsageStatistics(),
+      queueStatus: this.getQueueStatistics(),
+      budgetAlerts: this.getBudgetAlerts({ limit: 10 }),
+      performanceMetrics: {
+        averageWaitTime: this.queueStats.averageWaitTime,
+        averageProcessingTime: this.queueStats.averageProcessingTime,
+        successRate:
+          this.queueStats.totalProcessed > 0
+            ? this.queueStats.totalCompleted / this.queueStats.totalProcessed
+            : 0,
+        queueUtilization: Object.values(this.queueStats.queueSizes).reduce(
+          (sum, size) => sum + size,
+          0
+        ),
+      },
+    };
   }
 }
 
 module.exports = GoogleAIService;
+module.exports.ERROR_TYPES = ERROR_TYPES;
+module.exports.ERROR_RECOVERY_STRATEGIES = ERROR_RECOVERY_STRATEGIES;

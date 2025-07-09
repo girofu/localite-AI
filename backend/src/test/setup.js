@@ -12,24 +12,22 @@ jest.mock('../config/redis', () => {
       mockRedisData.set(key, { value, ...options });
       return Promise.resolve('OK');
     }),
-    get: jest.fn(key => {
+    get: jest.fn((key) => {
       const data = mockRedisData.get(key);
       return Promise.resolve(data ? data.value : null);
     }),
-    del: jest.fn(key => {
+    del: jest.fn((key) => {
       const existed = mockRedisData.has(key);
       mockRedisData.delete(key);
       return Promise.resolve(existed ? 1 : 0);
     }),
-    exists: jest.fn(key => {
-      return Promise.resolve(mockRedisData.has(key) ? 1 : 0);
-    }),
+    exists: jest.fn((key) => Promise.resolve(mockRedisData.has(key) ? 1 : 0)),
     expire: jest.fn(() => Promise.resolve(1)),
     ttl: jest.fn(() => Promise.resolve(-1)),
-    keys: jest.fn(pattern => {
+    keys: jest.fn((pattern) => {
       const keys = Array.from(mockRedisData.keys());
       if (pattern === '*test*') {
-        return Promise.resolve(keys.filter(key => key.includes('test')));
+        return Promise.resolve(keys.filter((key) => key.includes('test')));
       }
       return Promise.resolve(keys);
     }),
@@ -47,14 +45,12 @@ jest.mock('../config/redis', () => {
       mockRedisData.set(key, { value, ttl });
       return Promise.resolve('OK');
     }),
-    mGet: jest.fn(keys => {
-      return Promise.resolve(
-        keys.map(key => {
-          const data = mockRedisData.get(key);
-          return data ? data.value : null;
-        })
-      );
-    }),
+    mGet: jest.fn((keys) => Promise.resolve(
+      keys.map((key) => {
+        const data = mockRedisData.get(key);
+        return data ? data.value : null;
+      }),
+    )),
     ping: jest.fn(() => Promise.resolve('PONG')),
     info: jest.fn(() => Promise.resolve('redis_version:6.0.0')),
     connect: jest.fn(() => Promise.resolve()),
@@ -65,14 +61,14 @@ jest.mock('../config/redis', () => {
       expire: jest.fn(() => mockTransaction),
       exec: jest.fn(() => Promise.resolve([1, 1])), // 返回假結果
     })),
-    incr: jest.fn(key => {
+    incr: jest.fn((key) => {
       const data = mockRedisData.get(key);
       const currentValue = data ? parseInt(data.value) || 0 : 0;
       const newValue = currentValue + 1;
       mockRedisData.set(key, { value: newValue.toString() });
       return Promise.resolve(newValue);
     }),
-    decr: jest.fn(key => {
+    decr: jest.fn((key) => {
       const data = mockRedisData.get(key);
       const currentValue = data ? parseInt(data.value) || 0 : 0;
       const newValue = currentValue - 1;
@@ -89,7 +85,7 @@ jest.mock('../config/redis', () => {
       const hash = mockRedisData.get(key);
       return Promise.resolve(hash && hash.value ? hash.value[field] : null);
     }),
-    hgetall: jest.fn(key => {
+    hgetall: jest.fn((key) => {
       const hash = mockRedisData.get(key);
       return Promise.resolve(hash && hash.value ? hash.value : {});
     }),
@@ -123,8 +119,8 @@ jest.mock('../config/redis', () => {
 
         return Promise.resolve({
           totalHits: current,
-          resetTime: resetTime,
-          remaining: remaining,
+          resetTime,
+          remaining,
         });
       }
       return Promise.resolve(null);
@@ -139,7 +135,7 @@ jest.mock('../config/redis', () => {
       }
       return Promise.resolve(0);
     }),
-    pttl: jest.fn(key => {
+    pttl: jest.fn((key) => {
       const data = mockRedisData.get(key);
       if (data && data.expires) {
         return Promise.resolve(Math.max(0, data.expires - Date.now()));
@@ -167,25 +163,25 @@ jest.mock('../config/redis', () => {
     getClient: jest.fn(() => mockRedisClient),
     ping: jest.fn(() => Promise.resolve(true)),
     set: jest.fn((key, value, options) => mockRedisClient.set(key, JSON.stringify(value), options)),
-    get: jest.fn(async key => {
+    get: jest.fn(async (key) => {
       const value = await mockRedisClient.get(key);
       return value ? JSON.parse(value) : null;
     }),
-    delete: jest.fn(key => mockRedisClient.del(key)),
-    exists: jest.fn(key => mockRedisClient.exists(key)),
+    delete: jest.fn((key) => mockRedisClient.del(key)),
+    exists: jest.fn((key) => mockRedisClient.exists(key)),
     expire: jest.fn((key, seconds) => mockRedisClient.expire(key, seconds)),
-    ttl: jest.fn(key => mockRedisClient.ttl(key)),
-    mget: jest.fn(async keys => {
+    ttl: jest.fn((key) => mockRedisClient.ttl(key)),
+    mget: jest.fn(async (keys) => {
       const values = await mockRedisClient.mGet(keys);
-      return values.map(value => (value ? JSON.parse(value) : null));
+      return values.map((value) => (value ? JSON.parse(value) : null));
     }),
     flushAll: jest.fn(() => mockRedisClient.flushAll()),
     flushdb: jest.fn(() => mockRedisClient.flushdb()),
     info: jest.fn(() => mockRedisClient.info()),
-    keys: jest.fn(pattern => mockRedisClient.keys(pattern)),
+    keys: jest.fn((pattern) => mockRedisClient.keys(pattern)),
     del: jest.fn((...keys) => {
       let deletedCount = 0;
-      keys.forEach(key => {
+      keys.forEach((key) => {
         if (mockRedisData.has(key)) {
           mockRedisData.delete(key);
           deletedCount++;
@@ -196,7 +192,7 @@ jest.mock('../config/redis', () => {
     // 添加 setex 方法
     setex: jest.fn((key, ttl, value) => mockRedisClient.setEx(key, ttl, JSON.stringify(value))),
     // 添加 incr 方法
-    incr: jest.fn(key => mockRedisClient.incr(key)),
+    incr: jest.fn((key) => mockRedisClient.incr(key)),
   };
 
   return {
@@ -212,13 +208,11 @@ jest.mock('firebase-admin', () => ({
     cert: jest.fn(),
   },
   auth: jest.fn(() => ({
-    verifyIdToken: jest.fn(() =>
-      Promise.resolve({
-        uid: 'security-test-user-123',
-        email: 'security-test@localite.com',
-        email_verified: true,
-      })
-    ),
+    verifyIdToken: jest.fn(() => Promise.resolve({
+      uid: 'security-test-user-123',
+      email: 'security-test@localite.com',
+      email_verified: true,
+    })),
     createUser: jest.fn(),
     updateUser: jest.fn(),
     deleteUser: jest.fn(),
@@ -241,12 +235,11 @@ expect.extend({
         message: () => `expected ${received} not to be one of ${expected.join(', ')}`,
         pass: true,
       };
-    } else {
-      return {
-        message: () => `expected ${received} to be one of ${expected.join(', ')}`,
-        pass: false,
-      };
     }
+    return {
+      message: () => `expected ${received} to be one of ${expected.join(', ')}`,
+      pass: false,
+    };
   },
   toBeWithinRange(received, min, max) {
     const pass = received >= min && received <= max;
@@ -255,33 +248,26 @@ expect.extend({
         message: () => `expected ${received} not to be within range ${min} - ${max}`,
         pass: true,
       };
-    } else {
-      return {
-        message: () => `expected ${received} to be within range ${min} - ${max}`,
-        pass: false,
-      };
     }
+    return {
+      message: () => `expected ${received} to be within range ${min} - ${max}`,
+      pass: false,
+    };
   },
   toHaveBeenCalledWithObjectContaining(received, expected) {
-    const pass = received.mock.calls.some(call =>
-      call.some(
-        arg =>
-          typeof arg === 'object' && Object.keys(expected).every(key => arg[key] === expected[key])
-      )
-    );
+    const pass = received.mock.calls.some((call) => call.some(
+      (arg) => typeof arg === 'object' && Object.keys(expected).every((key) => arg[key] === expected[key]),
+    ));
     if (pass) {
       return {
-        message: () =>
-          `expected function not to have been called with object containing ${JSON.stringify(expected)}`,
+        message: () => `expected function not to have been called with object containing ${JSON.stringify(expected)}`,
         pass: true,
       };
-    } else {
-      return {
-        message: () =>
-          `expected function to have been called with object containing ${JSON.stringify(expected)}`,
-        pass: false,
-      };
     }
+    return {
+      message: () => `expected function to have been called with object containing ${JSON.stringify(expected)}`,
+      pass: false,
+    };
   },
 });
 

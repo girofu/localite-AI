@@ -1,8 +1,8 @@
 const crypto = require('crypto');
-const { redisConnection } = require('../config/redis');
-const { logger } = require('../middleware/requestLogger');
 const { authenticator } = require('otplib');
 const QRCode = require('qrcode');
+const { redisConnection } = require('../config/redis');
+const { logger } = require('../middleware/requestLogger');
 
 /**
  * MFA (Multi-Factor Authentication) 服務
@@ -226,8 +226,8 @@ class MFAService {
       const maxDailyAttempts = type === this.MFA_TYPE.SMS ? this.smsConfig.maxDailyAttempts : 20; // 其他類型的每日限制
 
       return (
-        parseInt(currentAttempts, 10) >= maxAttempts ||
-        parseInt(dailyAttempts, 10) >= maxDailyAttempts
+        parseInt(currentAttempts, 10) >= maxAttempts
+        || parseInt(dailyAttempts, 10) >= maxDailyAttempts
       );
     } catch (error) {
       logger.error('檢查嘗試限制失敗', {
@@ -383,7 +383,7 @@ class MFAService {
       }
 
       const backupCodes = JSON.parse(backupCodesData);
-      return backupCodes.codes.filter(code => !code.used).length;
+      return backupCodes.codes.filter((code) => !code.used).length;
     } catch (error) {
       logger.error('獲取備用碼剩餘數量失敗', {
         uid,
@@ -480,7 +480,7 @@ class MFAService {
       // 驗證 TOTP 代碼
       const isValid = authenticator.verify({
         token: code.toString(),
-        secret: secret,
+        secret,
       });
 
       if (isValid) {
@@ -494,19 +494,18 @@ class MFAService {
           result: this.VERIFICATION_RESULT.SUCCESS,
           message: 'TOTP 驗證成功',
         };
-      } else {
-        logger.warn('TOTP 驗證失敗', {
-          uid,
-          code: '***',
-          timestamp: new Date().toISOString(),
-        });
-
-        return {
-          success: false,
-          result: this.VERIFICATION_RESULT.INVALID_CODE,
-          message: 'TOTP 驗證碼無效',
-        };
       }
+      logger.warn('TOTP 驗證失敗', {
+        uid,
+        code: '***',
+        timestamp: new Date().toISOString(),
+      });
+
+      return {
+        success: false,
+        result: this.VERIFICATION_RESULT.INVALID_CODE,
+        message: 'TOTP 驗證碼無效',
+      };
     } catch (error) {
       logger.error('TOTP 驗證過程發生錯誤', {
         uid,
@@ -662,7 +661,7 @@ class MFAService {
 
       // 查找匹配的備用碼
       const matchingCodeIndex = backupCodes.codes.findIndex(
-        codeObj => codeObj.code === normalizedCode && !codeObj.used
+        (codeObj) => codeObj.code === normalizedCode && !codeObj.used,
       );
 
       if (matchingCodeIndex === -1) {
@@ -690,7 +689,7 @@ class MFAService {
       logger.info('備用碼驗證成功', {
         uid,
         code: '***',
-        remainingCodes: backupCodes.codes.filter(c => !c.used).length,
+        remainingCodes: backupCodes.codes.filter((c) => !c.used).length,
         timestamp: new Date().toISOString(),
       });
 
@@ -698,7 +697,7 @@ class MFAService {
         success: true,
         result: this.VERIFICATION_RESULT.SUCCESS,
         message: '備用碼驗證成功',
-        remainingCodes: backupCodes.codes.filter(c => !c.used).length,
+        remainingCodes: backupCodes.codes.filter((c) => !c.used).length,
       };
     } catch (error) {
       logger.error('備用碼驗證過程發生錯誤', {
@@ -739,7 +738,7 @@ class MFAService {
       // 如 AWS SNS、Twilio、阿里雲短信等
 
       // 模擬發送延遲
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
       // 模擬 10% 的發送失敗率（用於測試）
       const shouldFail = Math.random() < 0.1;
@@ -794,7 +793,7 @@ class MFAService {
       const lastSent = parseInt(lastSentTime, 10);
       const remainingTime = Math.max(
         0,
-        this.smsConfig.resendInterval * 1000 - (currentTime - lastSent)
+        this.smsConfig.resendInterval * 1000 - (currentTime - lastSent),
       );
 
       return {
@@ -872,12 +871,12 @@ class MFAService {
       // 存儲驗證碼
       const smsCodeKey = `${this.smsCodePrefix}${uid}`;
       const codeData = {
-        code: code,
-        phone: phone,
+        code,
+        phone,
         createdAt: currentTime,
-        expiresAt: expiresAt,
+        expiresAt,
         attempts: 0,
-        isResend: isResend,
+        isResend,
       };
 
       await redisConnection.set(smsCodeKey, JSON.stringify(codeData));
@@ -965,7 +964,7 @@ class MFAService {
       await this.setUserMFAStatus(uid, {
         ...currentStatus,
         status: this.MFA_STATUS.PENDING,
-        pendingMethods: pendingMethods,
+        pendingMethods,
       });
 
       logger.info('SMS 驗證設置開始', { uid, phone });
@@ -1015,16 +1014,15 @@ class MFAService {
       }
 
       // 從待處理列表移除
-      const updatedPendingMethods = pendingMethods.filter(method => method !== this.MFA_TYPE.SMS);
+      const updatedPendingMethods = pendingMethods.filter((method) => method !== this.MFA_TYPE.SMS);
 
       // 決定整體狀態
-      const newStatus =
-        enabledMethods.length > 0 ? this.MFA_STATUS.ENABLED : this.MFA_STATUS.DISABLED;
+      const newStatus = enabledMethods.length > 0 ? this.MFA_STATUS.ENABLED : this.MFA_STATUS.DISABLED;
 
       await this.setUserMFAStatus(uid, {
         ...currentStatus,
         status: newStatus,
-        enabledMethods: enabledMethods,
+        enabledMethods,
         pendingMethods: updatedPendingMethods,
       });
 
@@ -1033,7 +1031,7 @@ class MFAService {
       return {
         success: true,
         message: 'SMS 驗證已成功啟用',
-        enabledMethods: enabledMethods,
+        enabledMethods,
       };
     } catch (error) {
       logger.error('SMS 驗證啟用失敗', {
@@ -1061,14 +1059,13 @@ class MFAService {
       const pendingMethods = currentStatus.pendingMethods || [];
 
       // 從啟用列表移除
-      const updatedEnabledMethods = enabledMethods.filter(method => method !== this.MFA_TYPE.SMS);
+      const updatedEnabledMethods = enabledMethods.filter((method) => method !== this.MFA_TYPE.SMS);
 
       // 從待處理列表移除
-      const updatedPendingMethods = pendingMethods.filter(method => method !== this.MFA_TYPE.SMS);
+      const updatedPendingMethods = pendingMethods.filter((method) => method !== this.MFA_TYPE.SMS);
 
       // 決定整體狀態
-      const newStatus =
-        updatedEnabledMethods.length > 0 ? this.MFA_STATUS.ENABLED : this.MFA_STATUS.DISABLED;
+      const newStatus = updatedEnabledMethods.length > 0 ? this.MFA_STATUS.ENABLED : this.MFA_STATUS.DISABLED;
 
       await this.setUserMFAStatus(uid, {
         ...currentStatus,
@@ -1154,8 +1151,8 @@ class MFAService {
     try {
       const backupCodesKey = `${this.backupCodesPrefix}${uid}`;
       const backupCodesData = {
-        codes: codes.map(code => ({
-          code: code,
+        codes: codes.map((code) => ({
+          code,
           used: false,
           usedAt: null,
         })),
@@ -1216,7 +1213,7 @@ class MFAService {
 
       await this.setUserMFAStatus(uid, {
         ...currentStatus,
-        pendingMethods: pendingMethods,
+        pendingMethods,
       });
 
       logger.info('備用碼設置成功', { uid });
@@ -1224,7 +1221,7 @@ class MFAService {
       return {
         success: true,
         message: '備用碼設置成功',
-        codes: codes,
+        codes,
         warning: '請安全保存這些備用碼，它們只會顯示一次',
       };
     } catch (error) {
@@ -1269,7 +1266,7 @@ class MFAService {
       return {
         success: true,
         message: '備用碼重新生成成功',
-        codes: codes,
+        codes,
         warning: '舊的備用碼已失效，請安全保存這些新的備用碼',
       };
     } catch (error) {
@@ -1308,7 +1305,7 @@ class MFAService {
       const backupCodes = JSON.parse(backupCodesData);
 
       // 過濾備用碼
-      const filteredCodes = backupCodes.codes.filter(codeObj => {
+      const filteredCodes = backupCodes.codes.filter((codeObj) => {
         if (includeUsed) {
           return true;
         }
@@ -1320,8 +1317,8 @@ class MFAService {
         codes: filteredCodes,
         enabled: backupCodes.enabled,
         totalCodes: backupCodes.codes.length,
-        usedCodes: backupCodes.codes.filter(c => c.used).length,
-        remainingCodes: backupCodes.codes.filter(c => !c.used).length,
+        usedCodes: backupCodes.codes.filter((c) => c.used).length,
+        remainingCodes: backupCodes.codes.filter((c) => !c.used).length,
         createdAt: backupCodes.createdAt,
         lastUsedAt: backupCodes.lastUsedAt,
       };
@@ -1372,7 +1369,7 @@ class MFAService {
 
       // 從待處理列表移除並添加到啟用列表
       const updatedPendingMethods = pendingMethods.filter(
-        method => method !== this.MFA_TYPE.BACKUP_CODE
+        (method) => method !== this.MFA_TYPE.BACKUP_CODE,
       );
 
       if (!enabledMethods.includes(this.MFA_TYPE.BACKUP_CODE)) {
@@ -1382,7 +1379,7 @@ class MFAService {
       await this.setUserMFAStatus(uid, {
         ...currentStatus,
         status: this.MFA_STATUS.ENABLED,
-        enabledMethods: enabledMethods,
+        enabledMethods,
         pendingMethods: updatedPendingMethods,
       });
 
@@ -1391,7 +1388,7 @@ class MFAService {
       return {
         success: true,
         message: '備用碼已啟用',
-        enabledMethods: enabledMethods,
+        enabledMethods,
       };
     } catch (error) {
       logger.error('啟用備用碼失敗', {
@@ -1419,17 +1416,16 @@ class MFAService {
 
       // 從啟用列表移除
       const updatedEnabledMethods = enabledMethods.filter(
-        method => method !== this.MFA_TYPE.BACKUP_CODE
+        (method) => method !== this.MFA_TYPE.BACKUP_CODE,
       );
 
       // 從待處理列表移除
       const updatedPendingMethods = pendingMethods.filter(
-        method => method !== this.MFA_TYPE.BACKUP_CODE
+        (method) => method !== this.MFA_TYPE.BACKUP_CODE,
       );
 
       // 決定整體狀態
-      const newStatus =
-        updatedEnabledMethods.length > 0 ? this.MFA_STATUS.ENABLED : this.MFA_STATUS.DISABLED;
+      const newStatus = updatedEnabledMethods.length > 0 ? this.MFA_STATUS.ENABLED : this.MFA_STATUS.DISABLED;
 
       await this.setUserMFAStatus(uid, {
         ...currentStatus,
@@ -1529,7 +1525,7 @@ class MFAService {
     try {
       const secretKey = `${this.totpSecretPrefix}${uid}`;
       const secretData = {
-        secret: secret,
+        secret,
         createdAt: new Date().toISOString(),
         enabled: false, // 預設為未啟用，需要驗證後才啟用
       };
@@ -1560,7 +1556,7 @@ class MFAService {
       const otpauth = authenticator.keyuri(
         email, // 帳號標識符
         this.totpConfig.issuer, // 發行者
-        secret
+        secret,
       );
 
       // 生成 QR 碼
@@ -1629,14 +1625,14 @@ class MFAService {
       await this.setUserMFAStatus(uid, {
         ...currentStatus,
         status: this.MFA_STATUS.PENDING,
-        pendingMethods: pendingMethods,
+        pendingMethods,
       });
 
       logger.info('TOTP 設置完成', { uid, email });
 
       return {
         success: true,
-        secret: secret,
+        secret,
         qrCode: qrCodeDataURL,
         message: '請使用驗證器應用掃描 QR 碼並輸入驗證碼以啟用 TOTP',
       };
@@ -1697,11 +1693,11 @@ class MFAService {
 
       // 更新 MFA 狀態
       const currentStatus = await this.getUserMFAStatus(uid);
-      let enabledMethods = currentStatus.enabledMethods || [];
+      const enabledMethods = currentStatus.enabledMethods || [];
       let pendingMethods = currentStatus.pendingMethods || [];
 
       // 移動 TOTP 從 pending 到 enabled
-      pendingMethods = pendingMethods.filter(method => method !== this.MFA_TYPE.TOTP);
+      pendingMethods = pendingMethods.filter((method) => method !== this.MFA_TYPE.TOTP);
       if (!enabledMethods.includes(this.MFA_TYPE.TOTP)) {
         enabledMethods.push(this.MFA_TYPE.TOTP);
       }
@@ -1709,8 +1705,8 @@ class MFAService {
       await this.setUserMFAStatus(uid, {
         ...currentStatus,
         status: this.MFA_STATUS.ENABLED,
-        enabledMethods: enabledMethods,
-        pendingMethods: pendingMethods,
+        enabledMethods,
+        pendingMethods,
       });
 
       logger.info('TOTP 啟用成功', { uid });
@@ -1750,17 +1746,16 @@ class MFAService {
       let pendingMethods = currentStatus.pendingMethods || [];
 
       // 移除 TOTP
-      enabledMethods = enabledMethods.filter(method => method !== this.MFA_TYPE.TOTP);
-      pendingMethods = pendingMethods.filter(method => method !== this.MFA_TYPE.TOTP);
+      enabledMethods = enabledMethods.filter((method) => method !== this.MFA_TYPE.TOTP);
+      pendingMethods = pendingMethods.filter((method) => method !== this.MFA_TYPE.TOTP);
 
-      const newStatus =
-        enabledMethods.length > 0 ? this.MFA_STATUS.ENABLED : this.MFA_STATUS.DISABLED;
+      const newStatus = enabledMethods.length > 0 ? this.MFA_STATUS.ENABLED : this.MFA_STATUS.DISABLED;
 
       await this.setUserMFAStatus(uid, {
         ...currentStatus,
         status: newStatus,
-        enabledMethods: enabledMethods,
-        pendingMethods: pendingMethods,
+        enabledMethods,
+        pendingMethods,
       });
 
       logger.info('TOTP 禁用成功', { uid });

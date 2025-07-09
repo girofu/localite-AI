@@ -17,7 +17,9 @@ jest.mock('./requestLogger', () => ({
   },
 }));
 
-const { authenticate, requireRole, optionalAuth, AuthMiddleware } = require('./authMiddleware');
+const {
+  authenticate, requireRole, optionalAuth, AuthMiddleware,
+} = require('./authMiddleware');
 
 describe('AuthMiddleware', () => {
   let req;

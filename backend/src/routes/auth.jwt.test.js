@@ -123,10 +123,10 @@ describe('JWT Token Management Routes', () => {
 
       // 驗證 token 格式正確
       expect(response.body.data.accessToken).toMatch(
-        /^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+$/
+        /^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+$/,
       );
       expect(response.body.data.refreshToken).toMatch(
-        /^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+$/
+        /^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+$/,
       );
     });
 
@@ -185,7 +185,7 @@ describe('JWT Token Management Routes', () => {
           deviceFingerprint: expect.any(String),
           loginMethod: 'token_refresh',
           timestamp: expect.any(String),
-        })
+        }),
       );
     });
 

@@ -21,7 +21,7 @@ class RateLimitMiddleware {
     };
 
     // 初始化 Redis 連接（異步）
-    this.initializeRedis().catch(error => {
+    this.initializeRedis().catch((error) => {
       logger.error('Rate limiting Redis 初始化失敗', { error: error.message });
     });
 
@@ -57,11 +57,10 @@ class RateLimitMiddleware {
   static generateKey(req, prefix = 'rate_limit') {
     // 基於 IP 地址和用戶 ID（如果有）生成唯一鍵
     // 優先使用 X-Forwarded-For 標頭中的 IP（用於測試和代理環境）
-    const ip =
-      req.get('X-Forwarded-For') ||
-      req.ip ||
-      (req.connection && req.connection.remoteAddress) ||
-      'unknown';
+    const ip = req.get('X-Forwarded-For')
+      || req.ip
+      || (req.connection && req.connection.remoteAddress)
+      || 'unknown';
     const userId = req.user?.uid || req.user?.id || 'anonymous';
     const userAgent = req.get('User-Agent') || 'unknown';
 
@@ -122,7 +121,7 @@ class RateLimitMiddleware {
    * 跳過條件檢查
    */
   static createSkipFunction(customSkipConditions = []) {
-    return req => {
+    return (req) => {
       // 開發環境跳過（可選）
       if (process.env.NODE_ENV === 'development' && process.env.SKIP_RATE_LIMIT === 'true') {
         return true;
@@ -140,7 +139,7 @@ class RateLimitMiddleware {
       }
 
       // 自訂跳過條件
-      return customSkipConditions.some(condition => condition(req));
+      return customSkipConditions.some((condition) => condition(req));
     };
   }
 
@@ -148,7 +147,7 @@ class RateLimitMiddleware {
    * 建立 Redis 存儲類別
    */
   createRedisStore(windowMs) {
-    const redis = this.redis;
+    const { redis } = this;
 
     return {
       async increment(key) {
@@ -171,15 +170,14 @@ class RateLimitMiddleware {
               totalHits,
               resetTime: new Date(Date.now() + windowMs),
             };
-          } else {
-            // 如果 multi 失敗，嘗試單獨的命令
-            const totalHits = await redis.incr(key);
-            await redis.expire(key, Math.ceil(windowMs / 1000));
-            return {
-              totalHits,
-              resetTime: new Date(Date.now() + windowMs),
-            };
           }
+          // 如果 multi 失敗，嘗試單獨的命令
+          const totalHits = await redis.incr(key);
+          await redis.expire(key, Math.ceil(windowMs / 1000));
+          return {
+            totalHits,
+            resetTime: new Date(Date.now() + windowMs),
+          };
         } catch (error) {
           logger.error('Redis rate limit increment failed', {
             error: error.message,
@@ -259,7 +257,7 @@ class RateLimitMiddleware {
       },
       standardHeaders: true,
       legacyHeaders: false,
-      keyGenerator: req => RateLimitMiddleware.generateKey(req, keyPrefix),
+      keyGenerator: (req) => RateLimitMiddleware.generateKey(req, keyPrefix),
       handler: this.createResponseHandler(message, windowMs),
       skip: RateLimitMiddleware.createSkipFunction(skipConditions),
     };
@@ -363,7 +361,7 @@ class RateLimitMiddleware {
           logger.info('Rate limiting statistics', this.getStats());
         }
       },
-      60 * 60 * 1000
+      60 * 60 * 1000,
     ); // 1小時
   }
 

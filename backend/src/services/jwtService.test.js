@@ -114,13 +114,13 @@ describe('JWT Service', () => {
       redisConnection.exists.mockResolvedValue(true);
 
       await expect(jwtService.verifyAccessToken(validAccessToken)).rejects.toThrow(
-        'Token 已被撤銷'
+        'Token 已被撤銷',
       );
     });
 
     it('should reject invalid token format', async () => {
       await expect(jwtService.verifyAccessToken('invalid-token')).rejects.toThrow(
-        '無效的 token 格式'
+        '無效的 token 格式',
       );
     });
 
@@ -146,7 +146,7 @@ describe('JWT Service', () => {
       redisConnection.get.mockResolvedValue(null);
 
       await expect(jwtService.verifyRefreshToken(validRefreshToken)).rejects.toThrow(
-        'Refresh token 不存在或已過期'
+        'Refresh token 不存在或已過期',
       );
     });
   });
@@ -196,7 +196,7 @@ describe('JWT Service', () => {
       redisConnection.get.mockResolvedValue(null);
 
       await expect(jwtService.refreshAccessToken(validRefreshToken)).rejects.toThrow(
-        'Refresh token 不存在或已過期'
+        'Refresh token 不存在或已過期',
       );
     });
   });
@@ -303,7 +303,7 @@ describe('JWT Service', () => {
           isActive: true,
           securityFlags: expect.any(Object),
         }),
-        { ttl: expect.any(Number) }
+        { ttl: expect.any(Number) },
       );
     });
 
@@ -325,7 +325,7 @@ describe('JWT Service', () => {
       expect(redisConnection.set).toHaveBeenCalledWith(
         `session:${sessionId}`,
         { ...sessionData, ...updates },
-        { ttl: expect.any(Number) }
+        { ttl: expect.any(Number) },
       );
     });
 
@@ -383,17 +383,17 @@ describe('JWT Service', () => {
 
     it('should handle malformed tokens', async () => {
       await expect(jwtService.verifyAccessToken('malformed.token')).rejects.toThrow(
-        '無效的 token 格式'
+        '無效的 token 格式',
       );
     });
 
-    it('should handle expired tokens', done => {
+    it('should handle expired tokens', (done) => {
       // 測試過期 token - 使用實際過期的 token
       const payload = { uid: mockUser.firebaseUid, email: mockUser.email };
       const expiredToken = jwt.sign(
         { ...payload, type: 'access', jti: 'test-jti' },
         process.env.JWT_SECRET || 'localite-jwt-secret-key',
-        { expiresIn: '1ms', issuer: 'localite', audience: 'localite-users' }
+        { expiresIn: '1ms', issuer: 'localite', audience: 'localite-users' },
       );
 
       // 等待 token 過期

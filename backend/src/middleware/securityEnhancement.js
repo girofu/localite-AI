@@ -69,9 +69,9 @@ class SecurityEnhancement {
     } catch (error) {
       // 在特定的中間件錯誤測試中，重新拋出錯誤
       if (
-        process.env.NODE_ENV === 'test' &&
-        process.env.MIDDLEWARE_ERROR_TEST === 'true' &&
-        error.message === 'Redis connection failed'
+        process.env.NODE_ENV === 'test'
+        && process.env.MIDDLEWARE_ERROR_TEST === 'true'
+        && error.message === 'Redis connection failed'
       ) {
         throw error;
       }
@@ -465,16 +465,16 @@ class SecurityEnhancement {
 
       // 篩選事件類型 - 確保嚴格匹配
       if (eventType) {
-        filteredEvents = filteredEvents.filter(event => event.type === eventType);
+        filteredEvents = filteredEvents.filter((event) => event.type === eventType);
       }
 
       // 篩選時間範圍 - 支援 since 和 from/to 兩種格式
       if (since !== null) {
         // 使用 since 參數：篩選指定時間點之後的事件
-        filteredEvents = filteredEvents.filter(event => event.timestamp >= since);
+        filteredEvents = filteredEvents.filter((event) => event.timestamp >= since);
       } else if (from !== null || to !== null) {
         // 使用 from/to 參數：篩選時間範圍內的事件
-        filteredEvents = filteredEvents.filter(event => {
+        filteredEvents = filteredEvents.filter((event) => {
           const eventTime = event.timestamp;
           if (from !== null && eventTime < from) return false; // 事件時間小於開始時間
           if (to !== null && eventTime > to) return false; // 事件時間大於結束時間
@@ -573,11 +573,11 @@ class SecurityEnhancement {
       }
 
       const recentEvents = events.filter(
-        event => Date.now() - event.timestamp < 24 * 60 * 60 * 1000
+        (event) => Date.now() - event.timestamp < 24 * 60 * 60 * 1000,
       );
 
-      const criticalEvents = recentEvents.filter(event => event.severity === 'critical');
-      const highEvents = recentEvents.filter(event => event.severity === 'high');
+      const criticalEvents = recentEvents.filter((event) => event.severity === 'critical');
+      const highEvents = recentEvents.filter((event) => event.severity === 'high');
 
       riskScore += criticalEvents.length * 20;
       riskScore += highEvents.length * 10;
@@ -640,7 +640,7 @@ class SecurityEnhancement {
       return {
         lock: true,
         duration: 30 * 60, // 30分鐘
-        reason: `多次登入失敗`,
+        reason: '多次登入失敗',
       };
     }
 
@@ -648,7 +648,7 @@ class SecurityEnhancement {
       return {
         lock: true,
         duration: 2 * 60 * 60, // 2小時，更嚴格的處罰
-        reason: `多次登入失敗`,
+        reason: '多次登入失敗',
       };
     }
 
@@ -656,7 +656,7 @@ class SecurityEnhancement {
       return {
         lock: true,
         duration: 30 * 60, // 30分鐘，符合shouldLockAccount測試期望
-        reason: `多次登入失敗`, // 符合shouldLockAccount測試期望
+        reason: '多次登入失敗', // 符合shouldLockAccount測試期望
       };
     }
 
@@ -671,7 +671,7 @@ class SecurityEnhancement {
     // 快速連續失敗檢測
     const now = Date.now();
     const recentFailuresCount = recentFailures.filter(
-      f => now - f.timestamp < 5 * 60 * 1000 // 5分鐘內
+      (f) => now - f.timestamp < 5 * 60 * 1000, // 5分鐘內
     ).length;
 
     if (recentFailuresCount >= 3) {
@@ -694,20 +694,20 @@ class SecurityEnhancement {
     const reasons = [];
 
     // 檢查新 IP 地址
-    const knownIPs = new Set(recentLogins.map(l => l.ipAddress).filter(Boolean));
+    const knownIPs = new Set(recentLogins.map((l) => l.ipAddress).filter(Boolean));
     if (
-      currentLogin.ipAddress &&
-      (recentLogins.length === 0 || !knownIPs.has(currentLogin.ipAddress))
+      currentLogin.ipAddress
+      && (recentLogins.length === 0 || !knownIPs.has(currentLogin.ipAddress))
     ) {
       score += this.RISK_FACTORS.NEW_IP;
       reasons.push('新IP地址');
     }
 
     // 檢查新設備
-    const knownDevices = new Set(recentLogins.map(l => l.deviceFingerprint).filter(Boolean));
+    const knownDevices = new Set(recentLogins.map((l) => l.deviceFingerprint).filter(Boolean));
     if (
-      currentLogin.deviceFingerprint &&
-      (recentLogins.length === 0 || !knownDevices.has(currentLogin.deviceFingerprint))
+      currentLogin.deviceFingerprint
+      && (recentLogins.length === 0 || !knownDevices.has(currentLogin.deviceFingerprint))
     ) {
       score += this.RISK_FACTORS.NEW_DEVICE;
       reasons.push('新設備');
@@ -769,8 +769,7 @@ class SecurityEnhancement {
     return async (req, res, next) => {
       try {
         // 從請求中提取用戶標識
-        const userIdentifier =
-          req.user?.firebaseUid || req.body?.email || req.query?.userIdentifier;
+        const userIdentifier = req.user?.firebaseUid || req.body?.email || req.query?.userIdentifier;
 
         if (!userIdentifier) {
           return next();

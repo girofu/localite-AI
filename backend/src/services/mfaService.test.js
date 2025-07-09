@@ -1,8 +1,8 @@
+const { authenticator } = require('otplib');
+const QRCode = require('qrcode');
 const MFAService = require('./mfaService');
 const { redisConnection } = require('../config/redis');
 const { logger } = require('../middleware/requestLogger');
-const { authenticator } = require('otplib');
-const QRCode = require('qrcode');
 
 // Mock dependencies
 jest.mock('../config/redis', () => ({
@@ -140,7 +140,7 @@ describe('MFAService', () => {
 
       expect(redisConnection.set).toHaveBeenCalledWith(
         `mfa_status:${testUid}`,
-        expect.stringContaining('"status":"enabled"')
+        expect.stringContaining('"status":"enabled"'),
       );
       expect(logger.info).toHaveBeenCalledWith('用戶 MFA 狀態更新成功', {
         uid: testUid,
@@ -230,7 +230,7 @@ describe('MFAService', () => {
       redisConnection.incr.mockRejectedValue(error);
 
       await expect(mfaService.incrementAttemptCounter(testUid, 'totp')).rejects.toThrow(
-        '增加嘗試次數失敗'
+        '增加嘗試次數失敗',
       );
       expect(logger.error).toHaveBeenCalledWith('增加嘗試次數失敗', {
         uid: testUid,
@@ -519,7 +519,7 @@ describe('MFAService', () => {
       redisConnection.get.mockResolvedValue(
         JSON.stringify({
           createdAt: new Date(Date.now() - 25 * 60 * 60 * 1000).toISOString(), // 25 小時前
-        })
+        }),
       );
       redisConnection.del.mockResolvedValue(1);
 
@@ -540,7 +540,7 @@ describe('MFAService', () => {
       redisConnection.get.mockResolvedValue(
         JSON.stringify({
           createdAt: new Date(Date.now() - 25 * 60 * 60 * 1000).toISOString(),
-        })
+        }),
       );
       redisConnection.del.mockResolvedValue(1);
 
@@ -1095,7 +1095,7 @@ describe('MFAService', () => {
         expect(result).toBe(true);
         expect(redisConnection.set).toHaveBeenCalledWith(
           `totp_secret:${testUid}`,
-          expect.stringContaining(mockSecret)
+          expect.stringContaining(mockSecret),
         );
       });
 
@@ -1125,7 +1125,7 @@ describe('MFAService', () => {
         QRCode.toDataURL.mockRejectedValue(new Error('QR 碼生成失敗'));
 
         await expect(mfaService.generateTOTPQRCode(testUid, mockEmail, mockSecret)).rejects.toThrow(
-          '生成 QR 碼失敗'
+          '生成 QR 碼失敗',
         );
       });
     });
@@ -1365,7 +1365,7 @@ describe('MFAService', () => {
         const codes = mfaService.generateBackupCodes();
 
         expect(codes).toHaveLength(mfaService.backupCodeConfig.totalCodes);
-        expect(codes.every(code => typeof code === 'string')).toBe(true);
+        expect(codes.every((code) => typeof code === 'string')).toBe(true);
       });
 
       it('應該處理生成錯誤', () => {
@@ -1386,7 +1386,7 @@ describe('MFAService', () => {
         expect(result).toBe(true);
         expect(redisConnection.set).toHaveBeenCalledWith(
           `backup_codes:${testUid}`,
-          expect.stringContaining('ABC12345')
+          expect.stringContaining('ABC12345'),
         );
       });
 

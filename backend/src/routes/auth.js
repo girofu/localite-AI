@@ -409,7 +409,7 @@ router.post(
           error: {
             message: '資料驗證失敗',
             code: 'VALIDATION_ERROR',
-            details: Object.values(error.errors).map(err => err.message),
+            details: Object.values(error.errors).map((err) => err.message),
           },
         });
       }
@@ -422,7 +422,7 @@ router.post(
         },
       });
     }
-  }
+  },
 );
 
 /**
@@ -557,7 +557,7 @@ router.post('/verify-email', sensitiveOperationLimiter, authenticate, async (req
 
     const verificationLink = await firebaseAuth.generateEmailVerificationLink(
       user.email,
-      actionCodeSettings
+      actionCodeSettings,
     );
 
     // 這裡應該集成實際的郵件發送服務 (例如 SendGrid, AWS SES)
@@ -663,7 +663,7 @@ router.post(
           {
             ...req.securityContext,
             lockReason: lockCheck.reason,
-          }
+          },
         );
 
         return res.status(423).json({
@@ -781,7 +781,7 @@ router.post(
         },
       });
     }
-  }
+  },
 );
 
 /**
@@ -951,7 +951,7 @@ router.post(
             ...req.securityContext,
             riskScore: loginAnalysis.riskScore,
             reasons: loginAnalysis.reasons,
-          }
+          },
         );
 
         // 高風險情況下要求額外驗證
@@ -1009,7 +1009,7 @@ router.post(
           role: user.role,
           permissions: user.permissions || [],
         },
-        requestContext
+        requestContext,
       );
 
       logger.info('JWT Token 對生成成功', {
@@ -1038,7 +1038,7 @@ router.post(
         },
       });
     }
-  }
+  },
 );
 
 /**
@@ -1144,7 +1144,7 @@ router.post(
         },
       });
     }
-  }
+  },
 );
 
 /**
@@ -1334,7 +1334,7 @@ router.get('/session-info', generalLimiter, authenticate, async (req, res) => {
     const sessions = await jwtService.getUserSessions(req.user.uid);
 
     // 增強的 session 資訊
-    const enhancedSessions = sessions.map(session => ({
+    const enhancedSessions = sessions.map((session) => ({
       sessionId: session.sessionId,
       createdAt: session.createdAt,
       lastActivity: session.lastActivity,
@@ -1491,7 +1491,7 @@ router.post(
         },
       });
     }
-  }
+  },
 );
 
 /**
@@ -1581,7 +1581,7 @@ router.post(
         },
       });
     }
-  }
+  },
 );
 
 /**
@@ -1712,7 +1712,7 @@ router.post(
         },
       });
     }
-  }
+  },
 );
 
 // ============ 帳號鎖定管理 API ============
@@ -1925,7 +1925,7 @@ router.post(
         },
       });
     }
-  }
+  },
 );
 
 /**
@@ -2008,7 +2008,7 @@ router.post(
         userIdentifier,
         duration,
         reason,
-        adminUser
+        adminUser,
       );
 
       if (!locked) {
@@ -2055,7 +2055,7 @@ router.post(
         },
       });
     }
-  }
+  },
 );
 
 /**
@@ -2155,7 +2155,7 @@ router.get(
         },
       });
     }
-  }
+  },
 );
 
 /**
@@ -2233,7 +2233,7 @@ router.get(
         },
       });
     }
-  }
+  },
 );
 
 /**
@@ -2319,7 +2319,7 @@ router.post(
         },
       });
     }
-  }
+  },
 );
 
 // ============ MFA 狀態檢查和驗證 API 端點 ============
@@ -2446,7 +2446,7 @@ router.post(
  */
 router.get('/mfa/status', generalLimiter, authenticate, async (req, res) => {
   try {
-    const uid = req.user.uid;
+    const { uid } = req.user;
 
     // 獲取用戶 MFA 狀態
     const mfaStatus = await mfaService.getUserMFAStatus(uid);
@@ -2528,7 +2528,7 @@ router.post(
   async (req, res) => {
     try {
       const { code, type } = req.body;
-      const uid = req.user.uid;
+      const { uid } = req.user;
 
       // 驗證請求參數
       if (!code || !type) {
@@ -2607,7 +2607,7 @@ router.post(
         },
       });
     }
-  }
+  },
 );
 
 /**
@@ -2656,7 +2656,7 @@ router.post(
  */
 router.get('/mfa/methods', generalLimiter, authenticate, async (req, res) => {
   try {
-    const uid = req.user.uid;
+    const { uid } = req.user;
 
     // 獲取用戶 MFA 狀態
     const mfaStatus = await mfaService.getUserMFAStatus(uid);
@@ -2695,7 +2695,7 @@ router.get('/mfa/methods', generalLimiter, authenticate, async (req, res) => {
       totalMethods: allMethods.length,
       enabledMethods: mfaStatus.enabledMethods.length,
       pendingMethods: mfaStatus.pendingMethods.length,
-      availableMethods: allMethods.filter(method => method.available).length,
+      availableMethods: allMethods.filter((method) => method.available).length,
     };
 
     logger.info('用戶 MFA 方法查詢', {
@@ -2796,7 +2796,7 @@ router.post(
   async (req, res) => {
     try {
       const { operation = 'login', context = {} } = req.body;
-      const uid = req.user.uid;
+      const { uid } = req.user;
 
       // 獲取用戶 MFA 狀態
       const mfaStatus = await mfaService.getUserMFAStatus(uid);
@@ -2896,7 +2896,7 @@ router.post(
         },
       });
     }
-  }
+  },
 );
 
 // ============ 安全設定和管理 API ============
@@ -3090,7 +3090,7 @@ router.post(
  */
 router.get('/security-preferences', generalLimiter, authenticate, async (req, res) => {
   try {
-    const uid = req.user.uid;
+    const { uid } = req.user;
 
     // 從用戶模型或快取中獲取安全偏好設定
     const user = await User.findByFirebaseUid(uid);
@@ -3206,7 +3206,7 @@ router.put(
   authenticate,
   async (req, res) => {
     try {
-      const uid = req.user.uid;
+      const { uid } = req.user;
       const newPreferences = req.body;
 
       // 驗證輸入參數
@@ -3254,7 +3254,7 @@ router.put(
       const currentPreferences = user.securityPreferences || {};
       const changes = [];
 
-      Object.keys(newPreferences).forEach(key => {
+      Object.keys(newPreferences).forEach((key) => {
         if (currentPreferences[key] !== newPreferences[key]) {
           changes.push(`${key}: ${currentPreferences[key]} → ${newPreferences[key]}`);
         }
@@ -3274,7 +3274,7 @@ router.put(
             securityPreferences: updatedPreferences,
             updatedAt: new Date(),
           },
-        }
+        },
       );
 
       // 記錄安全事件
@@ -3313,7 +3313,7 @@ router.put(
         },
       });
     }
-  }
+  },
 );
 
 /**
@@ -3353,7 +3353,7 @@ router.put(
  */
 router.get('/notification-settings', generalLimiter, authenticate, async (req, res) => {
   try {
-    const uid = req.user.uid;
+    const { uid } = req.user;
 
     const user = await User.findByFirebaseUid(uid);
     if (!user) {
@@ -3450,7 +3450,7 @@ router.put(
   authenticate,
   async (req, res) => {
     try {
-      const uid = req.user.uid;
+      const { uid } = req.user;
       const newSettings = req.body;
 
       const user = await User.findByFirebaseUid(uid);
@@ -3479,7 +3479,7 @@ router.put(
             notificationSettings: updatedSettings,
             updatedAt: new Date(),
           },
-        }
+        },
       );
 
       // 記錄設定變更
@@ -3515,7 +3515,7 @@ router.put(
         },
       });
     }
-  }
+  },
 );
 
 /**
@@ -3618,7 +3618,7 @@ router.get(
         },
       });
     }
-  }
+  },
 );
 
 /**
@@ -3666,8 +3666,8 @@ router.put(
       if (newPolicy.passwordPolicy) {
         const { passwordPolicy } = newPolicy;
         if (
-          passwordPolicy.minLength &&
-          (passwordPolicy.minLength < 8 || passwordPolicy.minLength > 128)
+          passwordPolicy.minLength
+          && (passwordPolicy.minLength < 8 || passwordPolicy.minLength > 128)
         ) {
           validationErrors.push('密碼最小長度必須在 8 到 128 之間');
         }
@@ -3679,14 +3679,14 @@ router.put(
       if (newPolicy.accountLockPolicy) {
         const { accountLockPolicy } = newPolicy;
         if (
-          accountLockPolicy.maxFailedAttempts &&
-          (accountLockPolicy.maxFailedAttempts < 3 || accountLockPolicy.maxFailedAttempts > 10)
+          accountLockPolicy.maxFailedAttempts
+          && (accountLockPolicy.maxFailedAttempts < 3 || accountLockPolicy.maxFailedAttempts > 10)
         ) {
           validationErrors.push('最大失敗嘗試次數必須在 3 到 10 之間');
         }
         if (
-          accountLockPolicy.lockDuration &&
-          (accountLockPolicy.lockDuration < 1 || accountLockPolicy.lockDuration > 1440)
+          accountLockPolicy.lockDuration
+          && (accountLockPolicy.lockDuration < 1 || accountLockPolicy.lockDuration > 1440)
         ) {
           validationErrors.push('鎖定時間必須在 1 到 1440 分鐘之間');
         }
@@ -3752,7 +3752,7 @@ router.put(
         },
       });
     }
-  }
+  },
 );
 
 /**
@@ -3951,7 +3951,7 @@ router.get(
         },
       });
     }
-  }
+  },
 );
 
 /**
@@ -3999,7 +3999,7 @@ router.post(
   authenticate,
   async (req, res) => {
     try {
-      const uid = req.user.uid;
+      const { uid } = req.user;
 
       const user = await User.findByFirebaseUid(uid);
       if (!user) {
@@ -4034,7 +4034,7 @@ router.post(
           $set: {
             updatedAt: new Date(),
           },
-        }
+        },
       );
 
       // 記錄安全事件
@@ -4072,7 +4072,7 @@ router.post(
         },
       });
     }
-  }
+  },
 );
 
 module.exports = router;

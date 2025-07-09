@@ -251,14 +251,14 @@ describe('安全認證流程整合測試', () => {
               .set('X-Test-User', 'security-test')
               .set('User-Agent', 'Malicious-Browser/1.0')
               .set('X-Forwarded-For', '192.168.1.100')
-              .send(maliciousData)
+              .send(maliciousData),
           );
         }
 
         const responses = await Promise.all(loginAttempts);
 
         // 檢查所有響應都是404
-        responses.forEach(response => {
+        responses.forEach((response) => {
           expect(response.status).toBe(404); // 用戶不存在
         });
 
@@ -412,7 +412,7 @@ describe('安全認證流程整合測試', () => {
           .send(suspiciousData);
 
         // 短暫等待以模擬時間間隔
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise((resolve) => setTimeout(resolve, 100));
       }
 
       // 檢查是否記錄了安全事件
@@ -528,7 +528,7 @@ describe('安全認證流程整合測試', () => {
       expect(allEvents.length).toBeGreaterThanOrEqual(3);
 
       // 驗證事件內容
-      const eventTypesRecorded = allEvents.map(e => e.type);
+      const eventTypesRecorded = allEvents.map((e) => e.type);
       expect(eventTypesRecorded).toContain('login_failure');
       expect(eventTypesRecorded).toContain('suspicious_activity');
       expect(eventTypesRecorded).toContain('account_locked');
@@ -564,13 +564,13 @@ describe('安全認證流程整合測試', () => {
       await securityEnhancement.recordSecurityEvent(
         TEST_USER.uid,
         criticalEvent.type,
-        criticalEvent.data
+        criticalEvent.data,
       );
       await securityEnhancement.recordSecurityEvent(TEST_USER.uid, highEvent.type, highEvent.data);
       await securityEnhancement.recordSecurityEvent(
         TEST_USER.uid,
         mediumEvent.type,
-        mediumEvent.data
+        mediumEvent.data,
       );
 
       // 獲取事件並驗證嚴重程度
@@ -582,9 +582,9 @@ describe('安全認證流程整合測試', () => {
       expect(events.length).toBeGreaterThanOrEqual(3);
 
       // 驗證嚴重程度設置
-      const criticalEvents = events.filter(e => e.severity === 'critical');
-      const highEvents = events.filter(e => e.severity === 'high');
-      const mediumEvents = events.filter(e => e.severity === 'medium');
+      const criticalEvents = events.filter((e) => e.severity === 'critical');
+      const highEvents = events.filter((e) => e.severity === 'high');
+      const mediumEvents = events.filter((e) => e.severity === 'medium');
 
       expect(criticalEvents.length).toBeGreaterThan(0);
       expect(highEvents.length).toBeGreaterThan(0);
@@ -618,7 +618,7 @@ describe('安全認證流程整合測試', () => {
 
       expect(loginFailureEvents).toBeDefined();
       expect(loginFailureEvents.length).toBe(2);
-      loginFailureEvents.forEach(event => {
+      loginFailureEvents.forEach((event) => {
         expect(event.type).toBe('login_failure');
       });
 
@@ -684,7 +684,7 @@ describe('安全認證流程整合測試', () => {
       // 分析登入模式
       const riskAnalysis = await securityEnhancement.analyzeLoginPattern(
         TEST_USER.uid,
-        highRiskContext
+        highRiskContext,
       );
 
       // 驗證風險評估
@@ -700,7 +700,7 @@ describe('安全認證流程整合測試', () => {
         });
 
         const riskEvents = events.filter(
-          e => e.type === 'high_risk_login' || e.type === 'suspicious_activity'
+          (e) => e.type === 'high_risk_login' || e.type === 'suspicious_activity',
         );
 
         expect(riskEvents.length).toBeGreaterThan(0);
@@ -727,7 +727,7 @@ describe('安全認證流程整合測試', () => {
       const eventId = await securityEnhancement.recordSecurityEvent(
         TEST_USER.uid,
         testEvent.type,
-        testEvent.data
+        testEvent.data,
       );
 
       // 驗證事件 ID 被返回
@@ -761,7 +761,7 @@ describe('安全認證流程整合測試', () => {
       const eventId = await securityEnhancement.recordSecurityEvent(
         TEST_USER.uid,
         'test_error_event',
-        { test: 'data' }
+        { test: 'data' },
       );
 
       // 驗證錯誤處理
@@ -798,7 +798,7 @@ describe('安全認證流程整合測試', () => {
       expect(allEvents.length).toBeGreaterThanOrEqual(6); // 至少 1+2+3=6 個事件
 
       // 分析事件類型分佈
-      const eventTypes = allEvents.map(e => e.type);
+      const eventTypes = allEvents.map((e) => e.type);
       const uniqueTypes = [...new Set(eventTypes)];
 
       expect(uniqueTypes).toContain('brute_force_attempt');
@@ -845,15 +845,15 @@ describe('安全認證流程整合測試', () => {
 
       const responses = await Promise.all(requests);
 
-      const successCount = responses.filter(r => r.status === 200).length;
-      const rateLimitedCount = responses.filter(r => r.status === 429).length;
+      const successCount = responses.filter((r) => r.status === 200).length;
+      const rateLimitedCount = responses.filter((r) => r.status === 429).length;
 
       // 在大量請求中，應該有一些被 rate limit
       expect(successCount).toBeLessThanOrEqual(limit);
       expect(rateLimitedCount).toBeGreaterThan(0);
 
       // 檢查 rate limit 回應格式
-      const rateLimitResponse = responses.find(r => r.status === 429);
+      const rateLimitResponse = responses.find((r) => r.status === 429);
       if (rateLimitResponse) {
         expect(rateLimitResponse.body.error.code).toBe('RATE_LIMIT_EXCEEDED');
         expect(rateLimitResponse.body.rateLimitInfo).toBeDefined();
@@ -870,16 +870,16 @@ describe('安全認證流程整合測試', () => {
           request(app)
             .post('/api/v1/auth/login')
             .set('User-Agent', 'Auth-Test-Client/1.0')
-            .send({ firebaseUid: `test-user-${i}` })
+            .send({ firebaseUid: `test-user-${i}` }),
         );
       }
 
       const responses = await Promise.all(requests);
 
       const successOrErrorCount = responses.filter(
-        r => r.status === 200 || r.status === 404 || r.status === 401
+        (r) => r.status === 200 || r.status === 404 || r.status === 401,
       ).length;
-      const rateLimitedCount = responses.filter(r => r.status === 429).length;
+      const rateLimitedCount = responses.filter((r) => r.status === 429).length;
 
       // 認證端點應該有更嚴格的限制
       expect(successOrErrorCount).toBeLessThanOrEqual(authLimit);
@@ -896,14 +896,14 @@ describe('安全認證流程整合測試', () => {
           request(app)
             .post('/api/v1/auth/verify-email')
             .set('X-Test-User', 'security-test')
-            .set('User-Agent', 'Sensitive-Test-Client/1.0')
+            .set('User-Agent', 'Sensitive-Test-Client/1.0'),
         );
       }
 
       const responses = await Promise.all(requests);
 
-      const successCount = responses.filter(r => r.status === 200).length;
-      const rateLimitedCount = responses.filter(r => r.status === 429).length;
+      const successCount = responses.filter((r) => r.status === 200).length;
+      const rateLimitedCount = responses.filter((r) => r.status === 429).length;
 
       // 敏感操作應該有最嚴格的限制
       expect(successCount).toBeLessThanOrEqual(sensitiveLimit);
@@ -921,7 +921,7 @@ describe('安全認證流程整合測試', () => {
             .post('/api/v1/auth/login')
             .set('User-Agent', 'User1-Browser/1.0')
             .set('X-Forwarded-For', '192.168.1.1') // 模擬不同 IP
-            .send({ firebaseUid: 'user-1' })
+            .send({ firebaseUid: 'user-1' }),
         );
       }
 
@@ -932,7 +932,7 @@ describe('安全認證流程整合測試', () => {
             .post('/api/v1/auth/login')
             .set('User-Agent', 'User2-Browser/1.0')
             .set('X-Forwarded-For', '192.168.1.2') // 模擬不同 IP
-            .send({ firebaseUid: 'user-2' })
+            .send({ firebaseUid: 'user-2' }),
         );
       }
 
@@ -942,10 +942,10 @@ describe('安全認證流程整合測試', () => {
       ]);
 
       // 兩個不同來源都應該能發送請求，直到達到各自的限制
-      const user1Success = user1Responses.filter(r => r.status !== 429).length;
-      const user2Success = user2Responses.filter(r => r.status !== 429).length;
-      const user1RateLimited = user1Responses.filter(r => r.status === 429).length;
-      const user2RateLimited = user2Responses.filter(r => r.status === 429).length;
+      const user1Success = user1Responses.filter((r) => r.status !== 429).length;
+      const user2Success = user2Responses.filter((r) => r.status !== 429).length;
+      const user1RateLimited = user1Responses.filter((r) => r.status === 429).length;
+      const user2RateLimited = user2Responses.filter((r) => r.status === 429).length;
 
       // 每個來源都應該有一些成功的請求
       expect(user1Success).toBeGreaterThan(0);
@@ -971,7 +971,7 @@ describe('安全認證流程整合測試', () => {
             .post('/api/v1/auth/login')
             .set('User-Agent', 'Stats-Test-Client/1.0')
             .send({ firebaseUid: 'stats-test-user' })
-            .timeout(5000) // 設定5秒超時
+            .timeout(5000), // 設定5秒超時
         );
       }
 
@@ -1008,12 +1008,12 @@ describe('安全認證流程整合測試', () => {
             request(app)
               .post('/api/v1/auth/login')
               .set('User-Agent', 'Memory-Test-Client/1.0')
-              .send({ firebaseUid: 'memory-test-user' })
+              .send({ firebaseUid: 'memory-test-user' }),
           );
         }
 
         const responses = await Promise.all(requests);
-        const rateLimitedCount = responses.filter(r => r.status === 429).length;
+        const rateLimitedCount = responses.filter((r) => r.status === 429).length;
 
         // 即使 Redis 不可用，仍應該有 rate limiting
         expect(rateLimitedCount).toBeGreaterThan(0);
@@ -1034,7 +1034,7 @@ describe('安全認證流程整合測試', () => {
           request(app)
             .post('/api/v1/auth/login')
             .set('User-Agent', 'Concurrent-Test-Client/1.0')
-            .send({ firebaseUid: 'concurrent-test-user' })
+            .send({ firebaseUid: 'concurrent-test-user' }),
         );
       }
 
@@ -1042,10 +1042,10 @@ describe('安全認證流程整合測試', () => {
 
       // 分析結果
       const successCount = responses.filter(
-        r => r.status === 200 || r.status === 404 || r.status === 401
+        (r) => r.status === 200 || r.status === 404 || r.status === 401,
       ).length;
-      const rateLimitedCount = responses.filter(r => r.status === 429).length;
-      const errorCount = responses.filter(r => r.status >= 500).length;
+      const rateLimitedCount = responses.filter((r) => r.status === 429).length;
+      const errorCount = responses.filter((r) => r.status >= 500).length;
 
       // 應該有一定數量的成功請求和被限制的請求
       expect(successCount + rateLimitedCount).toBe(totalRequests);
@@ -1071,7 +1071,7 @@ describe('安全認證流程整合測試', () => {
               .post('/api/v1/auth/login')
               .set('User-Agent', 'Combined-Test/1.0')
               .set('X-Real-IP', '192.168.1.100') // 統一 IP 以觸發 rate limiting
-              .send({ firebaseUid: maliciousUser })
+              .send({ firebaseUid: maliciousUser }),
           );
         }
 
@@ -1079,32 +1079,31 @@ describe('安全認證流程整合測試', () => {
 
         // 分析所有回應狀態
         const statusCounts = {};
-        responses.forEach(r => {
+        responses.forEach((r) => {
           statusCounts[r.status] = (statusCounts[r.status] || 0) + 1;
         });
 
         console.log('協同測試 - 狀態碼分布:', statusCounts);
 
         // 應該看到各種安全機制的回應
-        const rateLimitedCount = responses.filter(r => r.status === 429).length;
-        const notFoundCount = responses.filter(r => r.status === 404).length;
-        const authErrorCount = responses.filter(r => r.status === 401).length;
-        const badRequestCount = responses.filter(r => r.status === 400).length;
+        const rateLimitedCount = responses.filter((r) => r.status === 429).length;
+        const notFoundCount = responses.filter((r) => r.status === 404).length;
+        const authErrorCount = responses.filter((r) => r.status === 401).length;
+        const badRequestCount = responses.filter((r) => r.status === 400).length;
 
         // 驗證安全機制協同工作
         expect(responses.length).toBe(15);
 
         // 應該有多種安全機制被觸發
-        const totalSecurityBlocks =
-          rateLimitedCount + notFoundCount + authErrorCount + badRequestCount;
+        const totalSecurityBlocks = rateLimitedCount + notFoundCount + authErrorCount + badRequestCount;
         expect(totalSecurityBlocks).toBeGreaterThan(0);
 
         // 測試更靈活 - 接受各種安全機制回應
         const expectedStatuses = [429, 404, 401, 400];
-        const actualStatuses = responses.map(r => r.status);
+        const actualStatuses = responses.map((r) => r.status);
 
         // 驗證所有回應都是安全機制的預期狀態碼
-        expect(actualStatuses.every(status => expectedStatuses.includes(status))).toBe(true);
+        expect(actualStatuses.every((status) => expectedStatuses.includes(status))).toBe(true);
 
         // 如果有 rate limiting，驗證其有效性
         if (rateLimitedCount > 0) {
@@ -1240,7 +1239,7 @@ describe('安全認證流程整合測試', () => {
         },
         standardHeaders: true,
         legacyHeaders: false,
-        keyGenerator: req => `test_stress:${req.ip}:test`,
+        keyGenerator: (req) => `test_stress:${req.ip}:test`,
         skip: customSkipFunction, // 使用我們的自訂跳過函數
         handler: (req, res) => {
           rateLimitInstance.stats.blockedRequests += 1;
@@ -1275,15 +1274,15 @@ describe('安全認證流程整合測試', () => {
             .post('/api/v1/test-stress')
             .set('User-Agent', `StressTest-${i}/1.0`)
             .set('X-Forwarded-For', '192.168.1.100') // 使用相同 IP 確保觸發限制
-            .send({ testData: `request-${i}` })
+            .send({ testData: `request-${i}` }),
         );
       }
 
       // 快速發送所有請求以觸發 rate limiting
       const responses = await Promise.all(allRequests);
 
-      const successResponses = responses.filter(r => r.status === 200).length;
-      const rateLimitedResponses = responses.filter(r => r.status === 429).length;
+      const successResponses = responses.filter((r) => r.status === 200).length;
+      const rateLimitedResponses = responses.filter((r) => r.status === 429).length;
 
       expect(responses.length).toBe(totalRequests);
 
@@ -1292,11 +1291,11 @@ describe('安全認證流程整合測試', () => {
       expect(successResponses + rateLimitedResponses).toBe(totalRequests);
 
       // 驗證所有回應都是有效的（200 或 429）
-      const validResponses = responses.filter(r => r.status === 200 || r.status === 429).length;
+      const validResponses = responses.filter((r) => r.status === 200 || r.status === 429).length;
       expect(validResponses).toBe(totalRequests);
 
       console.log(
-        `高並發穩定性測試結果: ${successResponses}/${totalRequests} 成功, ${rateLimitedResponses} 被限制`
+        `高並發穩定性測試結果: ${successResponses}/${totalRequests} 成功, ${rateLimitedResponses} 被限制`,
       );
 
       // 驗證系統在高負載下的穩定性
@@ -1330,15 +1329,15 @@ describe('安全認證流程整合測試', () => {
             .send({
               code: '123456', // 無效代碼
               type: 'totp',
-            })
+            }),
         );
       }
 
       const responses = await Promise.all(requests);
 
       // 檢查回應一致性
-      const successCount = responses.filter(r => r.status === 200).length;
-      const rateLimitedCount = responses.filter(r => r.status === 429).length;
+      const successCount = responses.filter((r) => r.status === 200).length;
+      const rateLimitedCount = responses.filter((r) => r.status === 429).length;
 
       expect(successCount + rateLimitedCount).toBe(concurrentMFARequests);
 
@@ -1367,7 +1366,7 @@ describe('安全認證流程整合測試', () => {
             ipAddress: `192.168.1.${i % 255}`,
             userAgent: `StressTest-${i}/1.0`,
             timestamp: new Date().toISOString(),
-          })
+          }),
         );
       }
 
@@ -1379,7 +1378,7 @@ describe('安全認證流程整合測試', () => {
 
       for (const batch of batches) {
         await Promise.all(batch);
-        await new Promise(resolve => setTimeout(resolve, 10));
+        await new Promise((resolve) => setTimeout(resolve, 10));
       }
 
       // 驗證事件記錄完整性
@@ -1399,7 +1398,7 @@ describe('安全認證流程整合測試', () => {
       // 生成極高並發請求
       for (let i = 0; i < extremeLoad; i++) {
         requests.push(
-          request(app).get('/health').set('User-Agent', `ExtremeLloadTest-${i}/1.0`).timeout(5000) // 5秒超時
+          request(app).get('/health').set('User-Agent', `ExtremeLloadTest-${i}/1.0`).timeout(5000), // 5秒超時
         );
       }
 
@@ -1408,11 +1407,11 @@ describe('安全認證流程整合測試', () => {
       const endTime = Date.now();
 
       const successfulResponses = responses.filter(
-        r => r.status === 'fulfilled' && r.value.status === 200
+        (r) => r.status === 'fulfilled' && r.value.status === 200,
       ).length;
 
       const failedResponses = responses.filter(
-        r => r.status === 'rejected' || r.value.status !== 200
+        (r) => r.status === 'rejected' || r.value.status !== 200,
       ).length;
 
       // 即使在極高負載下，也應該有部分請求成功
@@ -1423,7 +1422,7 @@ describe('安全認證流程整合測試', () => {
       expect(totalTime).toBeLessThan(30000); // 30秒內完成
 
       console.log(
-        `極高負載測試結果: ${successfulResponses}/${extremeLoad} 成功, 總時間: ${totalTime}ms`
+        `極高負載測試結果: ${successfulResponses}/${extremeLoad} 成功, 總時間: ${totalTime}ms`,
       );
     });
 
@@ -1446,7 +1445,7 @@ describe('安全認證流程整合測試', () => {
             successCount++;
           }
 
-          await new Promise(resolve => setTimeout(resolve, intervalMs));
+          await new Promise((resolve) => setTimeout(resolve, intervalMs));
         } catch (error) {
           requestCount++;
           // 繼續測試即使有錯誤
@@ -1462,7 +1461,7 @@ describe('安全認證流程整合測試', () => {
       expect(successRate).toBeGreaterThan(0.5); // 至少50%成功率
 
       console.log(
-        `持續負載測試結果: ${successCount}/${requestCount} 成功 (${(successRate * 100).toFixed(1)}%)`
+        `持續負載測試結果: ${successCount}/${requestCount} 成功 (${(successRate * 100).toFixed(1)}%)`,
       );
     });
   });
