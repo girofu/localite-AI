@@ -1,0 +1,1 @@
+{"environment":"development","level":"error","message":"Unhandled Rejection:","promise":"[object Promise]","reason":"TypeError: logger.warn is not a function","service":"localite-backend","timestamp":"2025-07-09T04:26:54.469Z","type":"unhandledRejection","version":"1.0.0"}

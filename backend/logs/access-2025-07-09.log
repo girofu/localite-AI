@@ -1,0 +1,3 @@
+{"environment":"development","level":"error","message":"Unhandled Rejection:","promise":"[object Promise]","reason":"TypeError: logger.warn is not a function","service":"localite-backend","timestamp":"2025-07-09T04:26:54.470Z","type":"unhandledRejection","version":"1.0.0"}
+{"environment":"development","level":"warn","message":"Redis not connected, falling back to memory-based rate limiting","service":"localite-backend","timestamp":"2025-07-09T04:27:24.078Z","version":"1.0.0"}
+{"environment":"development","level":"info","message":"GoogleAIService initialized with 2 API keys","quotaManagement":true,"rateLimit":true,"service":"localite-backend","timestamp":"2025-07-09T04:27:24.079Z","useRedis":false,"version":"1.0.0"}
